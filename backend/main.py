@@ -1,0 +1,50 @@
+# Arquivo: backend/main.py
+
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+# Importamos nossas configurações e modelos
+from app.database import engine, SessionLocal
+from app.models import banco_de_dados
+from app import schemas
+
+# Cria as tabelas no banco de dados
+banco_de_dados.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="API de Gestão de Projetos",
+    description="Backend para o piloto do sistema de controle de projetos da consultoria."
+)
+
+# Função auxiliar: Abre uma conexão com o banco de dados e fecha quando terminar
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/")
+def ler_raiz():
+    return {"mensagem": "Bem-vindo à API de Gestão de Projetos!"}
+
+# --- NOVA ROTA: CADASTRAR TRABALHADOR ---
+# Usamos @app.post porque estamos ENVIANDO dados para o servidor criar algo novo
+@app.post("/trabalhadores/", response_model=schemas.TrabalhadorResposta)
+def criar_trabalhador(trabalhador: schemas.TrabalhadorCriar, db: Session = Depends(get_db)):
+    """
+    Esta rota recebe os dados de um novo trabalhador e salva no banco de dados.
+    """
+    # 1. Transformamos o 'schema' recebido em um 'model' do banco de dados
+    novo_trabalhador = banco_de_dados.Trabalhador(nome=trabalhador.nome, cargo=trabalhador.cargo)
+    
+    # 2. Adicionamos o novo trabalhador na sessão do banco
+    db.add(novo_trabalhador)
+    
+    # 3. Salvamos as alterações no banco de fato (commit)
+    db.commit()
+    
+    # 4. Atualizamos a variável para pegar o ID que o banco gerou automaticamente
+    db.refresh(novo_trabalhador)
+    
+    # 5. Devolvemos os dados do trabalhador criado com sucesso
+    return novo_trabalhador
