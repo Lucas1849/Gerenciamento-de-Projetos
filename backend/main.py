@@ -51,3 +51,36 @@ def criar_trabalhador(trabalhador: schemas.TrabalhadorCriar, db: Session = Depen
     
     # 5. Devolvemos os dados do trabalhador criado com sucesso
     return novo_trabalhador
+
+    # Arquivo: backend/main.py (Adicione no final)
+
+# ROTA PARA CADASTRAR PROJETO
+@app.post("/projetos/", response_model=schemas.ProjetoResposta)
+def criar_projeto(projeto: schemas.ProjetoCriar, db: Session = Depends(get_db)):
+    """
+    Cadastra um novo projeto e vincula o gerente e os consultores usando seus IDs.
+    """
+    novo_projeto = banco_de_dados.Projeto(
+        nome=projeto.nome,
+        descricao=projeto.descricao,
+        status=projeto.status,
+        gerente_id=projeto.gerente_id,
+        consultor1_id=projeto.consultor1_id,
+        consultor2_id=projeto.consultor2_id,
+        consultor3_id=projeto.consultor3_id
+    )
+    
+    db.add(novo_projeto)
+    db.commit()
+    db.refresh(novo_projeto)
+    return novo_projeto
+
+# ROTA PARA LISTAR TODOS OS PROJETOS
+@app.get("/projetos/", response_model=list[schemas.ProjetoResposta])
+def listar_projetos(db: Session = Depends(get_db)):
+    """
+    Busca no banco de dados e retorna uma lista com todos os projetos cadastrados.
+    """
+    # O db.query busca tudo que está na tabela Projeto
+    projetos = db.query(banco_de_dados.Projeto).all()
+    return projetos
