@@ -6,12 +6,14 @@ from pydantic import BaseModel
 class TrabalhadorCriar(BaseModel):
     nome: str
     cargo: str
+    emailInstitucional: str
 
 # 2. Molde para DEVOLVER dados (O que o backend responde após salvar, incluindo o ID)
 class TrabalhadorResposta(BaseModel):
     id: int
     nome: str
     cargo: str
+    emailInstitucional: str
 
     class Config:
         from_attributes = True # Isso ajuda o FastAPI a converter os dados do banco para enviar ao frontend

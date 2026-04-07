@@ -8,7 +8,7 @@ from app.models import banco_de_dados
 from app import schemas
 
 # Cria as tabelas no banco de dados
-banco_de_dados.Base.metadata.create_all(bind=engine)
+banco_de_dados.BancoDB.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="API de Gestão de Projetos",
@@ -35,7 +35,10 @@ def criar_trabalhador(trabalhador: schemas.TrabalhadorCriar, db: Session = Depen
     Esta rota recebe os dados de um novo trabalhador e salva no banco de dados.
     """
     # 1. Transformamos o 'schema' recebido em um 'model' do banco de dados
-    novo_trabalhador = banco_de_dados.Trabalhador(nome=trabalhador.nome, cargo=trabalhador.cargo)
+    novo_trabalhador = banco_de_dados.Trabalhador(
+        nome=trabalhador.nome, 
+        cargo=trabalhador.cargo,
+        emailInstitucional = trabalhador.emailInstitucional)
     
     # 2. Adicionamos o novo trabalhador na sessão do banco
     db.add(novo_trabalhador)
