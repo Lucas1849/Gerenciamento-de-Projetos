@@ -1,5 +1,3 @@
-# Arquivo: backend/app/schemas.py
-
 from pydantic import BaseModel
 
 # 1. Molde para RECEBER dados (O que o frontend vai nos enviar)
@@ -17,8 +15,6 @@ class TrabalhadorResposta(BaseModel):
 
     class Config:
         from_attributes = True # Isso ajuda o FastAPI a converter os dados do banco para enviar ao frontend
-
-# Arquivo: backend/app/schemas.py (Adicione no final)
 
 # 1. Molde para RECEBER dados do Projeto
 class ProjetoCriar(BaseModel):

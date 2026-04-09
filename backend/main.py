@@ -10,6 +10,7 @@ from app import schemas
 # Cria as tabelas no banco de dados
 banco_de_dados.BancoDB.metadata.create_all(bind=engine)
 
+#Essa é a base da aplicação toda
 app = FastAPI(
     title="API de Gestão de Projetos",
     description="Backend para o piloto do sistema de controle de projetos da consultoria."
@@ -23,6 +24,7 @@ def get_db():
     finally:
         db.close()
 
+#Respectivo método HTTP para conversar Front com Back ---> Apenas para testes inicias com o Fast API
 @app.get("/")
 def ler_raiz():
     return {"mensagem": "Bem-vindo à API de Gestão de Projetos!"}
@@ -51,8 +53,6 @@ def criar_trabalhador(trabalhador: schemas.TrabalhadorCriar, db: Session = Depen
     
     # 5. Devolvemos os dados do trabalhador criado com sucesso
     return novo_trabalhador
-
-    # Arquivo: backend/main.py (Adicione no final)
 
 # ROTA PARA CADASTRAR PROJETO
 @app.post("/projetos/", response_model=schemas.ProjetoResposta)
