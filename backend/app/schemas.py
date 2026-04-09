@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
-# 1. Molde para RECEBER dados (O que o frontend vai nos enviar)
+# Molde para RECEBER dados (O que o frontend vai nos enviar)
 class TrabalhadorCriar(BaseModel):
     nome: str
     cargo: str
     emailInstitucional: str
 
-# 2. Molde para DEVOLVER dados (O que o backend responde após salvar, incluindo o ID)
+# Molde para DEVOLVER dados (O que o backend responde após salvar, incluindo o ID)
 class TrabalhadorResposta(BaseModel):
     id: int
     nome: str
@@ -16,7 +16,7 @@ class TrabalhadorResposta(BaseModel):
     class Config:
         from_attributes = True # Isso ajuda o FastAPI a converter os dados do banco para enviar ao frontend
 
-# 1. Molde para RECEBER dados do Projeto
+# Molde para RECEBER dados do Projeto
 class ProjetoCriar(BaseModel):
     nome: str
     descricao: str # Você pode colocar "= None" no final se quiser que a descrição seja opcional
@@ -27,7 +27,7 @@ class ProjetoCriar(BaseModel):
     consultor2_id: int
     consultor3_id: int
 
-# 2. Molde para DEVOLVER os dados do Projeto
+# Molde para DEVOLVER os dados do Projeto
 class ProjetoResposta(BaseModel):
     id: int
     nome: str
@@ -37,6 +37,31 @@ class ProjetoResposta(BaseModel):
     consultor1_id: int
     consultor2_id: int
     consultor3_id: int
+
+    class Config:
+        from_attributes = True
+
+# Molde para CRIAR uma nova tarefa (O Post-it novo)
+class TarefaCriar(BaseModel):
+    titulo: str
+    descricao: str
+    projeto_id: int
+    trabalhador_id: int
+    # Não pedimos a coluna_status aqui, pois por padrão ela nasce no "TODO" (A Fazer)
+
+# Molde para ATUALIZAR a tarefa (Arrastar o Post-it)
+# Quando formos mover a tarefa, o frontend só precisa nos enviar a nova coluna
+class TarefaAtualizar(BaseModel):
+    coluna_status: str
+
+# Molde para DEVOLVER os dados da Tarefa
+class TarefaResposta(BaseModel):
+    id: int
+    titulo: str
+    descricao: str
+    coluna_status: str
+    projeto_id: int
+    trabalhador_id: int
 
     class Config:
         from_attributes = True

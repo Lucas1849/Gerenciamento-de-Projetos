@@ -1,6 +1,6 @@
 # Arquivo: backend/main.py
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 # Importamos nossas configurações e modelos
 from app.database import engine, SessionLocal
@@ -84,3 +84,47 @@ def listar_projetos(db: Session = Depends(get_db)):
     # O db.query busca tudo que está na tabela Projeto
     projetos = db.query(banco_de_dados.Projeto).all()
     return projetos
+
+# --- ROTAS DO KANBAN ---
+
+# ROTA 1: CRIAR TAREFA
+@app.post("/tarefas/", response_model=schemas.TarefaResposta)
+def criar_tarefa(tarefa: schemas.TarefaCriar, db: Session = Depends(get_db)):
+    """
+    Cria uma nova tarefa e a vincula a um projeto e a um responsável.
+    Ela nasce automaticamente na coluna 'TODO'.
+    """
+    nova_tarefa = banco_de_dados.TarefaKanban(
+        titulo=tarefa.titulo,
+        descricao=tarefa.descricao,
+        projeto_id=tarefa.projeto_id,
+        trabalhador_id=tarefa.trabalhador_id
+    )
+    
+    db.add(nova_tarefa)
+    db.commit()
+    db.refresh(nova_tarefa)
+    return nova_tarefa
+
+# ROTA 2: ATUALIZAR STATUS DA TAREFA (MOVER NO KANBAN)
+@app.put("/tarefas/{tarefa_id}/status", response_model=schemas.TarefaResposta)
+def atualizar_status_tarefa(tarefa_id: int, atualizacao: schemas.TarefaAtualizar, db: Session = Depends(get_db)):
+    """
+    Recebe o ID de uma tarefa na URL e o novo status no corpo (ex: 'DOING', 'DONE').
+    Atualiza a coluna em que a tarefa se encontra.
+    """
+    # 1. O servidor procura a tarefa específica no banco de dados usando o ID
+    tarefa_salva = db.query(banco_de_dados.TarefaKanban).filter(banco_de_dados.TarefaKanban.id == tarefa_id).first()
+
+    # 2. Se a tarefa não existir, retornamos um erro claro
+    if not tarefa_salva:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+
+    # 3. Se existir, nós trocamos a coluna antiga pela nova que o frontend enviou
+    tarefa_salva.coluna_status = atualizacao.coluna_status
+
+    # 4. Salvamos as alterações
+    db.commit()
+    db.refresh(tarefa_salva)
+
+    return tarefa_salva
