@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import FormularioColaborador from './components/FormularioColaborador'
+import FormularioProjeto from './components/FormularioProjetos'
 
 function App() {
   // Criamos uma "caixa" (estado) no React para guardar os projetos que virão do banco
@@ -23,8 +24,9 @@ function App() {
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1>Piloto: Sistema de Projetos</h1>
-      
-      {/* 2. ENCAIXAMOS O NOSSO FORMULÁRIO AQUI: */}
+
+      {/*Formulários */}
+      <FormularioProjeto />
       <FormularioColaborador />
 
       <h2 style={{ marginTop: '40px' }}>Meus Projetos Cadastrados:</h2>
