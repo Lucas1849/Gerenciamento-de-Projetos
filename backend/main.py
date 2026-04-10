@@ -1,6 +1,8 @@
 # Arquivo: backend/main.py
 
 from fastapi import FastAPI, Depends, HTTPException
+#Parte fundamental para inicar a comunicação front e back
+from fastapi.middleware.cors import CORSMiddleware 
 from sqlalchemy.orm import Session
 # Importamos nossas configurações e modelos
 from app.database import engine, SessionLocal
@@ -15,6 +17,16 @@ app = FastAPI(
     title="API de Gestão de Projetos",
     description="Backend para o piloto do sistema de controle de projetos da consultoria."
 )
+
+# --- CONFIGURAÇÃO DO CORS ---
+# Isso permite que o nosso frontend em React converse com o FastAPI sem ser bloqueado pelo navegador.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Em produção, colocaríamos apenas o endereço real do site. Aqui "*" libera para testes.
+    allow_credentials=True,
+    allow_methods=["*"], # Permite todos os verbos (GET, POST, PUT, etc)
+    allow_headers=["*"], # Permite qualquer tipo de cabeçalho
+)   
 
 # Função auxiliar: Abre uma conexão com o banco de dados e fecha quando terminar
 def get_db():
