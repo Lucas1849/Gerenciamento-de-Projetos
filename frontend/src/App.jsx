@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
 import FormularioColaborador from './components/FormularioColaborador'
 import FormularioProjeto from './components/FormularioProjetos'
+import Kanban from './components/Kanban'
 
 function App() {
   // Criamos uma "caixa" (estado) no React para guardar os projetos que virão do banco
   const [projetos, setProjetos] = useState([])
+
+  // Caixa para saber em qual projeto o usuário clicou
+  const [projetoSelecionado, setProjetoSelecionado] = useState(null)
 
   // O useEffect é uma função que roda automaticamente assim que a tela abre
   useEffect(() => {
@@ -26,17 +30,32 @@ function App() {
       <h1>Piloto: Sistema de Projetos</h1>
 
       {/*Formulários */}
+      <div style={{ display: 'flex', gap: '20px' }}>
       <FormularioProjeto />
       <FormularioColaborador />
+      </div>
 
       <h2 style={{ marginTop: '40px' }}>Meus Projetos Cadastrados:</h2>
-      <ul>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
         {projetos.map(projeto => (
-          <li key={projeto.id}>
+          <li key={projeto.id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px', borderRadius: '5px' }}>
             <strong>{projeto.nome}</strong> — Status: {projeto.status}
+            
+            {/* 3. Botão para abrir o Kanban deste projeto */}
+            <button 
+              onClick={() => setProjetoSelecionado(projeto.id)}
+              style={{ marginLeft: '15px', padding: '5px 10px', cursor: 'pointer' }}
+            >
+              Abrir Quadro Kanban
+            </button>
           </li>
         ))}
       </ul>
+
+      {/*Esclarecer que só deve mostrar um kanban se um projeto for selecionado*/}
+      {projetoSelecionado && (
+        <Kanban projetoId={projetoSelecionado} />
+      )}
       
       {projetos.length === 0 && (
         <p>Nenhum projeto encontrado.</p>
