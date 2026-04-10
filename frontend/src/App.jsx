@@ -1,120 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react'
+import FormularioColaborador from './components/FormularioColaborador'
 
 function App() {
-  const [count, setCount] = useState(0)
+  // Criamos uma "caixa" (estado) no React para guardar os projetos que virão do banco
+  const [projetos, setProjetos] = useState([])
+
+  // O useEffect é uma função que roda automaticamente assim que a tela abre
+  useEffect(() => {
+    // É AQUI QUE TESTAMOS O CORS! 
+    // O React (5173) está batendo na porta do FastAPI (8000) pedindo um GET
+    fetch('http://127.0.0.1:8000/projetos/')
+      .then(resposta => resposta.json()) // Transforma a resposta em um formato que o JavaScript entende
+      .then(dados => {
+        console.log("Sucesso! Dados recebidos do backend:", dados);
+        setProjetos(dados); // Guarda os dados na nossa "caixa"
+      })
+      .catch(erro => {
+        console.error("Ops! Tivemos um erro de comunicação ou de CORS:", erro);
+      })
+  }, []) // Os colchetes vazios significam: "faça isso apenas uma vez ao carregar a página"
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1>Piloto: Sistema de Projetos</h1>
+      
+      {/* 2. ENCAIXAMOS O NOSSO FORMULÁRIO AQUI: */}
+      <FormularioColaborador />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <h2 style={{ marginTop: '40px' }}>Meus Projetos Cadastrados:</h2>
+      <ul>
+        {projetos.map(projeto => (
+          <li key={projeto.id}>
+            <strong>{projeto.nome}</strong> — Status: {projeto.status}
+          </li>
+        ))}
+      </ul>
+      
+      {projetos.length === 0 && (
+        <p>Nenhum projeto encontrado.</p>
+      )}
+    </div>
   )
 }
 
