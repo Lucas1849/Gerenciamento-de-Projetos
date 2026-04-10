@@ -149,3 +149,18 @@ def atualizar_status_tarefa(tarefa_id: int, atualizacao: schemas.TarefaAtualizar
     db.refresh(tarefa_salva)
 
     return tarefa_salva
+
+# Rota 3 - Visualizar as tarefas de acordo com seu respectivo projeto
+@app.get("/projetos/{projeto_id}/tarefas", response_model=list[schemas.TarefaResposta])
+def listar_tarefas_do_projeto(projeto_id: int, db: Session = Depends(get_db)):
+    """
+    Recebe o ID do projeto pela URL e busca apenas as tarefas (post-its)
+    que pertencem a ele.
+    """
+    # Usamos o .filter() para dizer ao SQLAlchemy: 
+    # "Traga as tarefas ONDE a coluna projeto_id seja igual ao número que veio na URL"
+    tarefas = db.query(banco_de_dados.TarefaKanban).filter(
+        banco_de_dados.TarefaKanban.projeto_id == projeto_id
+    ).all()
+    
+    return tarefas
