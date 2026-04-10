@@ -87,6 +87,15 @@ def criar_projeto(projeto: schemas.ProjetoCriar, db: Session = Depends(get_db)):
     db.refresh(novo_projeto)
     return novo_projeto
 
+#Visualizar trabalhadores cadastrados
+@app.get("/trabalhadores/", response_model=list[schemas.TrabalhadorResposta])
+def listar_trabalhadores(db: Session = Depends(get_db)):
+    """
+    Retorna a lista de todos os colaboradores cadastrados para o frontend.
+    """
+    trabalhadores = db.query(banco_de_dados.Trabalhador).all()
+    return trabalhadores
+
 # ROTA PARA LISTAR TODOS OS PROJETOS
 @app.get("/projetos/", response_model=list[schemas.ProjetoResposta])
 def listar_projetos(db: Session = Depends(get_db)):
