@@ -1,4 +1,43 @@
-/* Arquivo: frontend/src/App.css */
+/* Usar largura toda da tela da tela */
+#root {
+  width: 100%;
+  max-width: none; 
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* Botões de adicionar*/
+.btn-adicionar {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+/*Background do botão*/
+.btn-adicionar:hover {
+  background-color: #218838;
+}
+
+/* Caixa de destaque para deixar mais visível */
+.form-container {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+  border-left: 5px solid #17a2b8; /* Linha de destaque */
+}
 
 /* Reset básico para remover margens padrão do navegador */
 * {

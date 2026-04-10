@@ -11,6 +11,10 @@ function App() {
   const [projetos, setProjetos] = useState([]);
   const [equipe, setEquipe] = useState([]);
 
+  // Método para ocultar o formulário enquanto não clicarmos no botão
+  const [mostrarFormProjeto, setMostrarFormProjeto] = useState(false);
+  const [mostrarFormEquipe, setMostrarFormEquipe] = useState(false);
+
   // Caixa para saber em qual projeto o usuário clicou
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
 
@@ -23,8 +27,7 @@ function App() {
   }, []);
 
   // 2. FUNÇÕES DE RENDERIZAÇÃO (O que mostrar em cada tela)
-  const renderizarProjetos = () => {
-    // Se um projeto foi clicado, mostra o Kanban dele
+ const renderizarProjetos = () => {
     if (projetoSelecionado) {
       return (
         <div>
@@ -36,14 +39,26 @@ function App() {
       );
     }
 
- return (
+    return (
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2>Galeria de Projetos</h2>
-          {/* Aqui futuramente podemos colocar um botão bonito que abre um "Modal" para o Formulário */}
+          
+          {/* BOTÃO PARA MOSTRAR/ESCONDER O FORMULÁRIO */}
+          <button 
+            className="btn-adicionar" 
+            onClick={() => setMostrarFormProjeto(!mostrarFormProjeto)}
+          >
+            {mostrarFormProjeto ? '✕ Cancelar Cadastro' : '➕ Novo Projeto'}
+          </button>
         </div>
         
-        <FormularioProjeto />
+        {/* RENDERIZAÇÃO CONDICIONAL: Só desenha o form se a variável for "true" */}
+        {mostrarFormProjeto && (
+          <div className="form-container">
+            <FormularioProjeto />
+          </div>
+        )}
 
         <div className="card-grid">
           {projetos.map(p => (
@@ -55,10 +70,7 @@ function App() {
                   {p.status}
                 </span>
               </div>
-              <button 
-                onClick={() => setProjetoSelecionado(p.id)}
-                style={{ marginTop: '20px', padding: '10px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', width: '100%' }}
-              >
+              <button onClick={() => setProjetoSelecionado(p.id)} style={{ marginTop: '20px', padding: '10px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', width: '100%' }}>
                 Abrir Kanban
               </button>
             </div>
@@ -68,11 +80,28 @@ function App() {
     );
   };
 
+  // --- TELA DA EQUIPE ---
   const renderizarEquipe = () => {
     return (
       <div>
-        <h2>Equipe Vigente</h2>
-        <FormularioColaborador />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2>Equipe Vigente</h2>
+          
+          {/* BOTÃO PARA MOSTRAR/ESCONDER O FORMULÁRIO */}
+          <button 
+            className="btn-adicionar" 
+            onClick={() => setMostrarFormEquipe(!mostrarFormEquipe)}
+          >
+            {mostrarFormEquipe ? '✕ Cancelar Cadastro' : '➕ Novo Colaborador'}
+          </button>
+        </div>
+
+        {/* RENDERIZAÇÃO CONDICIONAL */}
+        {mostrarFormEquipe && (
+          <div className="form-container">
+            <FormularioColaborador />
+          </div>
+        )}
 
         <div className="card-grid">
           {equipe.map(pessoa => (
@@ -87,32 +116,21 @@ function App() {
     );
   };
 
-  // 3. A ESTRUTURA PRINCIPAL (Barra Lateral + Conteúdo)
   return (
     <div className="app-container">
-      
-      {/* BARRA LATERAL */}
       <aside className="sidebar">
         <h2>Painel de Consultoria</h2>
-        <button 
-          className={`menu-btn ${telaAtual === 'projetos' ? 'ativo' : ''}`}
-          onClick={() => { setTelaAtual('projetos'); setProjetoSelecionado(null); }}
-        >
-          📁 Portfólio de Projetos
+        <button className={`menu-btn ${telaAtual === 'projetos' ? 'ativo' : ''}`} onClick={() => { setTelaAtual('projetos'); setProjetoSelecionado(null); }}>
+          📁 Portfólio
         </button>
-        <button 
-          className={`menu-btn ${telaAtual === 'equipe' ? 'ativo' : ''}`}
-          onClick={() => { setTelaAtual('equipe'); setProjetoSelecionado(null); }}
-        >
+        <button className={`menu-btn ${telaAtual === 'equipe' ? 'ativo' : ''}`} onClick={() => { setTelaAtual('equipe'); setProjetoSelecionado(null); }}>
           👥 Equipe
         </button>
       </aside>
 
-      {/* CONTEÚDO DINÂMICO */}
       <main className="main-content">
         {telaAtual === 'projetos' ? renderizarProjetos() : renderizarEquipe()}
       </main>
-
     </div>
   );
 }
