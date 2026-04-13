@@ -3,6 +3,7 @@ import "./App.css";
 import FormularioColaborador from './components/FormularioColaborador'
 import FormularioProjeto from './components/FormularioProjetos'
 import Kanban from './components/Kanban'
+import PaginaProjeto from './components/PaginaProjeto';
 
 function App() {
   // Criamos uma "caixa" (estado) no React para guardar os projetos que virão do banco
@@ -28,17 +29,23 @@ function App() {
 
   // 2. FUNÇÕES DE RENDERIZAÇÃO (O que mostrar em cada tela)
  const renderizarProjetos = () => {
-    if (projetoSelecionado) {
+   if (projetoSelecionado) {
+      // Procuramos o objeto completo do projeto na nossa lista
+      const projeto = projetos.find(p => p.id === projetoSelecionado);
+      
       return (
-        <div>
-          <button onClick={() => setProjetoSelecionado(null)} style={{ padding: '8px 15px', marginBottom: '20px', cursor: 'pointer' }}>
-            ← Voltar para Galeria
-          </button>
-          <Kanban projetoId={projetoSelecionado} />
-        </div>
+        <PaginaProjeto 
+            projeto={projeto} 
+            aoVoltar={() => setProjetoSelecionado(null)} 
+        />
       );
     }
-
+    return (
+      <div>
+        {/* ... conteúdo da galeria de projetos igual ao anterior ... */}
+      </div>
+    );
+    
     return (
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

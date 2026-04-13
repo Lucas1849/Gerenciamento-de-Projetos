@@ -76,6 +76,14 @@ def criar_projeto(projeto: schemas.ProjetoCriar, db: Session = Depends(get_db)):
         nome=projeto.nome,
         descricao=projeto.descricao,
         status=projeto.status,
+        # Campos personalizados
+        tipo_servico=projeto.tipo_servico,
+        objetivo=projeto.objetivo,
+        nome_contratante=projeto.nome_contratante,
+        agregados_contratante=projeto.agregados_contratante,
+        kickoff_realizado=projeto.kickoff_realizado,
+        tap_assinado=projeto.tap_assinado,
+        # Equipe
         gerente_id=projeto.gerente_id,
         consultor1_id=projeto.consultor1_id,
         consultor2_id=projeto.consultor2_id,
