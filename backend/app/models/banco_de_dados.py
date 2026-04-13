@@ -30,6 +30,13 @@ class Projeto(BancoDB):
     nome = Column(String, index=True, nullable=False)
     descricao = Column(String)
     status = Column(String, default="Em andamento") # Ex: Em andamento, Concluído
+    # Campos personalizados para Apoio
+    tipo_servico = Column(String)
+    objetivo = Column(String)
+    nome_contratante = Column(String)
+    agregados_contratante = Column(String) # Pode ser um texto livre separado por vírgulas
+    kickoff_realizado = Column(String, default="Não")
+    tap_assinado = Column(String, default="Não")
     
     # 1. Colunas de ID's (Chaves Estrangeiras - Foreing Keys)
     # Relaciona cada colaborador do projeto com seu respectivo ID na tabela

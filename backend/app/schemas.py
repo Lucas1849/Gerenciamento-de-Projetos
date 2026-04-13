@@ -21,6 +21,13 @@ class ProjetoCriar(BaseModel):
     nome: str
     descricao: str # Você pode colocar "= None" no final se quiser que a descrição seja opcional
     status: str = "Em andamento"
+    # Novos campos
+    tipo_servico: str
+    objetivo: str
+    nome_contratante: str
+    agregados_contratante: str
+    kickoff_realizado: str
+    tap_assinado: str
     # Recebemos apenas os números (IDs) de quem vai trabalhar no projeto
     gerente_id: int
     consultor1_id: int
@@ -33,6 +40,14 @@ class ProjetoResposta(BaseModel):
     nome: str
     descricao: str
     status: str
+    # Novos campos
+    tipo_servico: str
+    objetivo: str
+    nome_contratante: str
+    agregados_contratante: str
+    kickoff_realizado: str
+    tap_assinado: str
+    #Equipe principal do projeto
     gerente_id: int
     consultor1_id: int
     consultor2_id: int
