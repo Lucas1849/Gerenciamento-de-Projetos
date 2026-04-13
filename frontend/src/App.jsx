@@ -40,11 +40,6 @@ function App() {
         />
       );
     }
-    return (
-      <div>
-        {/* ... conteúdo da galeria de projetos igual ao anterior ... */}
-      </div>
-    );
     
     return (
       <div>
