@@ -10,7 +10,7 @@ export default function PaginaProjeto({ projeto, aoVoltar }) {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
       
-      {/* 1. Imagem de Fundo (Notion Style) */}
+      {/* 1. Imagem de Fundo*/}
       <div className="project-banner"></div>
 
       {/* 2. Barra de Navegação Horizontal */}
@@ -19,19 +19,19 @@ export default function PaginaProjeto({ projeto, aoVoltar }) {
           className={`tab-item ${abaAtiva === 'geral' ? 'active' : ''}`} 
           onClick={() => setAbaAtiva('geral')}
         >
-          📄 Visão Geral
+          Visão Geral
         </div>
         <div 
           className={`tab-item ${abaAtiva === 'kanban' ? 'active' : ''}`} 
           onClick={() => setAbaAtiva('kanban')}
         >
-          📋 Quadro Kanban
+          Atividades
         </div>
         <div 
           className={`tab-item ${abaAtiva === 'arquivos' ? 'active' : ''}`} 
           onClick={() => setAbaAtiva('arquivos')}
         >
-          📁 Arquivos (Em breve)
+          Arquivos (Em breve)
         </div>
         <div style={{ marginLeft: 'auto', alignSelf: 'center' }}>
             <button onClick={aoVoltar} style={{ cursor: 'pointer', padding: '5px 10px' }}>✕ Fechar</button>

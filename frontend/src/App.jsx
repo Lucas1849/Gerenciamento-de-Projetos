@@ -51,7 +51,7 @@ function App() {
             className="btn-adicionar" 
             onClick={() => setMostrarFormProjeto(!mostrarFormProjeto)}
           >
-            {mostrarFormProjeto ? '✕ Cancelar Cadastro' : '➕ Novo Projeto'}
+            {mostrarFormProjeto ? '✕ Cancelar Cadastro' : 'Novo Projeto'}
           </button>
         </div>
         
@@ -62,6 +62,7 @@ function App() {
           </div>
         )}
 
+        {/*Card dos projetos na Galeria */}
         <div className="card-grid">
           {projetos.map(p => (
             <div key={p.id} className="card">
@@ -73,7 +74,7 @@ function App() {
                 </span>
               </div>
               <button onClick={() => setProjetoSelecionado(p.id)} style={{ marginTop: '20px', padding: '10px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', width: '100%' }}>
-                Abrir Kanban
+                Abrir Projeto
               </button>
             </div>
           ))}
@@ -89,22 +90,23 @@ function App() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2>Equipe Vigente</h2>
           
-          {/* BOTÃO PARA MOSTRAR/ESCONDER O FORMULÁRIO */}
+          {/* Botão para ocultar/mostrar o forms de colaborador */}
           <button 
             className="btn-adicionar" 
             onClick={() => setMostrarFormEquipe(!mostrarFormEquipe)}
           >
-            {mostrarFormEquipe ? '✕ Cancelar Cadastro' : '➕ Novo Colaborador'}
+            {mostrarFormEquipe ? '✕ Cancelar Cadastro' : 'Novo Colaborador'}
           </button>
         </div>
 
-        {/* RENDERIZAÇÃO CONDICIONAL */}
+        {/* Estrutura Condicional para funcionar o ocultar/mostrar forms */}
         {mostrarFormEquipe && (
           <div className="form-container">
             <FormularioColaborador />
           </div>
         )}
 
+        {/*Card de Renderização das informações dos Colaboradores */}
         <div className="card-grid">
           {equipe.map(pessoa => (
             <div key={pessoa.id} className="card" style={{ borderTopColor: '#28a745' }}>
@@ -118,15 +120,16 @@ function App() {
     );
   };
 
+    {/*Barra Lateral de Navegação */}
   return (
     <div className="app-container">
       <aside className="sidebar">
         <h2>Painel de Consultoria</h2>
         <button className={`menu-btn ${telaAtual === 'projetos' ? 'ativo' : ''}`} onClick={() => { setTelaAtual('projetos'); setProjetoSelecionado(null); }}>
-          📁 Portfólio
+          Projetos
         </button>
         <button className={`menu-btn ${telaAtual === 'equipe' ? 'ativo' : ''}`} onClick={() => { setTelaAtual('equipe'); setProjetoSelecionado(null); }}>
-          👥 Equipe
+          Equipe de Projetos
         </button>
       </aside>
 

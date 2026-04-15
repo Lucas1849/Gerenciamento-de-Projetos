@@ -76,35 +76,39 @@ export default function FormularioProjeto() {
   return (
     <div>
       <h3 style={{ color: '#004080', borderBottom: '2px solid #17a2b8', paddingBottom: '10px', marginBottom: '20px' }}>
-        📝 Detalhes do Novo Projeto
+      Novo Projeto
       </h3>
       
       <form onSubmit={salvarProjeto}>
         
-        {/* BLOCO 1: Informações Base */}
+        {/* BLOCO 1: Informações Base projeto */}
         <div style={estiloGrid}>
           <div>
             <label style={estiloLabel}>Nome do Projeto</label>
             <input style={estiloInput} type="text" value={nome} onChange={e => setNome(e.target.value)} required />
           </div>
           <div>
+            {/*Lembrar de Mudar o input abaixo para select com a cartela de serviços */}
             <label style={estiloLabel}>Tipo de Serviço</label>
             <input style={estiloInput} type="text" placeholder="Ex: Mapeamento de Processos" value={tipoServico} onChange={e => setTipoServico(e.target.value)} required />
           </div>
+            {/*Caixa do objetivo do projeto */}
           <div style={{ gridColumn: 'span 2' }}>
             <label style={estiloLabel}>Objetivo do Projeto</label>
             <textarea style={{...estiloInput, height: '60px'}} value={objetivo} onChange={e => setObjetivo(e.target.value)} required />
           </div>
+          {/* Caixa com descrição curta - Talvez possa ser retirada*/}
           <div style={{ gridColumn: 'span 2' }}>
             <label style={estiloLabel}>Descrição Rápida</label>
             <input style={estiloInput} type="text" value={descricao} onChange={e => setDescricao(e.target.value)} required />
           </div>
         </div>
 
-        <h4 style={{ margin: '20px 0 10px 0', color: '#555' }}>👤 Cliente (Contratante)</h4>
+        {/* BLOCO 2: Cliente */}
+        <h4 style={{ margin: '20px 0 10px 0', color: '#555' }}> Informações do Cliente</h4>
         <div style={estiloGrid}>
           <div>
-            <label style={estiloLabel}>Nome Principal</label>
+            <label style={estiloLabel}>Nome do Contratante</label>
             <input style={estiloInput} type="text" value={nomeContratante} onChange={e => setNomeContratante(e.target.value)} required />
           </div>
           <div>
@@ -112,8 +116,8 @@ export default function FormularioProjeto() {
             <input style={estiloInput} type="text" placeholder="Ex: João (CEO), Maria (CFO)" value={agregadosContratante} onChange={e => setAgregadosContratante(e.target.value)} />
           </div>
         </div>
-
-        <h4 style={{ margin: '20px 0 10px 0', color: '#555' }}>🚀 Processo de Iniciação</h4>
+        {/* BLOCO 3: Status Importante */}
+        <h4 style={{ margin: '20px 0 10px 0', color: '#555' }}>Status etapas de iniciação</h4>
         <div style={estiloGrid}>
           <div>
             <label style={estiloLabel}>Reunião de Kick-Off Realizada?</label>
@@ -130,8 +134,8 @@ export default function FormularioProjeto() {
             </select>
           </div>
         </div>
-
-        <h4 style={{ margin: '20px 0 10px 0', color: '#555' }}>👥 Equipe do Projeto</h4>
+        {/* BLOCO 4: Equipe principal do projeto*/}
+        <h4 style={{ margin: '20px 0 10px 0', color: '#555' }}>Equipe do Projeto</h4>
         <div style={estiloGrid}>
           {/* Gerente */}
           <div>
