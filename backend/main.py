@@ -36,14 +36,12 @@ def get_db():
     finally:
         db.close()
 
-#Respectivo método HTTP para conversar Front com Back ---> Apenas para testes inicias com o Fast API
-@app.get("/")
+@app.get("/", tags=["Teste"])
 def ler_raiz():
     return {"mensagem": "Bem-vindo à API de Gestão de Projetos!"}
 
-# --- NOVA ROTA: CADASTRAR TRABALHADOR ---
 # Usamos @app.post porque estamos ENVIANDO dados para o servidor criar algo novo
-@app.post("/trabalhadores/", response_model=schemas.TrabalhadorResposta)
+@app.post("/trabalhadores/", response_model=schemas.TrabalhadorResposta, tags=["Trabalhadores"])
 def criar_trabalhador(trabalhador: schemas.TrabalhadorCriar, db: Session = Depends(get_db)):
     """
     Esta rota recebe os dados de um novo trabalhador e salva no banco de dados.
@@ -67,7 +65,7 @@ def criar_trabalhador(trabalhador: schemas.TrabalhadorCriar, db: Session = Depen
     return novo_trabalhador
 
 # ROTA PARA CADASTRAR PROJETO
-@app.post("/projetos/", response_model=schemas.ProjetoResposta)
+@app.post("/projetos/", response_model=schemas.ProjetoResposta, tags=["Projetos"])
 def criar_projeto(projeto: schemas.ProjetoCriar, db: Session = Depends(get_db)):
     """
     Cadastra um novo projeto e vincula o gerente e os consultores usando seus IDs.
@@ -96,7 +94,7 @@ def criar_projeto(projeto: schemas.ProjetoCriar, db: Session = Depends(get_db)):
     return novo_projeto
 
 #Visualizar trabalhadores cadastrados
-@app.get("/trabalhadores/", response_model=list[schemas.TrabalhadorResposta])
+@app.get("/trabalhadores/", response_model=list[schemas.TrabalhadorResposta], tags=["Trabalhadores"])
 def listar_trabalhadores(db: Session = Depends(get_db)):
     """
     Retorna a lista de todos os colaboradores cadastrados para o frontend.
@@ -105,7 +103,7 @@ def listar_trabalhadores(db: Session = Depends(get_db)):
     return trabalhadores
 
 # ROTA PARA LISTAR TODOS OS PROJETOS
-@app.get("/projetos/", response_model=list[schemas.ProjetoResposta])
+@app.get("/projetos/", response_model=list[schemas.ProjetoResposta], tags=["Projetos"])
 def listar_projetos(db: Session = Depends(get_db)):
     """
     Busca no banco de dados e retorna uma lista com todos os projetos cadastrados.
@@ -117,7 +115,7 @@ def listar_projetos(db: Session = Depends(get_db)):
 # --- ROTAS DO KANBAN ---
 
 # ROTA 1: CRIAR TAREFA
-@app.post("/tarefas/", response_model=schemas.TarefaResposta)
+@app.post("/tarefas/", response_model=schemas.TarefaResposta,tags=["Tarefas"])
 def criar_tarefa(tarefa: schemas.TarefaCriar, db: Session = Depends(get_db)):
     """
     Cria uma nova tarefa e a vincula a um projeto e a um responsável.
@@ -136,7 +134,7 @@ def criar_tarefa(tarefa: schemas.TarefaCriar, db: Session = Depends(get_db)):
     return nova_tarefa
 
 # ROTA 2: ATUALIZAR STATUS DA TAREFA (MOVER NO KANBAN)
-@app.put("/tarefas/{tarefa_id}/status", response_model=schemas.TarefaResposta)
+@app.put("/tarefas/{tarefa_id}/status", response_model=schemas.TarefaResposta, tags=["Tarefas"])
 def atualizar_status_tarefa(tarefa_id: int, atualizacao: schemas.TarefaAtualizar, db: Session = Depends(get_db)):
     """
     Recebe o ID de uma tarefa na URL e o novo status no corpo (ex: 'DOING', 'DONE').
@@ -159,7 +157,7 @@ def atualizar_status_tarefa(tarefa_id: int, atualizacao: schemas.TarefaAtualizar
     return tarefa_salva
 
 # Rota 3 - Visualizar as tarefas de acordo com seu respectivo projeto
-@app.get("/projetos/{projeto_id}/tarefas", response_model=list[schemas.TarefaResposta])
+@app.get("/projetos/{projeto_id}/tarefas", response_model=list[schemas.TarefaResposta], tags=["Projetos"])
 def listar_tarefas_do_projeto(projeto_id: int, db: Session = Depends(get_db)):
     """
     Recebe o ID do projeto pela URL e busca apenas as tarefas (post-its)
