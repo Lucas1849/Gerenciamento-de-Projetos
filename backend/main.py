@@ -122,10 +122,13 @@ def criar_tarefa(tarefa: schemas.TarefaCriar, db: Session = Depends(get_db)):
     Ela nasce automaticamente na coluna 'TODO'.
     """
     nova_tarefa = banco_de_dados.TarefaKanban(
-        titulo=tarefa.titulo,
-        descricao=tarefa.descricao,
-        projeto_id=tarefa.projeto_id,
-        trabalhador_id=tarefa.trabalhador_id
+        titulo = tarefa.titulo,
+        descricao = tarefa.descricao,
+        projeto_id = tarefa.projeto_id,
+        trabalhador_id = tarefa.trabalhador_id,
+        dias_uteis_esperados = tarefa.dias_uteis_esperados,
+        bloco_entrega = tarefa.bloco_entrega,
+        depende_de_id = tarefa.depende_de_id
     )
     
     db.add(nova_tarefa)

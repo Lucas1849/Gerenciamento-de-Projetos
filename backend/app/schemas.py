@@ -58,13 +58,16 @@ class ProjetoResposta(BaseModel):
 
 # Molde para CRIAR uma nova tarefa (O Post-it novo)
 class TarefaCriar(BaseModel):
+    #A situação da tarefa não precisa ser exigida, pois está por defaul como "A fazer"
     titulo: str
     descricao: str
     projeto_id: int
     trabalhador_id: int
-    # Não pedimos a coluna_status aqui, pois por padrão ela nasce no "TODO" (A Fazer)
+    dias_uteis_esperados: int = 1
+    bloco_entrega: str = None
+    depende_de_id: int = None
 
-# Molde para ATUALIZAR a tarefa (Arrastar o Post-it)
+# Molde para ATUALIZAR a tarefa
 # Quando formos mover a tarefa, o frontend só precisa nos enviar a nova coluna
 class TarefaAtualizar(BaseModel):
     coluna_status: str
@@ -77,6 +80,9 @@ class TarefaResposta(BaseModel):
     coluna_status: str
     projeto_id: int
     trabalhador_id: int
+    dias_uteis_esperados: int
+    bloco_entrega: str | None = None
+    depende_de_id: str | None = None
 
     class Config:
         from_attributes = True

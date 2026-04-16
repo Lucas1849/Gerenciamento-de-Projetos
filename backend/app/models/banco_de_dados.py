@@ -64,6 +64,15 @@ class TarefaKanban(BancoDB):
     descricao = Column(String)
     # A coluna do Kanban onde a tarefa está. Ex: "TODO", "DOING", "DONE"
     coluna_status = Column(String, default="TODO")
+    # Dias úteis de uma tarefa
+    dias_uteis_esperados = Column(Integer, default=1)
+    # Entrega em blocos  
+    bloco_entrega = Column(String, nullable=True)
+    """
+    Tipo de relacionamento de dependências entre tarefas. A variável recebe uma chave estrangeira da prórpria tabela de tarefas
+    para podermos relacionar diferentes ID's de tarefas.
+    """
+    depende_de_id = Column(Integer, ForeignKey("tarefas_kanban.id"), nullable=True)
     
     # Chaves estrangeiras (ligam a tarefa ao projeto e ao trabalhador)
     projeto_id = Column(Integer, ForeignKey("projetos.id"))
