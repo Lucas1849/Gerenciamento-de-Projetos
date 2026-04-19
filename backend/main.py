@@ -1,5 +1,3 @@
-# Arquivo: backend/main.py
-
 from fastapi import FastAPI, Depends, HTTPException
 #Parte fundamental para inicar a comunicação front e back
 from fastapi.middleware.cors import CORSMiddleware 

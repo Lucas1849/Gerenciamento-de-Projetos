@@ -1,74 +1,61 @@
 import { useState } from 'react';
 
 export default function FormularioColaborador() {
-  // Criamos 3 "caixinhas" para guardar o que o usuário digitar nos campos
   const [nome, setNome] = useState('');
   const [cargo, setCargo] = useState('');
   const [email, setEmail] = useState('');
 
-  // Esta função é chamada quando clicamos no botão "Salvar"
   const salvarColaborador = (evento) => {
-    evento.preventDefault(); // Impede a página de recarregar (comportamento padrão do HTML)
+    evento.preventDefault();
 
-    // Montamos o "pacote" exatamente como o nosso Schema do FastAPI exige
     const dadosParaEnviar = {
       nome: nome,
       cargo: cargo,
       emailInstitucional: email
     };
 
-    // Fazemos o POST para o nosso servidor Python
     fetch('http://127.0.0.1:8000/trabalhadores/', {
-      method: 'POST', // Avisamos que é um envio de dados
-      headers: {
-        'Content-Type': 'application/json' // Dizemos que estamos enviando no formato JSON
-      },
-      body: JSON.stringify(dadosParaEnviar) // Transformamos nosso pacote em texto para viajar pela rede
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dadosParaEnviar)
     })
     .then(resposta => resposta.json())
     .then(dados_salvos => {
-      alert("Colaborador salvo com sucesso com o ID: " + dados_salvos.id);
-      // Limpamos os campos do formulário para o próximo cadastro
-      setNome('');
-      setCargo('');
-      setEmail('');
+      alert("Colaborador salvo com sucesso!");
+      setNome(''); setCargo(''); setEmail('');
     })
     .catch(erro => console.error("Erro ao salvar:", erro));
   };
 
   return (
-    <div style={{ border: '1px solid #ccc', padding: '20px', marginTop: '20px', borderRadius: '8px' }}>
-      <h3>Cadastrar Novo Colaborador</h3>
+    <div className="ui-card" style={{ maxWidth: '500px', margin: '0 auto', borderTop: '4px solid var(--primary)' }}>
+      <h3 style={{ color: 'var(--primary)', marginBottom: 'var(--sp-24)' }}>👥 Novo Colaborador</h3>
       
-      {/* O formulário aciona a nossa função salvarColaborador ao ser enviado */}
-      <form onSubmit={salvarColaborador} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px' }}>
+      <form onSubmit={salvarColaborador} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
         
-        <input 
-          type="text" 
-          placeholder="Nome completo" 
-          value={nome}
-          onChange={(e) => setNome(e.target.value)} // Atualiza a caixinha do nome
-          required 
-        />
+        <div>
+          <label style={{ display: 'block', marginBottom: 'var(--sp-4)', fontWeight: '600', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            NOME COMPLETO
+          </label>
+          <input className="input-field" type="text" placeholder="Ex: João da Silva" value={nome} onChange={(e) => setNome(e.target.value)} required />
+        </div>
         
-        <input 
-          type="text" 
-          placeholder="Cargo (Ex: Assessor)" 
-          value={cargo}
-          onChange={(e) => setCargo(e.target.value)} 
-          required 
-        />
+        <div>
+          <label style={{ display: 'block', marginBottom: 'var(--sp-4)', fontWeight: '600', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            CARGO NA EMPRESA
+          </label>
+          <input className="input-field" type="text" placeholder="Ex: Assessor de Projetos" value={cargo} onChange={(e) => setCargo(e.target.value)} required />
+        </div>
         
-        <input 
-          type="email" 
-          placeholder="E-mail Institucional" 
-          value={email}
-          onChange={(e) => setEmail(e.target.value)} 
-          required 
-        />
+        <div>
+          <label style={{ display: 'block', marginBottom: 'var(--sp-4)', fontWeight: '600', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            E-MAIL INSTITUCIONAL
+          </label>
+          <input className="input-field" type="email" placeholder="joao@apoioconsultoria.com.br" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
         
-        <button type="submit" style={{ cursor: 'pointer', padding: '8px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}>
-          Salvar
+        <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--sp-8)', justifyContent: 'center' }}>
+          Salvar Colaborador
         </button>
       </form>
     </div>

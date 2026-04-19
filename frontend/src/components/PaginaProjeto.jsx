@@ -4,70 +4,65 @@ import Kanban from './Kanban';
 export default function PaginaProjeto({ projeto, aoVoltar }) {
   const [abaAtiva, setAbaAtiva] = useState('geral');
 
-  // Se o projeto ainda não carregou, não mostra nada
   if (!projeto) return null;
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
       
-      {/* 1. Imagem de Fundo*/}
-      <div className="project-banner"></div>
+      {/* Botão de Voltar Padronizado */}
+      <button className="btn btn-secondary" onClick={aoVoltar} style={{ marginBottom: '16px' }}>
+        ← Voltar para Galeria
+      </button>
 
-      {/* 2. Barra de Navegação Horizontal */}
-      <div className="tab-container">
-        <div 
-          className={`tab-item ${abaAtiva === 'geral' ? 'active' : ''}`} 
-          onClick={() => setAbaAtiva('geral')}
-        >
-          Visão Geral
-        </div>
-        <div 
-          className={`tab-item ${abaAtiva === 'kanban' ? 'active' : ''}`} 
-          onClick={() => setAbaAtiva('kanban')}
-        >
-          Atividades
-        </div>
-        <div 
-          className={`tab-item ${abaAtiva === 'arquivos' ? 'active' : ''}`} 
-          onClick={() => setAbaAtiva('arquivos')}
-        >
-          Arquivos (Em breve)
-        </div>
-        <div style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-            <button onClick={aoVoltar} style={{ cursor: 'pointer', padding: '5px 10px' }}>✕ Fechar</button>
+      <div className="ui-card" style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ fontSize: 'var(--h1)', color: 'var(--primary)', marginBottom: '8px' }}>
+              {projeto.nome}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)' }}>{projeto.objetivo}</p>
+          </div>
+          <span className="chip chip-status">{projeto.status}</span>
         </div>
       </div>
 
-      {/* 3. Conteúdo Dinâmico baseado na Aba */}
-      <div style={{ padding: '20px' }}>
-        
+      {/* TABS DO STYLEGUIDE */}
+      <div className="tabs-container">
+        <div className={`tab ${abaAtiva === 'geral' ? 'active' : ''}`} onClick={() => setAbaAtiva('geral')}>
+          Visão Geral
+        </div>
+        <div className={`tab ${abaAtiva === 'kanban' ? 'active' : ''}`} onClick={() => setAbaAtiva('kanban')}>
+          Quadro Kanban
+        </div>
+      </div>
+
+      {/* CONTEÚDO */}
+      <div>
         {abaAtiva === 'geral' && (
-          <div className="info-grid">
-            <div style={{ gridColumn: 'span 2' }}>
-                <h1 style={{ color: '#004080' }}>{projeto.nome}</h1>
-                <p style={{ fontSize: '18px', color: '#555', marginTop: '10px' }}>{projeto.objetivo}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div className="ui-card">
+              <span style={{ fontSize: 'var(--caption)', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Cliente / Contratante</span>
+              <h3 style={{ marginTop: '4px' }}>{projeto.nome_contratante}</h3>
+              <p style={{ fontSize: 'var(--body2)', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                Agregados: {projeto.agregados_contratante || 'Nenhum'}
+              </p>
             </div>
 
-            <div className="info-box">
-              <label>Cliente / Contratante</label>
-              <strong>{projeto.nome_contratante}</strong>
-              <p style={{ fontSize: '13px', color: '#777' }}>Agregados: {projeto.agregados_contratante || 'Nenhum'}</p>
+            <div className="ui-card">
+              <span style={{ fontSize: 'var(--caption)', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Tipo de Serviço</span>
+              <h3 style={{ marginTop: '4px' }}>{projeto.tipo_servico}</h3>
             </div>
 
-            <div className="info-box">
-              <label>Tipo de Serviço</label>
-              <strong>{projeto.tipo_servico}</strong>
-            </div>
-
-            <div className="info-box">
-              <label>Status de Iniciação</label>
-              <p>🏁 Kick-off: <strong>{projeto.kickoff_realizado}</strong></p>
-              <p>✍️ TAP Assinado: <strong>{projeto.tap_assinado}</strong></p>
-            </div>
-
-            <div className="info-box" style={{ borderLeftColor: '#17a2b8' }}>
-              <label>Status Atual</label>
-              <strong style={{ color: '#17a2b8' }}>{projeto.status}</strong>
+            <div className="ui-card">
+              <span style={{ fontSize: 'var(--caption)', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Iniciação</span>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <span className={`chip ${projeto.kickoff_realizado === 'Sim' ? 'chip-success' : 'chip-status'}`}>
+                  Kick-off: {projeto.kickoff_realizado}
+                </span>
+                <span className={`chip ${projeto.tap_assinado === 'Sim' ? 'chip-success' : 'chip-status'}`}>
+                  TAP: {projeto.tap_assinado}
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -75,14 +70,6 @@ export default function PaginaProjeto({ projeto, aoVoltar }) {
         {abaAtiva === 'kanban' && (
           <Kanban projetoId={projeto.id} />
         )}
-
-        {abaAtiva === 'arquivos' && (
-          <div style={{ textAlign: 'center', padding: '50px', color: '#999' }}>
-            <h3>Módulo de Arquivos</h3>
-            <p>Em breve você poderá integrar aqui documentos do SharePoint ou Drive.</p>
-          </div>
-        )}
-
       </div>
     </div>
   );

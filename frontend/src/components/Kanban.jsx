@@ -2,172 +2,125 @@ import { useState, useEffect } from 'react';
 
 export default function Kanban({ projetoId }) {
   const [tarefas, setTarefas] = useState([]);
-  // Colaborador que será responsabilizado pela tarefa
-  const [colaboradores, setColaboradores] = useState([]); 
+  const [colaboradores, setColaboradores] = useState([]);
   
-  // Controles do Formulário de Nova Tarefa
   const [mostrarForm, setMostrarForm] = useState(false);
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
+  // NOVOS CAMPOS
+  const [diasUteis, setDiasUteis] = useState(1);
+  const [blocoEntrega, setBlocoEntrega] = useState('');
 
-  // Busca as tarefas E a equipe assim que o componente abre
   useEffect(() => {
     if (projetoId) {
-      // Busca as Tarefas
-      fetch(`http://127.0.0.1:8000/projetos/${projetoId}/tarefas`)
-        .then(resposta => resposta.json())
-        .then(dados => setTarefas(dados))
-        .catch(erro => console.error("Erro ao carregar Kanban:", erro));
-        
-      // Busca os Colaboradores (Para o select da nova tarefa)
-      fetch('http://127.0.0.1:8000/trabalhadores/')
-        .then(resposta => resposta.json())
-        .then(dados => setColaboradores(dados))
-        .catch(erro => console.error("Erro ao carregar equipe:", erro));
+      fetch(`http://127.0.0.1:8000/projetos/${projetoId}/tarefas`).then(res => res.json()).then(setTarefas);
+      fetch('http://127.0.0.1:8000/trabalhadores/').then(res => res.json()).then(setColaboradores);
     }
   }, [projetoId]);
 
-  // Criar nova tarefa
   const criarNovaTarefa = (evento) => {
     evento.preventDefault();
-
     const novaTarefa = {
-      titulo: titulo,
-      descricao: descricao,
-      projeto_id: projetoId,
-      trabalhador_id: parseInt(responsavelId)
+      titulo, descricao, 
+      projeto_id: projetoId, 
+      trabalhador_id: parseInt(responsavelId),
+      dias_uteis_esperados: parseInt(diasUteis), // Enviando pro Backend
+      bloco_entrega: blocoEntrega // Enviando pro Backend
     };
 
     fetch('http://127.0.0.1:8000/tarefas/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaTarefa)
-    })
-    .then(resposta => resposta.json())
-    .then(tarefaSalva => {
-      // Pega as tarefas que já existem e adiciona a nova na lista
+    }).then(res => res.json()).then(tarefaSalva => {
       setTarefas([...tarefas, tarefaSalva]);
-      
-      // Limpa e esconde o formulário
-      setTitulo('');
-      setDescricao('');
-      setResponsavelId('');
+      setTitulo(''); setDescricao(''); setResponsavelId(''); setDiasUteis(1); setBlocoEntrega('');
       setMostrarForm(false);
-    })
-    .catch(erro => console.error("Erro ao criar tarefa:", erro));
+    });
   };
 
-  // Mover as tarefas entre o Kanban
   const moverTarefa = (tarefaId, novoStatus) => {
     fetch(`http://127.0.0.1:8000/tarefas/${tarefaId}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ coluna_status: novoStatus })
-    })
-    .then(resposta => resposta.json())
-    .then(tarefaAtualizada => {
-      setTarefas(tarefasAtuais => 
-        tarefasAtuais.map(t => t.id === tarefaId ? tarefaAtualizada : t)
-      );
-    })
-    .catch(erro => console.error("Erro ao mover tarefa:", erro));
+    }).then(res => res.json()).then(tarefaAtualizada => {
+      setTarefas(tarefas.map(t => t.id === tarefaId ? tarefaAtualizada : t));
+    });
   };
 
   const tarefasTodo = tarefas.filter(t => t.coluna_status === 'TODO');
   const tarefasDoing = tarefas.filter(t => t.coluna_status === 'DOING');
   const tarefasDone = tarefas.filter(t => t.coluna_status === 'DONE');
 
-  const estiloColuna = { flex: 1, backgroundColor: '#f4f5f7', padding: '15px', borderRadius: '8px', minHeight: '300px' };
-  const estiloCartao = { backgroundColor: 'white', padding: '10px', marginBottom: '10px', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' };
-  const estiloInput = { width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ccc', borderRadius: '4px' };
-
   return (
-    <div style={{ marginTop: '10px' }}>
-      
-      {/* CABEÇALHO DO KANBAN COM BOTÃO DE NOVA TAREFA */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ color: '#004080' }}>Nova Etapa</h2>
-        <button 
-          onClick={() => setMostrarForm(!mostrarForm)}
-          style={{ backgroundColor: mostrarForm ? '#dc3545' : '#28a745', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          {mostrarForm ? '✕ Cancelar' : 'Nova Tarefa'}
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <h2 style={{ fontSize: 'var(--h2)' }}>Quadro Operacional</h2>
+        <button className={mostrarForm ? "btn btn-secondary" : "btn btn-primary"} onClick={() => setMostrarForm(!mostrarForm)}>
+          {mostrarForm ? '✕ Cancelar' : '➕ Nova Tarefa'}
         </button>
       </div>
 
-      {/* FORMULÁRIO DE NOVA TAREFA (RENDERIZAÇÃO CONDICIONAL) */}
       {mostrarForm && (
-        <div style={{ backgroundColor: '#e9ecef', padding: '20px', borderRadius: '8px', marginBottom: '20px', borderLeft: '4px solid #28a745' }}>
-          <h4 style={{ marginBottom: '15px', color: '#333' }}>Descrição da Etapa</h4>
-          <form onSubmit={criarNovaTarefa} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <input type="text" placeholder="Título da Tarefa" value={titulo} onChange={e => setTitulo(e.target.value)} required style={estiloInput} />
-            </div>
-            <div style={{ flex: 2, minWidth: '300px' }}>
-              <input type="text" placeholder="Descrição rápida..." value={descricao} onChange={e => setDescricao(e.target.value)} required style={estiloInput} />
-            </div>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <select value={responsavelId} onChange={e => setResponsavelId(e.target.value)} required style={estiloInput}>
-                <option value="">Atribuir para...</option>
-                {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome} ({c.cargo})</option>)}
-              </select>
-            </div>
-            <div>
-              <button type="submit" style={{ backgroundColor: '#17a2b8', color: 'white', border: 'none', padding: '9px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-                Adicionar
-              </button>
+        <div className="ui-card" style={{ marginBottom: '24px', borderLeft: '4px solid var(--primary)' }}>
+          <form onSubmit={criarNovaTarefa} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            <input className="input-field" type="text" placeholder="Título" value={titulo} onChange={e => setTitulo(e.target.value)} required />
+            <input className="input-field" type="text" placeholder="Descrição" value={descricao} onChange={e => setDescricao(e.target.value)} style={{ gridColumn: 'span 2' }} required />
+            
+            {/* Novos Campos no Formulário */}
+            <input className="input-field" type="number" min="1" placeholder="Dias Úteis (ex: 5)" value={diasUteis} onChange={e => setDiasUteis(e.target.value)} required />
+            <input className="input-field" type="text" placeholder="Bloco (Ex: Fase 1)" value={blocoEntrega} onChange={e => setBlocoEntrega(e.target.value)} />
+            
+            <select className="input-field" value={responsavelId} onChange={e => setResponsavelId(e.target.value)} required>
+              <option value="">👤 Atribuir para...</option>
+              {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+            
+            <div style={{ gridColumn: 'span 3', textAlign: 'right' }}>
+              <button type="submit" className="btn btn-primary">Salvar no Quadro</button>
             </div>
           </form>
         </div>
       )}
       
-      {/* COLUNAS DO KANBAN */}
-      <div style={{ display: 'flex', gap: '20px' }}>
-        
-        {/* A FAZER */}
-        <div style={estiloColuna}>
-          <h3 style={{ color: '#6b778c', marginBottom: '15px', borderBottom: '2px solid #ccc', paddingBottom: '5px' }}>A Fazer ({tarefasTodo.length})</h3>
-          {tarefasTodo.map(t => (
-            <div key={t.id} style={estiloCartao}>
-              <strong>{t.titulo}</strong>
-              <p style={{ fontSize: '14px', color: '#555', margin: '5px 0' }}>{t.descricao}</p>
-              <button onClick={() => moverTarefa(t.id, 'DOING')} style={{ cursor: 'pointer', backgroundColor: '#0052cc', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', width: '100%', marginTop: '5px' }}>
-                Iniciar →
-              </button>
-            </div>
-          ))}
-        </div>
+      {/* KANBAN COLUNAS */}
+      <div style={{ display: 'flex', gap: '24px' }}>
+        {[
+          { titulo: 'A Fazer', tarefas: tarefasTodo, cor: '#6B7280', next: 'DOING', nextLabel: 'Iniciar →' },
+          { titulo: 'Em Andamento', tarefas: tarefasDoing, cor: 'var(--primary)', next: 'DONE', nextLabel: 'Concluir ✓', prev: 'TODO' },
+          { titulo: 'Concluído', tarefas: tarefasDone, cor: 'var(--success)', prev: 'DOING', nextLabel: '← Reabrir' }
+        ].map(coluna => (
+          <div key={coluna.titulo} style={{ flex: 1, backgroundColor: '#F9FAFB', padding: '16px', borderRadius: 'var(--rad-lg)', borderTop: `4px solid ${coluna.cor}` }}>
+            <h3 style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>{coluna.titulo} ({coluna.tarefas.length})</h3>
+            
+            {coluna.tarefas.map(t => (
+              <div key={t.id} className="ui-card" style={{ padding: '16px', marginBottom: '16px', borderRadius: 'var(--rad-md)' }}>
+                
+                {/* Mostrando o Bloco de Entrega (Se existir) */}
+                {t.bloco_entrega && (
+                  <span className="chip" style={{ backgroundColor: '#E5E7EB', color: '#374151', fontSize: '10px', marginBottom: '8px' }}>
+                    📦 {t.bloco_entrega}
+                  </span>
+                )}
+                
+                <h4 style={{ textDecoration: t.coluna_status === 'DONE' ? 'line-through' : 'none' }}>{t.titulo}</h4>
+                <p style={{ fontSize: 'var(--body2)', color: 'var(--text-secondary)', margin: '8px 0' }}>{t.descricao}</p>
+                
+                {/* Mostrando os Dias Úteis */}
+                <p style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 'bold', marginBottom: '12px' }}>
+                  ⏳ Prazo: {t.dias_uteis_esperados} dia(s) útil(eis)
+                </p>
 
-        {/* EM ANDAMENTO */}
-        <div style={estiloColuna}>
-          <h3 style={{ color: '#ff991f', marginBottom: '15px', borderBottom: '2px solid #ff991f', paddingBottom: '5px' }}>Em Andamento ({tarefasDoing.length})</h3>
-          {tarefasDoing.map(t => (
-            <div key={t.id} style={{...estiloCartao, borderLeft: '4px solid #ff991f'}}>
-              <strong>{t.titulo}</strong>
-              <p style={{ fontSize: '14px', color: '#555', margin: '5px 0' }}>{t.descricao}</p>
-              <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                <button onClick={() => moverTarefa(t.id, 'TODO')} style={{ cursor: 'pointer', flex: 1 }}>← Voltar</button>
-                <button onClick={() => moverTarefa(t.id, 'DONE')} style={{ cursor: 'pointer', backgroundColor: '#36b37e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '3px', flex: 1 }}>
-                  Concluir ✓
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {coluna.prev && <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', flex: 1 }} onClick={() => moverTarefa(t.id, coluna.prev)}>Voltar</button>}
+                  {coluna.next && <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '12px', flex: 1, backgroundColor: coluna.cor }} onClick={() => moverTarefa(t.id, coluna.next)}>{coluna.nextLabel}</button>}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* CONCLUÍDO */}
-        <div style={estiloColuna}>
-          <h3 style={{ color: '#00875a', marginBottom: '15px', borderBottom: '2px solid #00875a', paddingBottom: '5px' }}>Concluído ({tarefasDone.length})</h3>
-          {tarefasDone.map(t => (
-            <div key={t.id} style={{...estiloCartao, opacity: 0.7, borderLeft: '4px solid #00875a'}}>
-              <strong style={{ textDecoration: 'line-through' }}>{t.titulo}</strong>
-              <p style={{ fontSize: '14px', color: '#555', margin: '5px 0' }}>{t.descricao}</p>
-              <button onClick={() => moverTarefa(t.id, 'DOING')} style={{ cursor: 'pointer', width: '100%', marginTop: '5px' }}>← Reabrir</button>
-            </div>
-          ))}
-        </div>
-
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

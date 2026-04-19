@@ -1,228 +1,150 @@
-/* Usar largura toda da tela da tela */
-#root {
-  width: 100%;
-  max-width: none; 
-  margin: 0;
-  padding: 0;
-  text-align: left;
-}
+/* =========================================
+   1. DESIGN TOKENS (Baseado no Styleguide)
+   ========================================= */
+:root {
+  /* Color Tokens (Identidade Apoio Consultoria) */
+  --primary: #004488; /* Azul corporativo profundo */
+  --primary-hover: #003366;
+  --primary-pressed: #002244;
+  --surface: #FFFFFF;
+  --background: #F4F5F7;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --border: #D1D5DB;
+  --focus-ring: rgba(0, 68, 136, 0.3);
 
-/* Botões de adicionar*/
-.btn-adicionar {
-  background-color: #28a745;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 1rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
-}
+  /* Status Colors */
+  --success: #28A745;
+  --warning: #FFC107;
+  --error: #DC3545;
+  --info: #17A2B8;
 
-/*Background do botão*/
-.btn-adicionar:hover {
-  background-color: #218838;
-}
-
-/* Caixa de destaque para deixar mais visível */
-.form-container {
-  background: white;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  margin-bottom: 30px;
-  border-left: 5px solid #17a2b8; /* Linha de destaque */
-}
-
-/* Reset básico para remover margens padrão do navegador */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f4f5f7; /* Cor de fundo suave, estilo Trello/Jira */
-  color: #333;
-}
-
-/* O container principal que segura a barra lateral e o conteúdo */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* --- BARRA LATERAL (AZUL CORPORATIVO) --- */
-.sidebar {
-  width: 250px;
-  background-color: #004080; /* Um azul escuro e elegante */
-  color: white;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-}
-
-.sidebar h2 {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding-bottom: 15px;
-}
-
-.menu-btn {
-  background: none;
-  border: none;
-  color: #d1e0f0;
-  padding: 12px 15px;
-  text-align: left;
-  font-size: 1rem;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: all 0.2s ease;
-}
-
-.menu-btn:hover {
-  background-color: #0059b3;
-  color: white;
-}
-
-.menu-btn.ativo {
-  background-color: #0059b3;
-  color: white;
-  font-weight: bold;
-  border-left: 4px solid #00d2ff; /* Um detalhe visual para a página atual */
-}
-
-/* --- CONTEÚDO PRINCIPAL --- */
-.main-content {
-  flex: 1;
-  padding: 30px;
-  overflow-y: auto; /* Permite rolar a tela se o conteúdo for grande */
-}
-
-/* --- GALERIA DE CARDS (PROJETOS E EQUIPE) --- */
-.card-grid {
-  display: grid;
-  /* A mágica da responsividade: cria colunas de 300px e se adapta ao tamanho da tela */
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border-top: 4px solid #17a2b8; /* Linha de destaque no topo */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-/* --- RESPONSIVIDADE (CELULARES) --- */
-@media (max-width: 768px) {
-  .app-container {
-    flex-direction: column; /* Em celulares, a barra fica em cima do conteúdo */
-  }
+  /* Typography Scale */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
   
-  .sidebar {
-    width: 100%;
-    flex-direction: row; /* Botões ficam lado a lado */
-    justify-content: space-around;
-    padding: 10px;
-  }
+  /* Spacing */
+  --sp-4: 4px;
+  --sp-8: 8px;
+  --sp-16: 16px;
+  --sp-24: 24px;
+  --sp-32: 32px;
 
-  .sidebar h2 {
-    display: none; /* Escondemos o título no celular para economizar espaço */
-  }
+  /* Radius */
+  --rad-none: 0px;
+  --rad-sm: 4px;
+  --rad-md: 8px;
+  --rad-lg: 16px;
+  --rad-full: 9999px; /* Para os Chips e botões arredondados */
 
-  .menu-btn {
-    text-align: center;
-    flex: 1;
-    margin: 0 5px;
-    padding: 10px;
-  }
-  
-  .main-content {
-    padding: 15px;
-  }
+  /* Elevation (Sombras da imagem) */
+  --elev-0: none;
+  --elev-1: 0 1px 3px rgba(0,0,0,0.12); /* Low shadow */
+  --elev-2: 0 4px 6px rgba(0,0,0,0.1);  /* Medium shadow */
+  --elev-3: 0 10px 15px rgba(0,0,0,0.1); /* High shadow */
 }
 
-/* Banner superior*/
-.project-banner {
-  width: 100%;
-  height: 180px;
-  background-image: url('https://images.unsplash.com/photo-1506784919141-935049917412?auto=format&fit=crop&q=80&w=1280'); /* Imagem default elegante */
-  background-size: cover;
-  background-position: center;
-  border-radius: 12px 12px 0 0;
-  margin-bottom: -40px; /* Faz a barra de abas "subir" um pouco */
-}
+/* =========================================
+   2. RESET E BASE
+   ========================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--background); color: var(--text-primary); }
+#root { width: 100%; max-width: none; text-align: left; }
 
-/* Barra Horizontal de Abas*/
-.tab-container {
-  background: white;
-  padding: 10px 30px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  gap: 30px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-  border-radius: 15px 15px 0 0;
-}
+/* =========================================
+   3. COMPONENTES DO STYLEGUIDE
+   ========================================= */
 
-.tab-item {
-  padding: 15px 5px;
-  cursor: pointer;
+/* --- BUTTONS --- */
+.btn {
+  padding: var(--sp-8) var(--sp-16);
+  border-radius: var(--rad-md);
   font-weight: 600;
-  color: #666;
-  border-bottom: 3px solid transparent;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--surface);
+}
+.btn-primary:hover { background-color: var(--primary-hover); box-shadow: var(--elev-2); }
+.btn-primary:active { background-color: var(--primary-pressed); transform: translateY(1px); }
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background-color: #E6F0FA; border-color: var(--primary); }
+
+/* --- INPUTS --- */
+.input-field {
+  width: 100%;
+  padding: var(--sp-8) var(--sp-16);
+  border-radius: var(--rad-sm);
+  border: 1px solid var(--border);
+  font-family: var(--font-family);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* --- CARDS --- */
+.ui-card {
+  background-color: var(--surface);
+  border-radius: var(--rad-lg);
+  box-shadow: var(--elev-1);
+  padding: var(--sp-24);
+  transition: box-shadow 0.2s ease;
+}
+.ui-card:hover { box-shadow: var(--elev-2); }
+
+/* --- CHIPS --- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-4) var(--sp-16);
+  border-radius: var(--rad-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.chip-status { background-color: #E6F0FA; color: var(--primary); border: 1px solid var(--primary); }
+.chip-success { background-color: #D4EDDA; color: var(--success); }
+
+/* --- TABS --- */
+.tabs-container {
+  display: flex;
+  gap: var(--sp-24);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--sp-24);
+}
+.tab {
+  padding: var(--sp-8) 0;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
   transition: all 0.2s;
 }
-
-.tab-item:hover {
-  color: #004080;
+.tab:hover { color: var(--text-primary); }
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
-.tab-item.active {
-  color: #004080;
-  border-bottom-color: #17a2b8;
-}
-
-/* Caixa de Visão Geral (Grid de Informações) */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
-.info-box {
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border-left: 4px solid #ddd;
-}
-
-.info-box label {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #888;
-  display: block;
-  margin-bottom: 5px;
-}
+/* Layouts Globais */
+.app-container { display: flex; min-height: 100vh; }
+.sidebar { width: 250px; background-color: var(--primary); color: var(--surface); padding: var(--sp-24); box-shadow: var(--elev-2); z-index: 10;}
+.sidebar h2 { margin-bottom: var(--sp-32); font-size: 1.25rem;}
+.menu-btn { background: none; border: none; color: rgba(255,255,255,0.7); padding: var(--sp-16); width: 100%; text-align: left; font-weight: 600; cursor: pointer; border-radius: var(--rad-md); margin-bottom: var(--sp-8); transition: all 0.2s;}
+.menu-btn:hover, .menu-btn.ativo { background-color: var(--primary-hover); color: var(--surface); }
+.main-content { flex: 1; padding: var(--sp-32); overflow-y: auto; }
