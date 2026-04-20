@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 # Molde para RECEBER dados (O que o frontend vai nos enviar)
 class TrabalhadorCriar(BaseModel):
@@ -64,8 +65,8 @@ class TarefaCriar(BaseModel):
     projeto_id: int
     trabalhador_id: int
     dias_uteis_esperados: int = 1
-    bloco_entrega: str = None
-    depende_de_id: int = None
+    bloco_entrega: Optional[str] = None
+    depende_de_id: Optional[int] = None
 
 # Molde para ATUALIZAR a tarefa
 # Quando formos mover a tarefa, o frontend só precisa nos enviar a nova coluna
@@ -81,8 +82,8 @@ class TarefaResposta(BaseModel):
     projeto_id: int
     trabalhador_id: int
     dias_uteis_esperados: int
-    bloco_entrega: str | None = None
-    depende_de_id: str | None = None
+    bloco_entrega: Optional[str] = None
+    depende_de_id: Optional[int] = None
 
     class Config:
         from_attributes = True

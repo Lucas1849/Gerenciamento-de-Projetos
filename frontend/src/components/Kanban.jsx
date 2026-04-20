@@ -8,36 +8,69 @@ export default function Kanban({ projetoId }) {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
-  // NOVOS CAMPOS
   const [diasUteis, setDiasUteis] = useState(1);
   const [blocoEntrega, setBlocoEntrega] = useState('');
-
-  useEffect(() => {
-    if (projetoId) {
-      fetch(`http://127.0.0.1:8000/projetos/${projetoId}/tarefas`).then(res => res.json()).then(setTarefas);
-      fetch('http://127.0.0.1:8000/trabalhadores/').then(res => res.json()).then(setColaboradores);
+  
+useEffect(() => {
+  if (projetoId) {
+      // Busca as Tarefas
+      fetch(`http://127.0.0.1:8000/projetos/${projetoId}/tarefas`)
+        .then(resposta => resposta.json())
+        .then(dados => setTarefas(dados))
+        .catch(erro => console.error("Erro ao carregar Kanban:", erro));
+        
+      // Busca os Colaboradores (Para o select da nova tarefa)
+      fetch('http://127.0.0.1:8000/trabalhadores/')
+        .then(resposta => resposta.json())
+        .then(dados => setColaboradores(dados))
+        .catch(erro => console.error("Erro ao carregar equipe:", erro));
     }
   }, [projetoId]);
 
   const criarNovaTarefa = (evento) => {
     evento.preventDefault();
     const novaTarefa = {
-      titulo, descricao, 
-      projeto_id: projetoId, 
-      trabalhador_id: parseInt(responsavelId),
-      dias_uteis_esperados: parseInt(diasUteis), // Enviando pro Backend
-      bloco_entrega: blocoEntrega // Enviando pro Backend
+      titulo: titulo, 
+      descricao: descricao, 
+      projeto_id: parseInt(projetoId), // Garante que é número
+      trabalhador_id: parseInt(responsavelId), // Garante que é número
+      dias_uteis_esperados: parseInt(diasUteis) || 1, // Se falhar, envia 1 por padrão
+      // Se o bloco estiver vazio, enviamos null para o banco de dados
+      bloco_entrega: blocoEntrega.trim() === '' ? null : blocoEntrega,
+      depende_de_id: null // Por enquanto enviamos nulo até criarmos a interface de dependências
     };
 
     fetch('http://127.0.0.1:8000/tarefas/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaTarefa)
-    }).then(res => res.json()).then(tarefaSalva => {
+    })
+    .then(async (resposta) => {
+      // Se o servidor retornar um erro (ex: 422 Unprocessable Entity ou 500 Internal Server Error)
+      if (!resposta.ok) {
+        let erroDetalhado;
+        try {
+          erroDetalhado = await resposta.json();
+        } catch {
+          erroDetalhado = await resposta.text();
+        }
+        console.error("O Backend recusou o pacote. Detalhes:", erroDetalhado);
+        alert("Erro na validação ou erro interno! Olhe o console (F12).");
+        throw new Error("Falha no POST");
+      }
+      return resposta.json();
+    })
+    .then(tarefaSalva => {
+      // Sucesso! Adiciona na tela e limpa o formulário
       setTarefas([...tarefas, tarefaSalva]);
-      setTitulo(''); setDescricao(''); setResponsavelId(''); setDiasUteis(1); setBlocoEntrega('');
+      setTitulo(''); 
+      setDescricao(''); 
+      setResponsavelId(''); 
+      setDiasUteis(1); 
+      setBlocoEntrega('');
       setMostrarForm(false);
-    });
+    })
+    .catch(erro => console.error("Erro na requisição:", erro));
   };
 
   const moverTarefa = (tarefaId, novoStatus) => {
@@ -59,7 +92,7 @@ export default function Kanban({ projetoId }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
         <h2 style={{ fontSize: 'var(--h2)' }}>Quadro Operacional</h2>
         <button className={mostrarForm ? "btn btn-secondary" : "btn btn-primary"} onClick={() => setMostrarForm(!mostrarForm)}>
-          {mostrarForm ? '✕ Cancelar' : '➕ Nova Tarefa'}
+          {mostrarForm ? '✕ Cancelar' : 'Nova Tarefa'}
         </button>
       </div>
 
@@ -74,7 +107,7 @@ export default function Kanban({ projetoId }) {
             <input className="input-field" type="text" placeholder="Bloco (Ex: Fase 1)" value={blocoEntrega} onChange={e => setBlocoEntrega(e.target.value)} />
             
             <select className="input-field" value={responsavelId} onChange={e => setResponsavelId(e.target.value)} required>
-              <option value="">👤 Atribuir para...</option>
+              <option value="">Atribuir para...</option>
               {colaboradores.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
             </select>
             
