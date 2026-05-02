@@ -31,10 +31,12 @@ class Projeto(BancoDB):
     descricao = Column(String)
     status = Column(String, default="Em andamento") # Ex: Em andamento, Concluído
     # Campos personalizados para Apoio
-    tipo_servico = Column(String)
+    tipo_servico = Column(String, ForeignKey("servicos_apoio.id"))
     objetivo = Column(String)
     nome_contratante = Column(String)
     agregados_contratante = Column(String) # Pode ser um texto livre separado por vírgulas
+
+    #Vão ser retirados por não agregarem informações para o projeto
     kickoff_realizado = Column(String, default="Não")
     tap_assinado = Column(String, default="Não")
     
@@ -81,3 +83,11 @@ class TarefaKanban(BancoDB):
     # Relações inversas para facilitar as buscas
     projeto = relationship("Projeto", back_populates="tarefas")
     responsavel = relationship("Trabalhador", back_populates="tarefas")
+
+class ServicosApoio(BancoDB):
+    __tablename__ = "servicos_apoio"
+
+    id = Column(Integer, primary_key=True, index=True)
+    servico = Column(String)
+
+    etapas = relationship("TarefaKanban")

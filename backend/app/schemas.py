@@ -20,7 +20,7 @@ class TrabalhadorResposta(BaseModel):
 # Molde para RECEBER dados do Projeto
 class ProjetoCriar(BaseModel):
     nome: str
-    descricao: str # Você pode colocar "= None" no final se quiser que a descrição seja opcional
+    descricao: str 
     status: str = "Em andamento"
     # Novos campos
     tipo_servico: str
@@ -87,3 +87,11 @@ class TarefaResposta(BaseModel):
 
     class Config:
         from_attributes = True
+
+#Modelo para criar um serviço no banco
+class ServicoCriar(BaseModel):
+    id: int
+    servico: str
+    etapas: list
+
+#Modelo de mostrar um serviço no banco
