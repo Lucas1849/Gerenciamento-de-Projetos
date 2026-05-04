@@ -4,6 +4,7 @@ import FormularioColaborador from './components/FormularioColaborador';
 import FormularioProjeto from './components/FormularioProjetos';
 import Kanban from './components/Kanban';
 import PaginaProjeto from './components/PaginaProjeto';
+import { useToast, ToastContainer } from './components/Toast';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 const API = 'http://127.0.0.1:8000';
@@ -154,7 +155,7 @@ function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto }) {
 
       {mostrarForm && (
         <div className="form-container">
-          <FormularioProjeto />
+          <FormularioProjeto toast={toast}/>
         </div>
       )}
 
@@ -199,7 +200,7 @@ function TelaEquipe({ equipe, carregando, erro, onRetry }) {
 
       {mostrarForm && (
         <div className="form-container">
-          <FormularioColaborador />
+          <FormularioColaborador toast={toast}/>
         </div>
       )}
 
@@ -226,6 +227,7 @@ export default function App() {
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
 
   const { projetos, equipe, carregando, erro, recarregar } = useDados();
+  const { toasts, remover, toast } = useToast();
 
   function navegar(tela) {
     setTelaAtual(tela);
@@ -299,6 +301,7 @@ export default function App() {
       <main className="main-content">
         {renderConteudo()}
       </main>
+      <ToastContainer toasts={toasts} remover={remover} />
     </div>
   );
 }
