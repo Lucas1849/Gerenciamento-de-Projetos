@@ -89,9 +89,5 @@ class TarefaResposta(BaseModel):
         from_attributes = True
 
 #Modelo para criar um serviço no banco
-class ServicoCriar(BaseModel):
-    id: int
-    servico: str
-    etapas: list
 
 #Modelo de mostrar um serviço no banco
