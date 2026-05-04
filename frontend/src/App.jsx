@@ -132,7 +132,7 @@ function CardColaborador({ pessoa }) {
 }
 
 // ─── Tela: Projetos ─────────────────────────────────────────────────────────────
-function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto }) {
+function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
@@ -177,7 +177,7 @@ function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto }) {
 }
 
 // ─── Tela: Equipe ───────────────────────────────────────────────────────────────
-function TelaEquipe({ equipe, carregando, erro, onRetry }) {
+function TelaEquipe({ equipe, carregando, erro, onRetry, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
@@ -260,6 +260,7 @@ export default function App() {
           erro={erro}
           onRetry={recarregar}
           onAbrirProjeto={abrirProjeto}
+          toast={toast}
         />
       );
     }
@@ -270,6 +271,7 @@ export default function App() {
         carregando={carregando}
         erro={erro}
         onRetry={recarregar}
+        toast={toast}
       />
     );
   }
