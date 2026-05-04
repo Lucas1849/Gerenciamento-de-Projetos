@@ -1,143 +1,304 @@
-import { useState, useEffect } from 'react'
-import "./App.css";
-import FormularioColaborador from './components/FormularioColaborador'
-import FormularioProjeto from './components/FormularioProjetos'
-import Kanban from './components/Kanban'
+import { useState, useEffect, useCallback } from 'react';
+import './App.css';
+import FormularioColaborador from './components/FormularioColaborador';
+import FormularioProjeto from './components/FormularioProjetos';
+import Kanban from './components/Kanban';
 import PaginaProjeto from './components/PaginaProjeto';
 
-function App() {
-  // Criamos uma "caixa" (estado) no React para guardar os projetos que virão do banco
-  // Defini a tela principal direto para a visualização dos projetos
-  const [telaAtual, setTelaAtual] = useState('projetos'); 
-  const [projetos, setProjetos] = useState([]);
-  const [equipe, setEquipe] = useState([]);
+// ─── Constantes ────────────────────────────────────────────────────────────────
+const API = 'http://127.0.0.1:8000';
 
-  // Método para ocultar o formulário enquanto não clicarmos no botão
-  const [mostrarFormProjeto, setMostrarFormProjeto] = useState(false);
-  const [mostrarFormEquipe, setMostrarFormEquipe] = useState(false);
+const TELAS = {
+  PROJETOS: 'projetos',
+  EQUIPE:   'equipe',
+};
 
-  // Caixa para saber em qual projeto o usuário clicou
-  const [projetoSelecionado, setProjetoSelecionado] = useState(null);
+// ─── Hooks de dados ─────────────────────────────────────────────────────────────
+function useDados() {
+  const [projetos,  setProjetos]  = useState([]);
+  const [equipe,    setEquipe]    = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro,      setErro]      = useState(null);
 
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const [resProjetos, resEquipe] = await Promise.all([
+        fetch(`${API}/projetos/`),
+        fetch(`${API}/trabalhadores/`),
+      ]);
 
-  // O useEffect é uma função que roda automaticamente assim que a tela abre
-  // Faz a busca dos cadastros de projetos e equipe presentes 
-  useEffect(() => {
-    fetch('http://127.0.0.1:8000/projetos/').then(res => res.json()).then(setProjetos);
-    fetch('http://127.0.0.1:8000/trabalhadores/').then(res => res.json()).then(setEquipe);
+      if (!resProjetos.ok || !resEquipe.ok) throw new Error('Falha ao carregar dados.');
+
+      const [dadosProjetos, dadosEquipe] = await Promise.all([
+        resProjetos.json(),
+        resEquipe.json(),
+      ]);
+
+      setProjetos(dadosProjetos);
+      setEquipe(dadosEquipe);
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
   }, []);
 
-  // 2. FUNÇÕES DE RENDERIZAÇÃO (O que mostrar em cada tela)
- const renderizarProjetos = () => {
-   if (projetoSelecionado) {
-      // Procuramos o objeto completo do projeto na nossa lista
-      const projeto = projetos.find(p => p.id === projetoSelecionado);
-      
-      return (
-        <PaginaProjeto 
-            projeto={projeto} 
-            aoVoltar={() => setProjetoSelecionado(null)} 
-        />
-      );
-    }
-    
-    return (
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2>Galeria de Projetos</h2>
-          
-          {/* BOTÃO PARA MOSTRAR/ESCONDER O FORMULÁRIO */}
-          <button 
-            className="btn-adicionar" 
-            onClick={() => setMostrarFormProjeto(!mostrarFormProjeto)}
-          >
-            {mostrarFormProjeto ? '✕ Cancelar Cadastro' : 'Novo Projeto'}
-          </button>
-        </div>
-        
-        {/* RENDERIZAÇÃO CONDICIONAL: Só desenha o form se a variável for "true" */}
-        {mostrarFormProjeto && (
-          <div className="form-container">
-            <FormularioProjeto />
-          </div>
-        )}
+  useEffect(() => { carregar(); }, [carregar]);
 
-        {/*Card dos projetos na Galeria */}
-        <div className="card-grid">
-          {projetos.map(p => (
-            <div key={p.id} className="card">
-              <div>
-                <h3 style={{ marginBottom: '10px', color: '#004080' }}>{p.nome}</h3>
-                <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>{p.descricao}</p>
-                <span style={{ backgroundColor: '#e6f2ff', color: '#0059b3', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
-                  {p.status}
-                </span>
-              </div>
-              <button onClick={() => setProjetoSelecionado(p.id)} style={{ marginTop: '20px', padding: '10px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', width: '100%' }}>
-                Abrir Projeto
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  return { projetos, equipe, carregando, erro, recarregar: carregar };
+}
 
-  // --- TELA DA EQUIPE ---
-  const renderizarEquipe = () => {
-    return (
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2>Equipe Vigente</h2>
-          
-          {/* Botão para ocultar/mostrar o forms de colaborador */}
-          <button 
-            className="btn-adicionar" 
-            onClick={() => setMostrarFormEquipe(!mostrarFormEquipe)}
-          >
-            {mostrarFormEquipe ? '✕ Cancelar Cadastro' : 'Novo Colaborador'}
-          </button>
-        </div>
-
-        {/* Estrutura Condicional para funcionar o ocultar/mostrar forms */}
-        {mostrarFormEquipe && (
-          <div className="form-container">
-            <FormularioColaborador />
-          </div>
-        )}
-
-        {/*Card de Renderização das informações dos Colaboradores */}
-        <div className="card-grid">
-          {equipe.map(pessoa => (
-            <div key={pessoa.id} className="card" style={{ borderTopColor: '#28a745' }}>
-              <h3 style={{ marginBottom: '5px' }}>{pessoa.nome}</h3>
-              <p style={{ color: '#555', fontWeight: 'bold' }}>{pessoa.cargo}</p>
-              <p style={{ fontSize: '14px', color: '#777', marginTop: '10px' }}>📧 {pessoa.emailInstitucional}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-    {/*Barra Lateral de Navegação */}
+// ─── Componentes auxiliares ─────────────────────────────────────────────────────
+function EstadoVazio({ mensagem, acao, rotulo }) {
   return (
-    <div className="app-container">
-      <aside className="sidebar">
-        <h2>Painel de Consultoria</h2>
-        <button className={`menu-btn ${telaAtual === 'projetos' ? 'ativo' : ''}`} onClick={() => { setTelaAtual('projetos'); setProjetoSelecionado(null); }}>
-          Projetos
+    <div className="empty-state">
+      <div className="empty-state-icon">📂</div>
+      <h3>{mensagem}</h3>
+      {acao && (
+        <button className="btn btn-primary" style={{ marginTop: 'var(--sp-16)' }} onClick={acao}>
+          {rotulo}
         </button>
-        <button className={`menu-btn ${telaAtual === 'equipe' ? 'ativo' : ''}`} onClick={() => { setTelaAtual('equipe'); setProjetoSelecionado(null); }}>
-          Equipe de Projetos
-        </button>
-      </aside>
-
-      <main className="main-content">
-        {telaAtual === 'projetos' ? renderizarProjetos() : renderizarEquipe()}
-      </main>
+      )}
     </div>
   );
 }
 
-export default App;
+function EstadoErro({ mensagem, onRetry }) {
+  return (
+    <div className="empty-state">
+      <div className="empty-state-icon">⚠️</div>
+      <h3>Erro ao carregar</h3>
+      <p style={{ fontSize: 'var(--text-body2)', marginBottom: 'var(--sp-16)' }}>{mensagem}</p>
+      <button className="btn btn-secondary" onClick={onRetry}>Tentar novamente</button>
+    </div>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div className="card-grid">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="ui-card skeleton-card">
+          <div className="skeleton-line skeleton-title" />
+          <div className="skeleton-line" />
+          <div className="skeleton-line skeleton-short" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CardProjeto({ projeto, aoAbrir }) {
+  const statusMap = {
+    'Em andamento': 'chip-brand',
+    'Concluído':    'chip-success',
+    'Pausado':      'chip-warning',
+    'Cancelado':    'chip-error',
+  };
+  const chipClasse = statusMap[projeto.status] ?? 'chip-brand';
+
+  return (
+    <div className="ui-card card-projeto">
+      <div className="card-projeto-header">
+        <span className={`chip ${chipClasse}`}>{projeto.status}</span>
+        <span className="card-tipo">{projeto.tipo_servico}</span>
+      </div>
+      <h3 className="card-projeto-nome">{projeto.nome}</h3>
+      <p className="card-projeto-desc">{projeto.descricao}</p>
+      <div className="card-projeto-footer">
+        <span className="card-contratante">🏢 {projeto.nome_contratante}</span>
+        <button className="btn btn-primary btn-sm" onClick={() => aoAbrir(projeto.id)}>
+          Abrir →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CardColaborador({ pessoa }) {
+  return (
+    <div className="ui-card card-colaborador">
+      <div className="avatar">{pessoa.nome.charAt(0).toUpperCase()}</div>
+      <div className="card-colaborador-info">
+        <h3>{pessoa.nome}</h3>
+        <p className="cargo">{pessoa.cargo}</p>
+        <p className="email">📧 {pessoa.emailInstitucional}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tela: Projetos ─────────────────────────────────────────────────────────────
+function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto }) {
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
+  if (carregando) return <Skeleton />;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Projetos</h1>
+          <p className="page-subtitle">{projetos.length} projeto(s) cadastrado(s)</p>
+        </div>
+        <button
+          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
+          onClick={() => setMostrarForm(v => !v)}
+        >
+          {mostrarForm ? '✕ Cancelar' : '+ Novo Projeto'}
+        </button>
+      </div>
+
+      {mostrarForm && (
+        <div className="form-container">
+          <FormularioProjeto />
+        </div>
+      )}
+
+      {projetos.length === 0 ? (
+        <EstadoVazio
+          mensagem="Nenhum projeto cadastrado."
+          acao={() => setMostrarForm(true)}
+          rotulo="Criar primeiro projeto"
+        />
+      ) : (
+        <div className="card-grid">
+          {projetos.map(p => (
+            <CardProjeto key={p.id} projeto={p} aoAbrir={onAbrirProjeto} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Tela: Equipe ───────────────────────────────────────────────────────────────
+function TelaEquipe({ equipe, carregando, erro, onRetry }) {
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
+  if (carregando) return <Skeleton />;
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Equipe</h1>
+          <p className="page-subtitle">{equipe.length} colaborador(es) cadastrado(s)</p>
+        </div>
+        <button
+          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
+          onClick={() => setMostrarForm(v => !v)}
+        >
+          {mostrarForm ? '✕ Cancelar' : '+ Novo Colaborador'}
+        </button>
+      </div>
+
+      {mostrarForm && (
+        <div className="form-container">
+          <FormularioColaborador />
+        </div>
+      )}
+
+      {equipe.length === 0 ? (
+        <EstadoVazio
+          mensagem="Nenhum colaborador cadastrado."
+          acao={() => setMostrarForm(true)}
+          rotulo="Adicionar colaborador"
+        />
+      ) : (
+        <div className="card-grid">
+          {equipe.map(p => (
+            <CardColaborador key={p.id} pessoa={p} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── App principal ──────────────────────────────────────────────────────────────
+export default function App() {
+  const [telaAtual,         setTelaAtual]         = useState(TELAS.PROJETOS);
+  const [projetoSelecionado, setProjetoSelecionado] = useState(null);
+
+  const { projetos, equipe, carregando, erro, recarregar } = useDados();
+
+  function navegar(tela) {
+    setTelaAtual(tela);
+    setProjetoSelecionado(null);
+  }
+
+  function abrirProjeto(id) {
+    setProjetoSelecionado(id);
+  }
+
+  const projetoAtual = projetoSelecionado
+    ? projetos.find(p => p.id === projetoSelecionado) ?? null
+    : null;
+
+  function renderConteudo() {
+    if (projetoAtual) {
+      return (
+        <PaginaProjeto
+          projeto={projetoAtual}
+          aoVoltar={() => setProjetoSelecionado(null)}
+        />
+      );
+    }
+
+    if (telaAtual === TELAS.PROJETOS) {
+      return (
+        <TelaProjetos
+          projetos={projetos}
+          carregando={carregando}
+          erro={erro}
+          onRetry={recarregar}
+          onAbrirProjeto={abrirProjeto}
+        />
+      );
+    }
+
+    return (
+      <TelaEquipe
+        equipe={equipe}
+        carregando={carregando}
+        erro={erro}
+        onRetry={recarregar}
+      />
+    );
+  }
+
+  return (
+    <div className="app-container">
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          Apoio
+          <span>Sistema de Gestão</span>
+        </div>
+
+        <nav>
+          <button
+            className={`menu-btn ${telaAtual === TELAS.PROJETOS && !projetoAtual ? 'ativo' : ''}`}
+            onClick={() => navegar(TELAS.PROJETOS)}
+          >
+            📁 Projetos
+          </button>
+          <button
+            className={`menu-btn ${telaAtual === TELAS.EQUIPE ? 'ativo' : ''}`}
+            onClick={() => navegar(TELAS.EQUIPE)}
+          >
+            👥 Equipe
+          </button>
+        </nav>
+      </aside>
+
+      <main className="main-content">
+        {renderConteudo()}
+      </main>
+    </div>
+  );
+}
