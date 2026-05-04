@@ -1,61 +1,62 @@
 import { useState } from 'react';
-
-export default function FormularioColaborador() {
-  const [nome, setNome] = useState('');
+ 
+const API = 'http://127.0.0.1:8000';
+ 
+export default function FormularioColaborador({ toast }) {
+  const [nome,  setNome]  = useState('');
   const [cargo, setCargo] = useState('');
   const [email, setEmail] = useState('');
-
-  const salvarColaborador = (evento) => {
-    evento.preventDefault();
-
-    const dadosParaEnviar = {
-      nome: nome,
-      cargo: cargo,
-      emailInstitucional: email
-    };
-
-    fetch('http://127.0.0.1:8000/trabalhadores/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dadosParaEnviar)
-    })
-    .then(resposta => resposta.json())
-    .then(dados_salvos => {
-      alert("Colaborador salvo com sucesso!");
-      setNome(''); setCargo(''); setEmail('');
-    })
-    .catch(erro => console.error("Erro ao salvar:", erro));
+  const [salvando, setSalvando] = useState(false);
+ 
+  const limpar = () => { setNome(''); setCargo(''); setEmail(''); };
+ 
+  const salvar = async (e) => {
+    e.preventDefault();
+    setSalvando(true);
+    try {
+      const res = await fetch(`${API}/trabalhadores/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, cargo, emailInstitucional: email }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success('Colaborador salvo com sucesso!');
+      limpar();
+    } catch {
+      toast.error('Erro ao salvar colaborador.');
+    } finally {
+      setSalvando(false);
+    }
   };
-
+ 
   return (
-    <div className="ui-card" style={{ maxWidth: '500px', margin: '0 auto', borderTop: '4px solid var(--primary)' }}>
-      <h3 style={{ color: 'var(--primary)', marginBottom: 'var(--sp-24)' }}>👥 Novo Colaborador</h3>
-      
-      <form onSubmit={salvarColaborador} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
-        
+    <div className="ui-card" style={{ maxWidth: '500px', borderTop: `4px solid var(--color-brand)` }}>
+      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h3)', marginBottom: 'var(--sp-24)' }}>
+        Novo Colaborador
+      </h3>
+ 
+      <form onSubmit={salvar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
         <div>
-          <label style={{ display: 'block', marginBottom: 'var(--sp-4)', fontWeight: '600', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            NOME COMPLETO
-          </label>
-          <input className="input-field" type="text" placeholder="Ex: João da Silva" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          <label className="field-label">Nome Completo</label>
+          <input className="input-field" type="text" placeholder="Ex: João da Silva"
+            value={nome} onChange={e => setNome(e.target.value)} required />
         </div>
-        
+ 
         <div>
-          <label style={{ display: 'block', marginBottom: 'var(--sp-4)', fontWeight: '600', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            CARGO NA EMPRESA
-          </label>
-          <input className="input-field" type="text" placeholder="Ex: Assessor de Projetos" value={cargo} onChange={(e) => setCargo(e.target.value)} required />
+          <label className="field-label">Cargo na Empresa</label>
+          <input className="input-field" type="text" placeholder="Ex: Assessor de Projetos"
+            value={cargo} onChange={e => setCargo(e.target.value)} required />
         </div>
-        
+ 
         <div>
-          <label style={{ display: 'block', marginBottom: 'var(--sp-4)', fontWeight: '600', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            E-MAIL INSTITUCIONAL
-          </label>
-          <input className="input-field" type="email" placeholder="joao@apoioconsultoria.com.br" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label className="field-label">E-mail Institucional</label>
+          <input className="input-field" type="email" placeholder="joao@apoioconsultoria.com.br"
+            value={email} onChange={e => setEmail(e.target.value)} required />
         </div>
-        
-        <button type="submit" className="btn btn-primary" style={{ marginTop: 'var(--sp-8)', justifyContent: 'center' }}>
-          Salvar Colaborador
+ 
+        <button type="submit" className="btn btn-primary" disabled={salvando}
+          style={{ marginTop: 'var(--sp-8)', justifyContent: 'center' }}>
+          {salvando ? 'Salvando...' : 'Salvar Colaborador'}
         </button>
       </form>
     </div>
