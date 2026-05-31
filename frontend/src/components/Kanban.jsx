@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { listarTarefasDoProjeto, listarTrabalhadores, criarTarefa, atualizarStatusTarefa } from '../services/api';
 
 export default function Kanban({ projetoId }) {
   const [tarefas, setTarefas] = useState([]);
@@ -14,14 +15,12 @@ export default function Kanban({ projetoId }) {
 useEffect(() => {
   if (projetoId) {
       // Busca as Tarefas
-      fetch(`http://127.0.0.1:8000/projetos/${projetoId}/tarefas`)
-        .then(resposta => resposta.json())
+      listarTarefasDoProjeto(projetoId)
         .then(dados => setTarefas(dados))
         .catch(erro => console.error("Erro ao carregar Kanban:", erro));
         
       // Busca os Colaboradores (Para o select da nova tarefa)
-      fetch('http://127.0.0.1:8000/trabalhadores/')
-        .then(resposta => resposta.json())
+      listarTrabalhadores()
         .then(dados => setColaboradores(dados))
         .catch(erro => console.error("Erro ao carregar equipe:", erro));
     }
@@ -40,26 +39,7 @@ useEffect(() => {
       depende_de_id: null // Por enquanto enviamos nulo até criarmos a interface de dependências
     };
 
-    fetch('http://127.0.0.1:8000/tarefas/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(novaTarefa)
-    })
-    .then(async (resposta) => {
-      // Se o servidor retornar um erro (ex: 422 Unprocessable Entity ou 500 Internal Server Error)
-      if (!resposta.ok) {
-        let erroDetalhado;
-        try {
-          erroDetalhado = await resposta.json();
-        } catch {
-          erroDetalhado = await resposta.text();
-        }
-        console.error("O Backend recusou o pacote. Detalhes:", erroDetalhado);
-        alert("Erro na validação ou erro interno! Olhe o console (F12).");
-        throw new Error("Falha no POST");
-      }
-      return resposta.json();
-    })
+    criarTarefa(novaTarefa)
     .then(tarefaSalva => {
       // Sucesso! Adiciona na tela e limpa o formulário
       setTarefas([...tarefas, tarefaSalva]);
@@ -70,17 +50,17 @@ useEffect(() => {
       setBlocoEntrega('');
       setMostrarForm(false);
     })
-    .catch(erro => console.error("Erro na requisição:", erro));
+    .catch(erro => {
+      console.error("Erro na requisição:", erro);
+      alert("Erro na validação ou erro interno! Olhe o console (F12).");
+    });
   };
 
   const moverTarefa = (tarefaId, novoStatus) => {
-    fetch(`http://127.0.0.1:8000/tarefas/${tarefaId}/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ coluna_status: novoStatus })
-    }).then(res => res.json()).then(tarefaAtualizada => {
-      setTarefas(tarefas.map(t => t.id === tarefaId ? tarefaAtualizada : t));
-    });
+    atualizarStatusTarefa(tarefaId, novoStatus)
+      .then(tarefaAtualizada => {
+        setTarefas(tarefas.map(t => t.id === tarefaId ? tarefaAtualizada : t));
+      });
   };
 
   const tarefasTodo = tarefas.filter(t => t.coluna_status === 'TODO');

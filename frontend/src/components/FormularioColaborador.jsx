@@ -1,6 +1,5 @@
 import { useState } from 'react';
- 
-const API = 'http://127.0.0.1:8000';
+import { criarTrabalhador } from '../services/api';
  
 export default function FormularioColaborador({ toast }) {
   const [nome,  setNome]  = useState('');
@@ -14,12 +13,7 @@ export default function FormularioColaborador({ toast }) {
     e.preventDefault();
     setSalvando(true);
     try {
-      const res = await fetch(`${API}/trabalhadores/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, cargo, emailInstitucional: email }),
-      });
-      if (!res.ok) throw new Error();
+      await criarTrabalhador({ nome, cargo, emailInstitucional: email });
       toast.success('Colaborador salvo com sucesso!');
       limpar();
     } catch {

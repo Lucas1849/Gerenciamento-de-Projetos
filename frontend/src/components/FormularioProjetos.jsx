@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
- 
-const API = 'http://127.0.0.1:8000';
+import { listarTrabalhadores, criarProjeto } from '../services/api';
  
 const CAMPO_VAZIO = {
   nome: '', descricao: '', tipoServico: '', objetivo: '',
@@ -15,8 +14,7 @@ export default function FormularioProjeto({ toast }) {
   const [salvando,      setSalvando]      = useState(false);
  
   useEffect(() => {
-    fetch(`${API}/trabalhadores/`)
-      .then(res => res.json())
+    listarTrabalhadores()
       .then(setColaboradores)
       .catch(() => toast.error('Erro ao carregar colaboradores.'));
   }, []);
@@ -27,26 +25,21 @@ export default function FormularioProjeto({ toast }) {
     e.preventDefault();
     setSalvando(true);
     try {
-      const res = await fetch(`${API}/projetos/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome:                   campos.nome,
-          descricao:              campos.descricao,
-          tipo_servico:           campos.tipoServico,
-          objetivo:               campos.objetivo,
-          nome_contratante:       campos.nomeContratante,
-          agregados_contratante:  campos.agregadosContratante,
-          kickoff_realizado:      campos.kickoff,
-          tap_assinado:           campos.tap,
-          status:                 'Em andamento',
-          gerente_id:             parseInt(campos.gerenteId),
-          consultor1_id:          parseInt(campos.consultor1Id),
-          consultor2_id:          parseInt(campos.consultor2Id),
-          consultor3_id:          parseInt(campos.consultor3Id),
-        }),
+      await criarProjeto({
+        nome:                   campos.nome,
+        descricao:              campos.descricao,
+        tipo_servico:           campos.tipoServico,
+        objetivo:               campos.objetivo,
+        nome_contratante:       campos.nomeContratante,
+        agregados_contratante:  campos.agregadosContratante,
+        kickoff_realizado:      campos.kickoff,
+        tap_assinado:           campos.tap,
+        status:                 'Em andamento',
+        gerente_id:             parseInt(campos.gerenteId),
+        consultor1_id:          parseInt(campos.consultor1Id),
+        consultor2_id:          parseInt(campos.consultor2Id),
+        consultor3_id:          parseInt(campos.consultor3Id),
       });
-      if (!res.ok) throw new Error();
       toast.success('Projeto criado com sucesso!');
       setCampos(CAMPO_VAZIO);
     } catch {

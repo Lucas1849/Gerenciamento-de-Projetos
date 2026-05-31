@@ -5,9 +5,7 @@ import FormularioProjeto from './components/FormularioProjetos';
 import Kanban from './components/Kanban';
 import PaginaProjeto from './components/PaginaProjeto';
 import { useToast, ToastContainer } from './components/Toast';
-
-// ─── Constantes ────────────────────────────────────────────────────────────────
-const API = 'http://127.0.0.1:8000';
+import { listarProjetos, listarTrabalhadores } from './services/api';
 
 const TELAS = {
   PROJETOS: 'projetos',
@@ -25,16 +23,9 @@ function useDados() {
     setCarregando(true);
     setErro(null);
     try {
-      const [resProjetos, resEquipe] = await Promise.all([
-        fetch(`${API}/projetos/`),
-        fetch(`${API}/trabalhadores/`),
-      ]);
-
-      if (!resProjetos.ok || !resEquipe.ok) throw new Error('Falha ao carregar dados.');
-
       const [dadosProjetos, dadosEquipe] = await Promise.all([
-        resProjetos.json(),
-        resEquipe.json(),
+        listarProjetos(),
+        listarTrabalhadores(),
       ]);
 
       setProjetos(dadosProjetos);
