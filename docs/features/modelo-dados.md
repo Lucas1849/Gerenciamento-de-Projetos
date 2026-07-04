@@ -16,7 +16,7 @@ Semestre/ciclo de gestão da empresa júnior (ex. "2026.1"). Usada para agrupar 
 
 ### Servico
 
-Catálogo dos 8 serviços da cartela (Pesquisa de Mercado, Plano de Marketing, Plano de Comunicação, Plano de Negócios, Planejamento Estratégico, Plano Operacional, Mapeamento de Processos, Cliente Oculto).
+Catálogo dos 9 serviços da cartela (Pesquisa de Mercado, Plano de Marketing, Plano de Comunicação, Plano de Negócios, Planejamento Estratégico, Plano Operacional, Mapeamento de Processos, Cliente Oculto, Valuation).
 
 | Campo | Tipo | Observação |
 |---|---|---|
