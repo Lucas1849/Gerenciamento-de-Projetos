@@ -34,8 +34,8 @@ Molde de etapa por serviço — usado para gerar as `Etapa` reais de um projeto 
 | servico_id | int | FK → Servico |
 | ordem | int | posição da etapa dentro do serviço |
 | nome | string | |
-| descricao_padrao | string | pré-preenche a etapa gerada |
-| dias_uteis_esperados_padrao | int | pré-preenche a etapa gerada |
+| descricao_padrao | string | opcional; pré-preenche a etapa gerada |
+| dias_uteis_esperados_padrao | int | opcional; pré-preenche a etapa gerada |
 
 ### Professor
 
@@ -53,18 +53,19 @@ Professor(a) orientador(a) — pessoa externa à empresa júnior, não é um `Tr
 |---|---|---|
 | id | int | PK |
 | nome | string | |
-| descricao | string | |
-| objetivo | string | |
-| nome_contratante | string | |
-| agregados_contratante | string | texto livre separado por vírgula (mantido como está) |
+| descricao | string | opcional |
+| objetivo | string | opcional |
+| nome_contratante | string | opcional |
+| agregados_contratante | string | opcional; texto livre separado por vírgula (mantido como está) |
 | servico_id | int | FK → Servico (substitui `tipo_servico` texto livre) |
 | gestao_id | int | FK → Gestao |
-| fase | string | `kickoff \| andamento \| finalizacao \| ajustes \| concluido` — validado via `Literal` no Pydantic. Substitui `status`, `kickoff_realizado`, `tap_assinado` (ver ADR-007) |
+| fase | string | `kickoff \| andamento \| finalizacao \| ajustes \| concluido` — validado via `Literal` no Pydantic. Substitui `status` e `kickoff_realizado` (ver ADR-007) |
+| tap_assinado | bool | mantido como booleano independente — marco contratual, não derivável da `fase` (ver ADR-007) |
 | gerente_id | int | FK → Trabalhador |
 | diretor_id | int | FK → Trabalhador |
 | professor_orientador_id | int | FK → Professor, nullable (pode ficar pendente enquanto a diretora busca o orientador) |
 
-Removidos: `consultor1_id`, `consultor2_id`, `consultor3_id`, `status`, `kickoff_realizado`, `tap_assinado` (ver ADR-007 sobre este último).
+Removidos: `consultor1_id`, `consultor2_id`, `consultor3_id`, `status`, `kickoff_realizado` (ver ADR-007). `tap_assinado` **não** é removido — permanece como bool independente.
 
 ### Etapa (substitui TarefaKanban)
 
@@ -75,8 +76,8 @@ Removidos: `consultor1_id`, `consultor2_id`, `consultor3_id`, `status`, `kickoff
 | etapa_template_id | int | FK → EtapaTemplate, nullable (nulo = etapa adicionada manualmente, fora do template) |
 | ordem | int | substitui `depende_de_id` (ver ADR-006) |
 | nome | string | |
-| descricao | string | |
-| dias_uteis_esperados | int | |
+| descricao | string | opcional |
+| dias_uteis_esperados | int | opcional |
 | bloco_entrega | string | opcional, mantido como está |
 | status | string | `nao_iniciada \| em_andamento \| concluida` |
 

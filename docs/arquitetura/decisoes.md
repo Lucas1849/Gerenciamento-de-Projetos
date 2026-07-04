@@ -52,7 +52,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Contexto:** já houve uma tentativa de tabela de catálogo de serviços (`ServicosApoio`, commit `c71e220`), revertida no commit seguinte (`3e2d27b`) para permitir testes de estilização — nunca chegou a ser usada com conteúdo real.
 
-**Decisão:** retomar o catálogo (`Servico` + `EtapaTemplate`), mas com o conteúdo (etapas, dias úteis, descrições dos 8 serviços) **validado com a diretoria antes do seed**, não assumido pela IA. Ver `docs/features/catalogo-servicos.md`.
+**Decisão:** retomar o catálogo (`Servico` + `EtapaTemplate`), mas com o conteúdo (etapas, dias úteis, descrições dos 9 serviços) **validado com a diretoria antes do seed**, não assumido pela IA. Ver `docs/features/catalogo-servicos.md`.
 
 **Justificativa:** etapas incorretas ou genéricas em produção seriam piores do que não ter o catálogo — é informação operacional real da consultoria, não algo que se possa inferir do contexto do produto.
 
@@ -68,12 +68,12 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 ---
 
-### ADR-007 — `kickoff_realizado` / `tap_assinado` (PENDENTE DE VALIDAÇÃO COM A DIRETORIA)
+### ADR-007 — `kickoff_realizado` / `tap_assinado`
 
-**Contexto:** o modelo atual tem três campos de ciclo de vida do projeto que não se relacionam entre si: `status`, `kickoff_realizado` e `tap_assinado`. O novo modelo introduz `Projeto.fase` (kickoff/andamento/finalização/ajustes/concluído) como o único campo de ciclo de vida.
+**Contexto:** o modelo atual tem três campos de ciclo de vida do projeto que não se relacionam entre si: `status`, `kickoff_realizado` e `tap_assinado`. O novo modelo introduz `Projeto.fase` (kickoff/andamento/finalização/ajustes/concluído) como o campo principal de ciclo de vida.
 
-**Recomendação (não confirmada):** remover `kickoff_realizado` (a informação já fica implícita quando `fase != kickoff`) e avaliar com a diretoria se `tap_assinado` deve virar um campo booleano independente (marco jurídico/contratual que pode não coincidir exatamente com a fase do projeto) ou também ser removido.
+**Decisão:** remover `status` e `kickoff_realizado` (a informação do kickoff já fica implícita quando `fase != kickoff`). `tap_assinado` **continua como um campo booleano independente** de `Projeto` — é um marco jurídico/contratual que pode não coincidir exatamente com a fase do projeto.
 
-**Status:** pendente — decisão final deve ser tomada com a diretoria antes ou durante a implementação da Fase 1, não assumida silenciosamente pela IA.
+**Justificativa:** `fase` cobre o ciclo de vida gerencial sem campos redundantes; a assinatura do TAP é um fato contratual distinto da fase e por isso não pode ser derivada dela.
 
-**tap_assinado (Situação):** o campo `tap_assinado` deve continuar como um campo booleano independente.
+**Status:** decidido (validado com a diretoria).
