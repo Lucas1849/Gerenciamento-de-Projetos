@@ -30,9 +30,9 @@ O frontend foi **reescrito para o modelo novo** e consome a API modularizada. A 
 - `components/fases.js` centraliza as constantes de fase; `services/api.js` foi estendido para todos os domínios novos (gestões, catálogo, professores, projetos, etapas).
 - `FormularioColaborador.jsx`, `Toast.jsx`: padrões mantidos.
 
-## Próximo passo — Fase 2: semear o catálogo de serviços
+## Fase 2 — catálogo de serviços semeado (concluída)
 
-As tabelas `Servico`/`EtapaTemplate` existem mas estão **vazias**, e o frontend **não tem UI para criar serviços** (por design — o catálogo é conteúdo validado pela diretoria, não dado de usuário). O próximo passo é criar `backend/app/seed_catalogo.py` para semear o catálogo real a partir de [../features/catalogo-servicos.md](../features/catalogo-servicos.md).
+`backend/app/seed_catalogo.py` semeia `Servico`/`EtapaTemplate` com o catálogo real aprovado pela diretoria em [../features/catalogo-servicos.md](../features/catalogo-servicos.md) (9 serviços; etapas com a mesma `ordem` são entregas em bloco). Rodar de `backend/` com `python -m app.seed_catalogo` — idempotente (pula serviços já existentes) e deve ser reexecutado após apagar o `.db` (fluxo ADR-001). O frontend continua **sem UI para criar serviços** (por design — mudanças no catálogo passam pelo documento e nova validação, ADR-005).
 
 ## Estado alvo (to-be)
 

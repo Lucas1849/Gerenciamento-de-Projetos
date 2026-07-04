@@ -1,6 +1,6 @@
 # Catálogo de Serviços — Etapas Padrão
 
-**Este documento precisa ser preenchido e validado com a diretoria antes de virar seed no banco (Fase 2 do plano de continuidade).** As etapas, dias úteis e descrições abaixo **não devem ser inventadas pela IA** — são informação operacional real da consultoria (ver ADR-005 em [../arquitetura/decisoes.md](../arquitetura/decisoes.md)).
+**Este documento foi validado com a diretoria (04/07, ver tabela de aprovação no fim) e já virou seed no banco: `backend/app/seed_catalogo.py` (Fase 2, concluída).** As etapas, dias úteis e descrições abaixo **não devem ser inventadas pela IA** — são informação operacional real da consultoria (ver ADR-005 em [../arquitetura/decisoes.md](../arquitetura/decisoes.md)). Qualquer mudança aqui exige nova validação e atualização correspondente do seed.
 
 Para cada serviço da cartela, preencher a tabela com as etapas padrão, na ordem em que normalmente acontecem. `Dias úteis esperados` é o prazo padrão daquela etapa (pode ser ajustado por projeto depois). `Descrição padrão` é o texto que já vem preenchido ao criar um projeto daquele serviço (editável).
 
