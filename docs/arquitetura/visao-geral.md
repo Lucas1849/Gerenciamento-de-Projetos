@@ -12,23 +12,27 @@ Este documento descreve o estado atual do sistema (as-is) e o estado alvo (to-be
 
 ### Backend
 
-- O app que **de fato roda** é `backend/main.py` (arquivo único na raiz do backend). Ele importa de `backend/app/database.py`, `backend/app/models/banco_de_dados.py` e `backend/app/schemas.py`, e define todas as rotas inline, sem camada de serviço.
-- `backend/app/main.py` está **vazio e versionado no git** — resíduo de uma tentativa de modularização que não foi concluída. `backend/app/routes/`, `backend/app/services/`, `backend/app/utils/` e `backend/tests/` existem no disco mas **não estão versionados** (scaffolding local morto).
-- `backend/requirements.txt` e `backend/.env.example` estão versionados e vazios — as dependências reais nunca foram documentadas.
-- `backend/piloto_projetos.db` está versionado no git, o que gera diffs binários a cada execução local.
-- Modelo de dados atual (`banco_de_dados.py`):
-  - `Trabalhador`: colaborador (nome, cargo, e-mail institucional).
-  - `Projeto`: equipe **fixa** de `gerente_id` + `consultor1_id`/`consultor2_id`/`consultor3_id` (4 FKs fixas para `Trabalhador`); `tipo_servico` como texto livre; `status`, `kickoff_realizado` e `tap_assinado` como três campos de ciclo de vida separados e não sincronizados entre si.
-  - `TarefaKanban`: tarefa com um único `trabalhador_id` responsável, `coluna_status` livre (`TODO`/`DOING`/`DONE`), e um campo `depende_de_id` que nunca chegou a ser usado (o frontend sempre envia `null`).
-- Já houve uma tentativa de tabela de catálogo de serviços (`ServicosApoio`, commit `c71e220`), revertida no commit seguinte (`3e2d27b`) só para permitir testes de estilização. Não foi retomada até agora.
+- O backend está **modularizado**. `backend/main.py` é o entrypoint fino: instancia o FastAPI, configura CORS, roda `Base.metadata.create_all()` e inclui os routers por domínio.
+- Rotas em `backend/app/routes/` (um router por domínio): `colaboradores.py`, `professores.py`, `gestoes.py`, `catalogo.py`, `projetos.py`, `etapas.py`.
+- Camadas de apoio: `backend/app/utils/db.py` (dependência `get_db`), `backend/app/services/projetos.py` (lógica de cascade na exclusão de projetos), `backend/app/database.py` (engine/session), `backend/app/models/banco_de_dados.py` (todos os modelos ORM) e `backend/app/schemas.py` (todos os schemas Pydantic).
+- `backend/app/main.py` (o resíduo vazio da tentativa antiga de modularização) foi **removido**.
+- `backend/requirements.txt` e `backend/.env.example` estão populados com as dependências e variáveis reais.
+- Modelo de dados atual (`banco_de_dados.py`): já é o modelo novo — `Gestao`, `Servico`, `EtapaTemplate`, `Professor`, `Projeto`, `Etapa`, `EtapaConsultor` (ver [../features/modelo-dados.md](../features/modelo-dados.md) para o detalhamento; o catálogo validado está em [../features/catalogo-servicos.md](../features/catalogo-servicos.md)).
 
 ### Frontend
 
-- `App.jsx`: sidebar com "Projetos" e "Equipe", projetos exibidos em grid **flat** (sem agrupamento por gestão/semestre).
-- `PaginaProjeto.jsx`: abre um projeto com abas "Visão Geral" e "Quadro Kanban".
-- `Kanban.jsx`: quadro genérico de 3 colunas (`TODO`/`DOING`/`DONE`) por projeto, uma tarefa = um responsável.
-- `FormularioProjetos.jsx`: `tipo_servico` é input de texto livre; equipe são 4 selects fixos.
-- `FormularioColaborador.jsx`, `Toast.jsx`, `services/api.js`: padrões sólidos, mantidos como estão.
+O frontend foi **reescrito para o modelo novo** e consome a API modularizada. A navegação é em **dois níveis**, ainda via `useState` em `App.jsx` (sem router):
+
+- **Nível 1 — galeria de gestões:** `App.jsx` lista as `Gestao` (semestres); ao entrar numa gestão, `KanbanFases.jsx` mostra os projetos num Kanban de **5 colunas** por `Projeto.fase` (`kickoff` → `andamento` → `finalizacao` → `ajustes` → `concluido`).
+- **Nível 2 — página do projeto:** `PaginaProjeto.jsx` abre um projeto; `KanbanEtapas.jsx` (renomeado de `Kanban.jsx`) mostra as etapas num Kanban de **3 colunas** por `Etapa.status`, com a equipe exibida por etapa (`EtapaConsultor`).
+- `FormularioProjetos.jsx` reescrito: select de serviço (com preview das etapas-template do serviço escolhido), consultores iniciais em número variável e checkbox de `tap_assinado`.
+- Novos formulários: `FormularioGestao.jsx` e `FormularioProfessor.jsx`.
+- `components/fases.js` centraliza as constantes de fase; `services/api.js` foi estendido para todos os domínios novos (gestões, catálogo, professores, projetos, etapas).
+- `FormularioColaborador.jsx`, `Toast.jsx`: padrões mantidos.
+
+## Próximo passo — Fase 2: semear o catálogo de serviços
+
+As tabelas `Servico`/`EtapaTemplate` existem mas estão **vazias**, e o frontend **não tem UI para criar serviços** (por design — o catálogo é conteúdo validado pela diretoria, não dado de usuário). O próximo passo é criar `backend/app/seed_catalogo.py` para semear o catálogo real a partir de [../features/catalogo-servicos.md](../features/catalogo-servicos.md).
 
 ## Estado alvo (to-be)
 
@@ -37,14 +41,14 @@ O modelo de dados e a navegação precisam suportar o que o produto realmente ex
 - **Catálogo de serviços** com etapas padrão por tipo de serviço (dias úteis + descrição), carregadas automaticamente ao criar um projeto.
 - **Gestões** (semestres, ex. "2026.1") como nível de agrupamento na galeria de projetos.
 - **Equipe flexível por etapa**, não fixa por projeto: qualquer número de consultores, incluindo temporários que entram/saem ao longo do tempo (necessário para a futura ficha SIEX).
-- **Kanban em dois níveis**: fase do projeto (`kickoff` → `andamento` → `finalizacao` → `ajustes` → `concluido`) na galeria da gestão, e status de cada etapa (`não iniciada` → `em andamento` → `concluída`) dentro do projeto.
-- Backend modularizado em routers por domínio (colaboradores, professores, gestões, catálogo de serviços, projetos, etapas), com `backend/main.py` como entrypoint fino.
+- **Kanban em dois níveis**: fase do projeto (`kickoff` → `andamento` → `finalizacao` → `ajustes` → `concluido`) na galeria da gestão, e status de cada etapa (`não iniciada` → `em andamento` → `concluída`) dentro do projeto — **já concluído** no frontend (ver as-is acima).
+- Backend modularizado em routers por domínio (colaboradores, professores, gestões, catálogo de serviços, projetos, etapas), com `backend/main.py` como entrypoint fino — **já concluído** (ver as-is acima).
 
 Funcionalidades de maior esforço (calendário automático, exportação SIEX, pontos fortes dos membros, integração real com o Apoio Hub) ficam registradas em [../features/roadmap.md](../features/roadmap.md) e não fazem parte desta base sólida.
 
 ## Decisão sobre os resíduos identificados
 
-- `backend/app/main.py` (vazio, versionado): **será removido**. `backend/main.py` continua sendo o único entrypoint real, agora modularizado.
-- `backend/app/routes/`, `services/`, `utils/`, `tests/` (não versionados): serão populados de verdade como parte da modularização — nenhum risco em reaproveitar, pois nunca existiu conteúdo versionado ali.
-- `backend/requirements.txt`, `.env.example`: serão preenchidos com as dependências reais em uso.
-- `backend/piloto_projetos.db`: será removido do controle de versão e ignorado via `.gitignore` (dado de piloto, descartável — confirmado com o responsável pelo projeto).
+- ~~`backend/app/main.py` (vazio, versionado)~~: **resolvido** — removido; `backend/main.py` é o único entrypoint, agora fino e modularizado.
+- ~~`backend/app/routes/`, `services/`, `utils/` (não versionados)~~: **resolvido** — populados de verdade como parte da modularização.
+- ~~`backend/requirements.txt`, `.env.example` vazios~~: **resolvido** — preenchidos com as dependências e variáveis reais em uso.
+- `backend/piloto_projetos.db`: **pendente** — ainda está versionado no git (gera diffs binários a cada execução local); será removido do controle de versão e ignorado via `.gitignore` (dado de piloto, descartável — confirmado com o responsável pelo projeto).
