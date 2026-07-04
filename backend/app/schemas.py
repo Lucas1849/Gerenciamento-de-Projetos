@@ -1,13 +1,22 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+from datetime import date
+from typing import Literal
 
-# Molde para RECEBER dados (O que o frontend vai nos enviar)
+# Valores permitidos nos campos de ciclo de vida (ADR-003 / ADR-007).
+Fase = Literal["kickoff", "andamento", "finalizacao", "ajustes", "concluido"]
+StatusEtapa = Literal["nao_iniciada", "em_andamento", "concluida"]
+
+
+# ---------------------------------------------------------------------------
+# Trabalhador
+# ---------------------------------------------------------------------------
 class TrabalhadorCriar(BaseModel):
     nome: str
     cargo: str
     emailInstitucional: str
 
-# Molde para DEVOLVER dados (O que o backend responde após salvar, incluindo o ID)
+
 class TrabalhadorResposta(BaseModel):
     id: int
     nome: str
@@ -15,79 +24,187 @@ class TrabalhadorResposta(BaseModel):
     emailInstitucional: str
 
     class Config:
-        from_attributes = True # Isso ajuda o FastAPI a converter os dados do banco para enviar ao frontend
+        from_attributes = True
 
-# Molde para RECEBER dados do Projeto
+
+# ---------------------------------------------------------------------------
+# Professor
+# ---------------------------------------------------------------------------
+class ProfessorCriar(BaseModel):
+    nome: str
+    email: Optional[str] = None
+
+
+class ProfessorResposta(BaseModel):
+    id: int
+    nome: str
+    email: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Gestao
+# ---------------------------------------------------------------------------
+class GestaoCriar(BaseModel):
+    nome: str
+    ativa: bool = False
+
+
+class GestaoResposta(BaseModel):
+    id: int
+    nome: str
+    ativa: bool
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# EtapaTemplate
+# ---------------------------------------------------------------------------
+class EtapaTemplateCriar(BaseModel):
+    servico_id: int
+    ordem: int
+    nome: str
+    descricao_padrao: Optional[str] = None
+    dias_uteis_esperados_padrao: Optional[int] = None
+
+
+class EtapaTemplateResposta(BaseModel):
+    id: int
+    servico_id: int
+    ordem: int
+    nome: str
+    descricao_padrao: Optional[str] = None
+    dias_uteis_esperados_padrao: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Servico
+# ---------------------------------------------------------------------------
+class ServicoCriar(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+
+
+class ServicoResposta(BaseModel):
+    id: int
+    nome: str
+    descricao: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ServicoComEtapasResposta(ServicoResposta):
+    etapas_template: List[EtapaTemplateResposta] = []
+
+
+# ---------------------------------------------------------------------------
+# EtapaConsultor
+# ---------------------------------------------------------------------------
+class EtapaConsultorCriar(BaseModel):
+    trabalhador_id: int
+    # Se omitida, o backend usa a data de hoje.
+    data_entrada: Optional[date] = None
+
+
+class EtapaConsultorResposta(BaseModel):
+    id: int
+    etapa_id: int
+    trabalhador_id: int
+    data_entrada: date
+    data_saida: Optional[date] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Etapa
+# ---------------------------------------------------------------------------
+class EtapaCriar(BaseModel):
+    # Etapa adicionada manualmente a um projeto existente.
+    projeto_id: int
+    ordem: int
+    nome: str
+    descricao: Optional[str] = None
+    dias_uteis_esperados: Optional[int] = None
+    bloco_entrega: Optional[str] = None
+    etapa_template_id: Optional[int] = None
+
+
+class EtapaAtualizar(BaseModel):
+    status: StatusEtapa
+
+
+class EtapaResposta(BaseModel):
+    id: int
+    projeto_id: int
+    etapa_template_id: Optional[int] = None
+    ordem: int
+    nome: str
+    descricao: Optional[str] = None
+    dias_uteis_esperados: Optional[int] = None
+    bloco_entrega: Optional[str] = None
+    status: StatusEtapa
+    # Equipe embutida: consultores ativos da etapa (data_saida IS NULL).
+    consultores: List[TrabalhadorResposta] = []
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Projeto
+# ---------------------------------------------------------------------------
 class ProjetoCriar(BaseModel):
     nome: str
-    descricao: str 
-    status: str = "Em andamento"
-    # Novos campos
-    tipo_servico: str
-    objetivo: str
-    nome_contratante: str
-    agregados_contratante: str
-    kickoff_realizado: str
-    tap_assinado: str
-    # Recebemos apenas os números (IDs) de quem vai trabalhar no projeto
+    descricao: Optional[str] = None
+    objetivo: Optional[str] = None
+    nome_contratante: Optional[str] = None
+    agregados_contratante: Optional[str] = None
+    servico_id: int
+    gestao_id: int
+    fase: Fase = "kickoff"
+    tap_assinado: bool = False
     gerente_id: int
-    consultor1_id: int
-    consultor2_id: int
-    consultor3_id: int
+    diretor_id: int
+    professor_orientador_id: Optional[int] = None
+    # Consultores atribuídos a todas as etapas geradas na criação.
+    consultores_iniciais_ids: List[int] = []
 
-# Molde para DEVOLVER os dados do Projeto
+
 class ProjetoResposta(BaseModel):
     id: int
     nome: str
-    descricao: str
-    status: str
-    # Novos campos
-    tipo_servico: str
-    objetivo: str
-    nome_contratante: str
-    agregados_contratante: str
-    kickoff_realizado: str
-    tap_assinado: str
-    #Equipe principal do projeto
+    descricao: Optional[str] = None
+    objetivo: Optional[str] = None
+    nome_contratante: Optional[str] = None
+    agregados_contratante: Optional[str] = None
+    servico_id: int
+    gestao_id: int
+    fase: Fase
+    tap_assinado: bool
     gerente_id: int
-    consultor1_id: int
-    consultor2_id: int
-    consultor3_id: int
+    diretor_id: int
+    professor_orientador_id: Optional[int] = None
 
     class Config:
         from_attributes = True
 
-# Molde para CRIAR uma nova tarefa (O Post-it novo)
-class TarefaCriar(BaseModel):
-    #A situação da tarefa não precisa ser exigida, pois está por defaul como "A fazer"
-    titulo: str
-    descricao: str
-    projeto_id: int
-    trabalhador_id: int
-    dias_uteis_esperados: int = 1
-    bloco_entrega: Optional[str] = None
-    depende_de_id: Optional[int] = None
 
-# Molde para ATUALIZAR a tarefa
-# Quando formos mover a tarefa, o frontend só precisa nos enviar a nova coluna
-class TarefaAtualizar(BaseModel):
-    coluna_status: str
+class ProjetoAtualizar(BaseModel):
+    fase: Optional[Fase] = None
+    tap_assinado: Optional[bool] = None
 
-# Molde para DEVOLVER os dados da Tarefa
-class TarefaResposta(BaseModel):
-    id: int
-    titulo: str
-    descricao: str
-    coluna_status: str
-    projeto_id: int
-    trabalhador_id: int
-    dias_uteis_esperados: int
-    bloco_entrega: Optional[str] = None
-    depende_de_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
-
-#Modelo para criar um serviço no banco
-
-#Modelo de mostrar um serviço no banco
+class ProjetoDetalheResposta(ProjetoResposta):
+    etapas: List[EtapaResposta] = []
+    # Equipe derivada: união dos consultores ativos de todas as etapas.
+    equipe: List[TrabalhadorResposta] = []

@@ -1,86 +1,152 @@
-# Importamos as ferramentas necessárias do SQLAlchemy
-from sqlalchemy import Column, Integer, String, ForeignKey
+# Modelo de dados alvo da Fase 1 — ver docs/features/modelo-dados.md e
+# docs/arquitetura/decisoes.md (ADR-001 a ADR-007).
+#
+# Sem Alembic (ADR-001): mudanças de schema aplicam-se apagando
+# piloto_projetos.db e deixando Base.metadata.create_all() recriar no boot.
+
+from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 
-# Quem faz a conexão entre as classes e a tabela do banco de dados
-# Ele utiliza de conceitos como herança por meio de uma síntase Python simples
+# Base declarativa que liga as classes ORM às tabelas do banco.
+Base = declarative_base()
+# Alias de compatibilidade com o nome usado no código legado.
+BancoDB = Base
 
-BancoDB = declarative_base()
 
-# 1. Tabela de Trabalhadores
-class Trabalhador(BancoDB):
-    # __tablename__ é o nome da tabela que estou criando
+# 1. Trabalhador — colaborador da empresa júnior (diretor, gerente, consultor).
+class Trabalhador(Base):
     __tablename__ = "trabalhadores"
 
-    #campos obrigatórios = nullable =  False
-    #colunas são criadas diretamente com comando Python
     id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String, nullable=False) 
+    nome = Column(String, nullable=False)
     cargo = Column(String, nullable=False)
     emailInstitucional = Column(String, nullable=False)
-    
-    # Relação: Um trabalhador pode ter várias tarefas no Kanban
-    tarefas = relationship("TarefaKanban", back_populates="responsavel")
 
-# 2. Tabela de Projetos
-class Projeto(BancoDB):
+
+# 2. Professor — orientador externo à empresa júnior (ADR-004).
+class Professor(Base):
+    __tablename__ = "professores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+
+
+# 3. Gestao — semestre/ciclo de gestão (ex. "2026.1"), agrupa projetos.
+class Gestao(Base):
+    __tablename__ = "gestoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, unique=True, nullable=False)
+    ativa = Column(Boolean, default=False, nullable=False)
+
+    projetos = relationship("Projeto", back_populates="gestao")
+
+
+# 4. Servico — catálogo dos serviços da cartela.
+# Nasce VAZIO nesta fase (ADR-005); seed é trabalho da Fase 2.
+class Servico(Base):
+    __tablename__ = "servicos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, unique=True, nullable=False)
+    descricao = Column(String, nullable=True)
+
+    etapas_template = relationship(
+        "EtapaTemplate", back_populates="servico", order_by="EtapaTemplate.ordem"
+    )
+    projetos = relationship("Projeto", back_populates="servico")
+
+
+# 5. EtapaTemplate — molde de etapa por serviço.
+# Nasce VAZIO nesta fase (ADR-005).
+class EtapaTemplate(Base):
+    __tablename__ = "etapas_template"
+
+    id = Column(Integer, primary_key=True, index=True)
+    servico_id = Column(Integer, ForeignKey("servicos.id"), nullable=False)
+    ordem = Column(Integer, nullable=False)
+    nome = Column(String, nullable=False)
+    descricao_padrao = Column(String, nullable=True)
+    dias_uteis_esperados_padrao = Column(Integer, nullable=True)
+
+    servico = relationship("Servico", back_populates="etapas_template")
+
+
+# 6. Projeto (reescrito) — ver tabela de campos em modelo-dados.md.
+class Projeto(Base):
     __tablename__ = "projetos"
 
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, index=True, nullable=False)
-    descricao = Column(String)
-    status = Column(String, default="Em andamento") # Ex: Em andamento, Concluído
-    # Campos personalizados para Apoio
-    tipo_servico = Column(String)
-    objetivo = Column(String)
-    nome_contratante = Column(String)
-    agregados_contratante = Column(String) # Pode ser um texto livre separado por vírgulas
+    descricao = Column(String, nullable=True)
+    objetivo = Column(String, nullable=True)
+    nome_contratante = Column(String, nullable=True)
+    # Texto livre separado por vírgula (mantido como está).
+    agregados_contratante = Column(String, nullable=True)
 
-    #Vão ser retirados por não agregarem informações para o projeto
-    kickoff_realizado = Column(String, default="Não")
-    tap_assinado = Column(String, default="Não")
-    
-    # 1. Colunas de ID's (Chaves Estrangeiras - Foreing Keys)
-    # Relaciona cada colaborador do projeto com seu respectivo ID na tabela
-    gerente_id = Column(Integer, ForeignKey("trabalhadores.id"))
-    consultor1_id = Column(Integer, ForeignKey("trabalhadores.id"))
-    consultor2_id = Column(Integer, ForeignKey("trabalhadores.id"))
-    consultor3_id = Column(Integer, ForeignKey("trabalhadores.id"))
+    servico_id = Column(Integer, ForeignKey("servicos.id"), nullable=False)
+    gestao_id = Column(Integer, ForeignKey("gestoes.id"), nullable=False)
 
-    # 2. RELACIONAMENTOS
-    # Pega os dados dos ID's relacionados
+    # Kanban da galeria (ADR-003); independente de Etapa.status.
+    # kickoff | andamento | finalizacao | ajustes | concluido
+    fase = Column(String, nullable=False, default="kickoff")
+    # Marco contratual independente da fase (ADR-007).
+    tap_assinado = Column(Boolean, nullable=False, default=False)
+
+    gerente_id = Column(Integer, ForeignKey("trabalhadores.id"), nullable=False)
+    diretor_id = Column(Integer, ForeignKey("trabalhadores.id"), nullable=False)
+    professor_orientador_id = Column(
+        Integer, ForeignKey("professores.id"), nullable=True
+    )
+
+    servico = relationship("Servico", back_populates="projetos")
+    gestao = relationship("Gestao", back_populates="projetos")
     gerente = relationship("Trabalhador", foreign_keys=[gerente_id])
-    consultor1 = relationship("Trabalhador", foreign_keys=[consultor1_id])
-    consultor2 = relationship("Trabalhador", foreign_keys=[consultor2_id])
-    consultor3 = relationship("Trabalhador", foreign_keys=[consultor3_id])
+    diretor = relationship("Trabalhador", foreign_keys=[diretor_id])
+    professor_orientador = relationship(
+        "Professor", foreign_keys=[professor_orientador_id]
+    )
 
-    # Relação: Um projeto tem várias tarefas no seu Kanban
-    tarefas = relationship("TarefaKanban", back_populates="projeto")
+    etapas = relationship(
+        "Etapa", back_populates="projeto", order_by="Etapa.ordem"
+    )
 
-# 3. Tabela de Tarefas do Kanban
-class TarefaKanban(BancoDB):
-    __tablename__ = "tarefas_kanban"
+
+# 7. Etapa (substitui TarefaKanban) — etapa real de um projeto.
+class Etapa(Base):
+    __tablename__ = "etapas"
 
     id = Column(Integer, primary_key=True, index=True)
-    titulo = Column(String, nullable=False)
-    descricao = Column(String)
-    # A coluna do Kanban onde a tarefa está. Ex: "TODO", "DOING", "DONE"
-    coluna_status = Column(String, default="TODO")
-    # Dias úteis de uma tarefa
-    dias_uteis_esperados = Column(Integer, default=1)
-    # Entrega em blocos  
+    projeto_id = Column(Integer, ForeignKey("projetos.id"), nullable=False)
+    # Nulo = etapa adicionada manualmente, fora do template.
+    etapa_template_id = Column(
+        Integer, ForeignKey("etapas_template.id"), nullable=True
+    )
+    ordem = Column(Integer, nullable=False)  # substitui depende_de_id (ADR-006)
+    nome = Column(String, nullable=False)
+    descricao = Column(String, nullable=True)
+    dias_uteis_esperados = Column(Integer, nullable=True)
     bloco_entrega = Column(String, nullable=True)
-    """
-    Tipo de relacionamento de dependências entre tarefas. A variável recebe uma chave estrangeira da prórpria tabela de tarefas
-    para podermos relacionar diferentes ID's de tarefas.
-    """
-    depende_de_id = Column(Integer, ForeignKey("tarefas_kanban.id"), nullable=True)
-    
-    # Chaves estrangeiras (ligam a tarefa ao projeto e ao trabalhador)
-    projeto_id = Column(Integer, ForeignKey("projetos.id"))
-    trabalhador_id = Column(Integer, ForeignKey("trabalhadores.id"))
+    # Kanban interno (ADR-003): nao_iniciada | em_andamento | concluida
+    status = Column(String, nullable=False, default="nao_iniciada")
 
-    # Relações inversas para facilitar as buscas
-    projeto = relationship("Projeto", back_populates="tarefas")
-    responsavel = relationship("Trabalhador", back_populates="tarefas")
+    projeto = relationship("Projeto", back_populates="etapas")
+    etapa_template = relationship("EtapaTemplate")
+    consultores = relationship("EtapaConsultor", back_populates="etapa")
 
+
+# 8. EtapaConsultor — associação N:N entre Etapa e Trabalhador (ADR-002).
+# Soft-delete only: remoção preenche data_saida, nunca apaga a linha.
+class EtapaConsultor(Base):
+    __tablename__ = "etapa_consultores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    etapa_id = Column(Integer, ForeignKey("etapas.id"), nullable=False)
+    trabalhador_id = Column(Integer, ForeignKey("trabalhadores.id"), nullable=False)
+    data_entrada = Column(Date, nullable=False)
+    # NULL = ainda ativo na etapa.
+    data_saida = Column(Date, nullable=True)
+
+    etapa = relationship("Etapa", back_populates="consultores")
+    trabalhador = relationship("Trabalhador")
