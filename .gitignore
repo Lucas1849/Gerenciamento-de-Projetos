@@ -20,4 +20,6 @@ dist/
 # Sistema operacional
 .DS_Store
 Thumbs.db
-```
+
+# Banco de dados SQLite (recriado via create_all() — ver ADR-001)
+*.db
