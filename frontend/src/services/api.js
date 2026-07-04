@@ -51,14 +51,77 @@ export function criarTrabalhador({ nome, cargo, emailInstitucional }) {
   });
 }
 
+// ─── Professores ────────────────────────────────────────────────────────────
+
+/** Retorna a lista de professores orientadores. */
+export function listarProfessores() {
+  return request('/professores/');
+}
+
+/** Cadastra um novo professor orientador. */
+export function criarProfessor({ nome, email }) {
+  return request('/professores/', {
+    method: 'POST',
+    body: JSON.stringify({ nome, email: email || null }),
+  });
+}
+
+// ─── Gestões ────────────────────────────────────────────────────────────────
+
+/** Retorna a lista de gestões (ciclos semestrais). */
+export function listarGestoes() {
+  return request('/gestoes/');
+}
+
+/** Cadastra uma nova gestão. */
+export function criarGestao({ nome, ativa = false }) {
+  return request('/gestoes/', {
+    method: 'POST',
+    body: JSON.stringify({ nome, ativa }),
+  });
+}
+
+// ─── Catálogo de Serviços ───────────────────────────────────────────────────
+
+/** Retorna a lista de serviços do catálogo. */
+export function listarServicos() {
+  return request('/servicos/');
+}
+
+/** Retorna um serviço com suas etapas-template. */
+export function obterServico(servicoId) {
+  return request(`/servicos/${servicoId}`);
+}
+
+/** Cadastra um novo serviço no catálogo. */
+export function criarServico({ nome, descricao }) {
+  return request('/servicos/', {
+    method: 'POST',
+    body: JSON.stringify({ nome, descricao: descricao || null }),
+  });
+}
+
+/** Cadastra uma etapa-template vinculada a um serviço. */
+export function criarEtapaTemplate(dados) {
+  return request('/etapas-template/', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
 // ─── Projetos ───────────────────────────────────────────────────────────────
 
-/** Retorna a lista de todos os projetos cadastrados. */
+/** Retorna a lista de todos os projetos cadastrados (com fase). */
 export function listarProjetos() {
   return request('/projetos/');
 }
 
-/** Cadastra um novo projeto. */
+/** Retorna o detalhe de um projeto (etapas + equipe derivada). */
+export function obterProjeto(projetoId) {
+  return request(`/projetos/${projetoId}`);
+}
+
+/** Cadastra um novo projeto (gera as etapas do template automaticamente). */
 export function criarProjeto(dados) {
   return request('/projetos/', {
     method: 'POST',
@@ -66,25 +129,40 @@ export function criarProjeto(dados) {
   });
 }
 
-// ─── Tarefas (Kanban) ───────────────────────────────────────────────────────
-
-/** Retorna todas as tarefas de um projeto específico. */
-export function listarTarefasDoProjeto(projetoId) {
-  return request(`/projetos/${projetoId}/tarefas`);
-}
-
-/** Cria uma nova tarefa vinculada a um projeto. */
-export function criarTarefa(dados) {
-  return request('/tarefas/', {
-    method: 'POST',
+/** Atualiza fase e/ou tap_assinado de um projeto. */
+export function atualizarProjeto(projetoId, dados) {
+  return request(`/projetos/${projetoId}`, {
+    method: 'PUT',
     body: JSON.stringify(dados),
   });
 }
 
-/** Atualiza o status (coluna) de uma tarefa existente. */
-export function atualizarStatusTarefa(tarefaId, coluna_status) {
-  return request(`/tarefas/${tarefaId}/status`, {
+/** Retorna as etapas de um projeto específico. */
+export function listarEtapasDoProjeto(projetoId) {
+  return request(`/projetos/${projetoId}/etapas`);
+}
+
+// ─── Etapas ─────────────────────────────────────────────────────────────────
+
+/** Atualiza o status (coluna) de uma etapa. */
+export function atualizarStatusEtapa(etapaId, status) {
+  return request(`/etapas/${etapaId}/status`, {
     method: 'PUT',
-    body: JSON.stringify({ coluna_status }),
+    body: JSON.stringify({ status }),
+  });
+}
+
+/** Vincula um consultor a uma etapa. */
+export function adicionarConsultorEtapa(etapaId, trabalhadorId) {
+  return request(`/etapas/${etapaId}/consultores`, {
+    method: 'POST',
+    body: JSON.stringify({ trabalhador_id: trabalhadorId }),
+  });
+}
+
+/** Remove um consultor da etapa (soft-delete no backend: preenche data_saida). */
+export function removerConsultorEtapa(etapaId, trabalhadorId) {
+  return request(`/etapas/${etapaId}/consultores/${trabalhadorId}`, {
+    method: 'DELETE',
   });
 }

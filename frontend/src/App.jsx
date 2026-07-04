@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import FormularioColaborador from './components/FormularioColaborador';
 import FormularioProjeto from './components/FormularioProjetos';
-import Kanban from './components/Kanban';
+import FormularioGestao from './components/FormularioGestao';
+import FormularioProfessor from './components/FormularioProfessor';
+import KanbanFases from './components/KanbanFases';
 import PaginaProjeto from './components/PaginaProjeto';
 import { useToast, ToastContainer } from './components/Toast';
-import { listarProjetos, listarTrabalhadores } from './services/api';
+import { listarProjetos, listarTrabalhadores, listarGestoes, listarProfessores } from './services/api';
 
 const TELAS = {
   PROJETOS: 'projetos',
@@ -14,22 +16,28 @@ const TELAS = {
 
 // ─── Hooks de dados ─────────────────────────────────────────────────────────────
 function useDados() {
-  const [projetos,  setProjetos]  = useState([]);
-  const [equipe,    setEquipe]    = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro,      setErro]      = useState(null);
+  const [projetos,    setProjetos]    = useState([]);
+  const [equipe,      setEquipe]      = useState([]);
+  const [gestoes,     setGestoes]     = useState([]);
+  const [professores, setProfessores] = useState([]);
+  const [carregando,  setCarregando]  = useState(true);
+  const [erro,        setErro]        = useState(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
     setErro(null);
     try {
-      const [dadosProjetos, dadosEquipe] = await Promise.all([
+      const [dadosProjetos, dadosEquipe, dadosGestoes, dadosProfessores] = await Promise.all([
         listarProjetos(),
         listarTrabalhadores(),
+        listarGestoes(),
+        listarProfessores(),
       ]);
 
       setProjetos(dadosProjetos);
       setEquipe(dadosEquipe);
+      setGestoes(dadosGestoes);
+      setProfessores(dadosProfessores);
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -39,7 +47,13 @@ function useDados() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  return { projetos, equipe, carregando, erro, recarregar: carregar };
+  return {
+    projetos, equipe, gestoes, professores,
+    carregando, erro,
+    recarregar: carregar,
+    atualizarProjetoLocal: (projetoAtualizado) =>
+      setProjetos(prev => prev.map(p => (p.id === projetoAtualizado.id ? projetoAtualizado : p))),
+  };
 }
 
 // ─── Componentes auxiliares ─────────────────────────────────────────────────────
@@ -82,26 +96,19 @@ function Skeleton() {
   );
 }
 
-function CardProjeto({ projeto, aoAbrir }) {
-  const statusMap = {
-    'Em andamento': 'chip-brand',
-    'Concluído':    'chip-success',
-    'Pausado':      'chip-warning',
-    'Cancelado':    'chip-error',
-  };
-  const chipClasse = statusMap[projeto.status] ?? 'chip-brand';
-
+function CardGestao({ gestao, totalProjetos, aoAbrir }) {
   return (
     <div className="ui-card card-projeto">
       <div className="card-projeto-header">
-        <span className={`chip ${chipClasse}`}>{projeto.status}</span>
-        <span className="card-tipo">{projeto.tipo_servico}</span>
+        <span className={`chip ${gestao.ativa ? 'chip-success' : 'chip-brand'}`}>
+          {gestao.ativa ? 'Ativa' : 'Encerrada'}
+        </span>
       </div>
-      <h3 className="card-projeto-nome">{projeto.nome}</h3>
-      <p className="card-projeto-desc">{projeto.descricao}</p>
+      <h3 className="card-projeto-nome">{gestao.nome}</h3>
+      <p className="card-projeto-desc">{totalProjetos} projeto(s) nesta gestão</p>
       <div className="card-projeto-footer">
-        <span className="card-contratante">🏢 {projeto.nome_contratante}</span>
-        <button className="btn btn-primary btn-sm" onClick={() => aoAbrir(projeto.id)}>
+        <span />
+        <button className="btn btn-primary btn-sm" onClick={() => aoAbrir(gestao.id)}>
           Abrir →
         </button>
       </div>
@@ -122,8 +129,21 @@ function CardColaborador({ pessoa }) {
   );
 }
 
-// ─── Tela: Projetos ─────────────────────────────────────────────────────────────
-function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto, toast }) {
+function CardProfessor({ professor }) {
+  return (
+    <div className="ui-card card-colaborador">
+      <div className="avatar">{professor.nome.charAt(0).toUpperCase()}</div>
+      <div className="card-colaborador-info">
+        <h3>{professor.nome}</h3>
+        <p className="cargo">Professor Orientador</p>
+        <p className="email">📧 {professor.email || 'Sem e-mail'}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tela: Galeria de Gestões ───────────────────────────────────────────────────
+function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAbrirGestao, onRecarregar, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
@@ -133,8 +153,64 @@ function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto, toa
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Projetos</h1>
-          <p className="page-subtitle">{projetos.length} projeto(s) cadastrado(s)</p>
+          <h1 className="page-title">Gestões</h1>
+          <p className="page-subtitle">{gestoes.length} gestão(ões) cadastrada(s)</p>
+        </div>
+        <button
+          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
+          onClick={() => setMostrarForm(v => !v)}
+        >
+          {mostrarForm ? '✕ Cancelar' : '+ Nova Gestão'}
+        </button>
+      </div>
+
+      {mostrarForm && (
+        <div className="form-container">
+          <FormularioGestao
+            toast={toast}
+            aoCriar={() => { setMostrarForm(false); onRecarregar(); }}
+          />
+        </div>
+      )}
+
+      {gestoes.length === 0 ? (
+        <EstadoVazio
+          mensagem="Nenhuma gestão cadastrada."
+          acao={() => setMostrarForm(true)}
+          rotulo="Criar primeira gestão"
+        />
+      ) : (
+        <div className="card-grid">
+          {gestoes.map(g => (
+            <CardGestao
+              key={g.id}
+              gestao={g}
+              totalProjetos={projetos.filter(p => p.gestao_id === g.id).length}
+              aoAbrir={onAbrirGestao}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Tela: Kanban de fases de uma Gestão ────────────────────────────────────────
+function TelaGestao({ gestao, projetos, aoVoltar, onAbrirProjeto, onAtualizarProjeto, onRecarregar, toast }) {
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  const projetosDaGestao = projetos.filter(p => p.gestao_id === gestao.id);
+
+  return (
+    <div>
+      <button className="btn btn-secondary" onClick={aoVoltar} style={{ marginBottom: 'var(--sp-16)' }}>
+        ← Voltar para Gestões
+      </button>
+
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Gestão {gestao.nome}</h1>
+          <p className="page-subtitle">{projetosDaGestao.length} projeto(s) nesta gestão</p>
         </div>
         <button
           className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
@@ -146,30 +222,36 @@ function TelaProjetos({ projetos, carregando, erro, onRetry, onAbrirProjeto, toa
 
       {mostrarForm && (
         <div className="form-container">
-          <FormularioProjeto toast={toast}/>
+          <FormularioProjeto
+            toast={toast}
+            gestaoInicialId={gestao.id}
+            aoCriar={() => { setMostrarForm(false); onRecarregar(); }}
+          />
         </div>
       )}
 
-      {projetos.length === 0 ? (
+      {projetosDaGestao.length === 0 ? (
         <EstadoVazio
-          mensagem="Nenhum projeto cadastrado."
+          mensagem="Nenhum projeto nesta gestão."
           acao={() => setMostrarForm(true)}
           rotulo="Criar primeiro projeto"
         />
       ) : (
-        <div className="card-grid">
-          {projetos.map(p => (
-            <CardProjeto key={p.id} projeto={p} aoAbrir={onAbrirProjeto} />
-          ))}
-        </div>
+        <KanbanFases
+          projetos={projetosDaGestao}
+          aoAbrirProjeto={onAbrirProjeto}
+          aoAtualizarProjeto={onAtualizarProjeto}
+          toast={toast}
+        />
       )}
     </div>
   );
 }
 
 // ─── Tela: Equipe ───────────────────────────────────────────────────────────────
-function TelaEquipe({ equipe, carregando, erro, onRetry, toast }) {
-  const [mostrarForm, setMostrarForm] = useState(false);
+function TelaEquipe({ equipe, professores, carregando, erro, onRetry, onRecarregar, toast }) {
+  const [mostrarForm,     setMostrarForm]     = useState(false);
+  const [mostrarFormProf, setMostrarFormProf] = useState(false);
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
   if (carregando) return <Skeleton />;
@@ -208,49 +290,107 @@ function TelaEquipe({ equipe, carregando, erro, onRetry, toast }) {
           ))}
         </div>
       )}
+
+      {/* Professores orientadores */}
+      <div className="page-header" style={{ marginTop: 'var(--sp-32)' }}>
+        <div>
+          <h1 className="page-title">Professores Orientadores</h1>
+          <p className="page-subtitle">{professores.length} professor(es) cadastrado(s)</p>
+        </div>
+        <button
+          className={mostrarFormProf ? 'btn btn-secondary' : 'btn btn-primary'}
+          onClick={() => setMostrarFormProf(v => !v)}
+        >
+          {mostrarFormProf ? '✕ Cancelar' : '+ Novo Professor'}
+        </button>
+      </div>
+
+      {mostrarFormProf && (
+        <div className="form-container">
+          <FormularioProfessor
+            toast={toast}
+            aoCriar={() => { setMostrarFormProf(false); onRecarregar(); }}
+          />
+        </div>
+      )}
+
+      {professores.length === 0 ? (
+        <EstadoVazio
+          mensagem="Nenhum professor cadastrado."
+          acao={() => setMostrarFormProf(true)}
+          rotulo="Adicionar professor"
+        />
+      ) : (
+        <div className="card-grid">
+          {professores.map(p => (
+            <CardProfessor key={p.id} professor={p} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── App principal ──────────────────────────────────────────────────────────────
 export default function App() {
-  const [telaAtual,         setTelaAtual]         = useState(TELAS.PROJETOS);
+  const [telaAtual,          setTelaAtual]          = useState(TELAS.PROJETOS);
+  const [gestaoSelecionada,  setGestaoSelecionada]  = useState(null);
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
 
-  const { projetos, equipe, carregando, erro, recarregar } = useDados();
+  const {
+    projetos, equipe, gestoes, professores,
+    carregando, erro, recarregar, atualizarProjetoLocal,
+  } = useDados();
   const { toasts, remover, toast } = useToast();
 
   function navegar(tela) {
     setTelaAtual(tela);
+    setGestaoSelecionada(null);
     setProjetoSelecionado(null);
   }
 
-  function abrirProjeto(id) {
-    setProjetoSelecionado(id);
-  }
-
-  const projetoAtual = projetoSelecionado
-    ? projetos.find(p => p.id === projetoSelecionado) ?? null
+  const gestaoAtual = gestaoSelecionada
+    ? gestoes.find(g => g.id === gestaoSelecionada) ?? null
     : null;
 
   function renderConteudo() {
-    if (projetoAtual) {
+    // Nível 3: página do projeto
+    if (projetoSelecionado) {
       return (
         <PaginaProjeto
-          projeto={projetoAtual}
-          aoVoltar={() => setProjetoSelecionado(null)}
+          projetoId={projetoSelecionado}
+          aoVoltar={() => { setProjetoSelecionado(null); recarregar(); }}
+          toast={toast}
         />
       );
     }
 
     if (telaAtual === TELAS.PROJETOS) {
+      // Nível 2: kanban de fases da gestão selecionada
+      if (gestaoAtual) {
+        return (
+          <TelaGestao
+            gestao={gestaoAtual}
+            projetos={projetos}
+            aoVoltar={() => setGestaoSelecionada(null)}
+            onAbrirProjeto={setProjetoSelecionado}
+            onAtualizarProjeto={atualizarProjetoLocal}
+            onRecarregar={recarregar}
+            toast={toast}
+          />
+        );
+      }
+
+      // Nível 1: galeria de gestões
       return (
-        <TelaProjetos
+        <TelaGaleriaGestoes
+          gestoes={gestoes}
           projetos={projetos}
           carregando={carregando}
           erro={erro}
           onRetry={recarregar}
-          onAbrirProjeto={abrirProjeto}
+          onAbrirGestao={setGestaoSelecionada}
+          onRecarregar={recarregar}
           toast={toast}
         />
       );
@@ -259,9 +399,11 @@ export default function App() {
     return (
       <TelaEquipe
         equipe={equipe}
+        professores={professores}
         carregando={carregando}
         erro={erro}
         onRetry={recarregar}
+        onRecarregar={recarregar}
         toast={toast}
       />
     );
@@ -277,7 +419,7 @@ export default function App() {
 
         <nav>
           <button
-            className={`menu-btn ${telaAtual === TELAS.PROJETOS && !projetoAtual ? 'ativo' : ''}`}
+            className={`menu-btn ${telaAtual === TELAS.PROJETOS && !projetoSelecionado ? 'ativo' : ''}`}
             onClick={() => navegar(TELAS.PROJETOS)}
           >
             📁 Projetos

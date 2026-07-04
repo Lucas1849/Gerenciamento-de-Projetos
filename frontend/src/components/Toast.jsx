@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────────
 // tipo: 'success' | 'error' | 'warning' | 'info'
@@ -13,6 +13,7 @@ const CONFIG = {
 const DURACAO_PADRAO = 4000;
 
 // ─── Hook principal ─────────────────────────────────────────────────────────────
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
   const [toasts, setToasts] = useState([]);
   const contadorRef = useRef(0);
