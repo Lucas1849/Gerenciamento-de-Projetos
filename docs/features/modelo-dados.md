@@ -105,7 +105,7 @@ Sem mudanças nesta fase (`nome`, `cargo`, `emailInstitucional`). Campo de "pont
    - Gera uma `Etapa` para cada `EtapaTemplate` do serviço escolhido.
    - Atribui automaticamente os N consultores iniciais a **todas** as etapas geradas, criando uma linha em `EtapaConsultor` por (etapa, consultor) com `data_entrada = hoje`.
 3. A partir daí, a equipe de cada etapa pode ser ajustada individualmente (adicionar/remover consultor), sem afetar as demais etapas.
-4. A "equipe do projeto" mostrada na Visão Geral é **derivada**: união de todos os `trabalhador_id` com `data_saida IS NULL` em qualquer etapa daquele projeto. Não existe uma lista de equipe armazenada no nível do projeto.
+4. A "equipe do projeto" mostrada na Visão Geral é **derivada**: união de todos os `trabalhador_id` com `data_saida IS NULL` em qualquer etapa daquele projeto. Não existe uma lista de equipe armazenada no nível do projeto. Desde a Fase 3, o `GET /projetos/` (listagem) também embute essa equipe derivada em cada item (`ProjetoListaResposta.equipe`) para alimentar os avatares dos cards do Kanban de fases.
 
 ## Exemplos de payload
 
