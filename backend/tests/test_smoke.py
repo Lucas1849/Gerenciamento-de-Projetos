@@ -137,6 +137,27 @@ def test_soft_delete_consultor(client, db_session):
     assert alvo not in [c["id"] for c in etapa_resp["consultores"]]
 
 
+def test_atualizar_tap_assinado(client, db_session):
+    """Sela o contrato usado pela UI: PUT /projetos/{id} alterna tap_assinado
+    sem tocar na fase (ADR-007: TAP é flag independente, não derivada)."""
+    base = _setup_base(client, n_templates=1, n_consultores=1)
+    projeto = _criar_projeto(client, base)
+    assert projeto["tap_assinado"] is False
+
+    # Marca como assinado e persiste.
+    resp = client.put(f"/projetos/{projeto['id']}", json={"tap_assinado": True})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["tap_assinado"] is True
+    assert client.get(f"/projetos/{projeto['id']}").json()["tap_assinado"] is True
+
+    # Reverte para pendente; a fase não muda em nenhum dos dois sentidos.
+    resp = client.put(f"/projetos/{projeto['id']}", json={"tap_assinado": False})
+    assert resp.status_code == 200, resp.text
+    detalhe = client.get(f"/projetos/{projeto['id']}").json()
+    assert detalhe["tap_assinado"] is False
+    assert detalhe["fase"] == "kickoff"
+
+
 def test_independencia_fase_status(client, db_session):
     base = _setup_base(client, n_templates=2, n_consultores=1)
     projeto = _criar_projeto(client, base)
