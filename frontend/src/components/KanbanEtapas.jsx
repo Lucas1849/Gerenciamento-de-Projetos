@@ -9,8 +9,8 @@ import {
 
 const COLUNAS = [
   { status: 'nao_iniciada', titulo: 'Não Iniciada', cor: 'var(--color-text-secondary)', next: 'em_andamento', nextLabel: 'Iniciar →' },
-  { status: 'em_andamento', titulo: 'Em Andamento', cor: 'var(--color-accent)',          prev: 'nao_iniciada', next: 'concluida', nextLabel: 'Concluir ✓' },
-  { status: 'concluida',    titulo: 'Concluída',     cor: 'var(--color-success)',         prev: 'em_andamento' },
+  { status: 'em_andamento', titulo: 'Em Andamento', cor: 'var(--fase-andamento)',        prev: 'nao_iniciada', next: 'concluida', nextLabel: 'Concluir ✓' },
+  { status: 'concluida',    titulo: 'Concluída',     cor: 'var(--fase-concluido)',        prev: 'em_andamento' },
 ];
 
 function EquipeEtapa({ etapa, colaboradores, aoAdicionar, aoRemover }) {
@@ -129,8 +129,12 @@ export default function KanbanEtapas({ projetoId, toast }) {
             .sort((a, b) => a.ordem - b.ordem);
 
           return (
-            <div key={coluna.status} className="kanban-column" style={{ borderTopColor: coluna.cor }}>
-              <h3>{coluna.titulo} ({etapasColuna.length})</h3>
+            <div key={coluna.status} className="kanban-column">
+              <div className="kanban-col-header">
+                <span className="kanban-dot" style={{ backgroundColor: coluna.cor }} />
+                <h3>{coluna.titulo}</h3>
+                <span className="kanban-count">{etapasColuna.length}</span>
+              </div>
 
               {etapasColuna.map(etapa => (
                 <div key={etapa.id} className="ui-card kanban-card">
@@ -150,7 +154,7 @@ export default function KanbanEtapas({ projetoId, toast }) {
                   )}
 
                   {etapa.dias_uteis_esperados != null && (
-                    <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-accent)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
+                    <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
                       ⏳ Prazo: {etapa.dias_uteis_esperados} dia(s) útil(eis)
                     </p>
                   )}

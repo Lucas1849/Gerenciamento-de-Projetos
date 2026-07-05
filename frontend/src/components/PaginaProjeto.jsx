@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import KanbanEtapas from './KanbanEtapas';
 import { FASE_LABEL } from './fases';
-import { obterProjeto } from '../services/api';
+import { obterProjeto, atualizarProjeto } from '../services/api';
 
 const FASE_CHIP = {
   kickoff:     'chip-warning',
@@ -23,6 +23,20 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
   }, [projetoId]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  // O TAP é assinado pelo cliente via Clicksign fora do sistema; aqui o status
+  // é atualizado manualmente (gatilho automático é item de roadmap).
+  const alternarTap = () => {
+    const novoValor = !projeto.tap_assinado;
+    if (!novoValor && !window.confirm('Reverter o TAP para pendente?')) return;
+    atualizarProjeto(projeto.id, { tap_assinado: novoValor })
+      .then(resp => {
+        // Merge parcial: o PUT devolve equipe mas não etapas; o detalhe local tem mais campos.
+        setProjeto(prev => ({ ...prev, tap_assinado: resp.tap_assinado }));
+        toast.success(novoValor ? 'TAP marcado como assinado.' : 'TAP revertido para pendente.');
+      })
+      .catch(() => toast.error('Erro ao atualizar o status do TAP.'));
+  };
 
   if (erro) {
     return (
@@ -54,7 +68,7 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
       <div className="ui-card" style={{ marginBottom: 'var(--sp-24)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h1)', color: 'var(--color-brand)', marginBottom: 'var(--sp-8)' }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h1)', color: 'var(--color-text-primary)', marginBottom: 'var(--sp-8)' }}>
               {projeto.nome}
             </h1>
             <p style={{ fontSize: 'var(--text-body1)', color: 'var(--color-text-secondary)' }}>
@@ -98,6 +112,17 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
               <span className={`chip ${chipClasse}`}>
                 Fase: {FASE_LABEL[projeto.fase] ?? projeto.fase}
               </span>
+            </div>
+            <div style={{ marginTop: 'var(--sp-16)' }}>
+              {projeto.tap_assinado ? (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={alternarTap}>
+                  Reverter para pendente
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary btn-sm" onClick={alternarTap}>
+                  ✓ Marcar TAP como assinado
+                </button>
+              )}
             </div>
           </div>
 
