@@ -94,16 +94,14 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
   };
 
   return (
-    <div className="ui-card" style={{ borderTop: `4px solid var(--color-brand)`, maxWidth: '900px' }}>
-      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h3)', color: 'var(--color-brand)', borderBottom: '1px solid var(--color-border-subtle)', paddingBottom: 'var(--sp-16)', marginBottom: 'var(--sp-24)' }}>
-        Cadastrar Novo Projeto
-      </h3>
+    <div className="ui-card form-card">
+      <h3 className="form-titulo">Cadastrar Novo Projeto</h3>
 
       <form onSubmit={salvar}>
 
         {/* Bloco 1 — Informações principais */}
-        <h4 style={{ fontSize: 'var(--text-h4)', marginBottom: 'var(--sp-16)' }}>Informações Principais</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-16)', marginBottom: 'var(--sp-32)' }}>
+        <h4 className="form-secao-titulo">Informações Principais</h4>
+        <div className="form-grid-2">
           <div>
             <label className="field-label">Nome do Projeto</label>
             <input className="input-field" type="text" placeholder="Ex: Plano de Negócios 2026"
@@ -118,13 +116,13 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
               ))}
             </select>
           </div>
-          <div style={{ gridColumn: 'span 2' }}>
+          <div className="form-span-2">
             <label className="field-label">Objetivo do Projeto</label>
             <textarea className="input-field" placeholder="Descreva o objetivo principal..."
               style={{ minHeight: '80px', resize: 'vertical' }}
               value={campos.objetivo} onChange={set('objetivo')} />
           </div>
-          <div style={{ gridColumn: 'span 2' }}>
+          <div className="form-span-2">
             <label className="field-label">Descrição Curta</label>
             <input className="input-field" type="text" placeholder="Uma frase que resuma o projeto"
               value={campos.descricao} onChange={set('descricao')} />
@@ -133,7 +131,7 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
 
         {/* Pré-visualização das etapas do serviço escolhido */}
         {etapasTemplate.length > 0 && (
-          <div style={{ marginBottom: 'var(--sp-32)', backgroundColor: 'var(--color-background)', padding: 'var(--sp-16)', borderRadius: 'var(--radius-lg)' }}>
+          <div className="form-bloco">
             <span className="field-label">Etapas que serão geradas automaticamente</span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-8)', marginTop: 'var(--sp-8)' }}>
               {[...etapasTemplate].sort((a, b) => a.ordem - b.ordem).map(et => (
@@ -147,10 +145,10 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
         )}
 
         {/* Bloco 2 — Cliente e iniciação */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-32)', marginBottom: 'var(--sp-32)', backgroundColor: 'var(--color-background)', padding: 'var(--sp-24)', borderRadius: 'var(--radius-lg)' }}>
+        <div className="form-bloco form-bloco-grid-2">
           <div>
-            <h4 style={{ fontSize: 'var(--text-h4)', marginBottom: 'var(--sp-16)' }}>Cliente / Contratante</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
+            <h4 className="form-secao-titulo">Cliente / Contratante</h4>
+            <div className="form-coluna">
               <div>
                 <label className="field-label">Nome Principal</label>
                 <input className="input-field" type="text" placeholder="Empresa ou Responsável"
@@ -165,8 +163,8 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
           </div>
 
           <div>
-            <h4 style={{ fontSize: 'var(--text-h4)', marginBottom: 'var(--sp-16)' }}>Ciclo e Iniciação</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>
+            <h4 className="form-secao-titulo">Ciclo e Iniciação</h4>
+            <div className="form-coluna">
               <div>
                 <label className="field-label">Gestão</label>
                 <select className="input-field" value={campos.gestaoId} onChange={set('gestaoId')} required>
@@ -176,7 +174,7 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
                   ))}
                 </select>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-8)', cursor: 'pointer', fontSize: 'var(--text-body2)' }}>
+              <label className="form-checkbox">
                 <input
                   type="checkbox"
                   checked={campos.tapAssinado}
@@ -189,8 +187,8 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
         </div>
 
         {/* Bloco 3 — Equipe */}
-        <h4 style={{ fontSize: 'var(--text-h4)', marginBottom: 'var(--sp-16)' }}>Equipe Alocada</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--sp-16)', marginBottom: 'var(--sp-24)' }}>
+        <h4 className="form-secao-titulo">Equipe Alocada</h4>
+        <div className="form-grid-equipe">
           <div>
             <label className="field-label">Diretor</label>
             <select className="input-field" value={campos.diretorId} onChange={set('diretorId')} required>
@@ -217,9 +215,9 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
         {/* Consultores iniciais — tamanho variável */}
         <div style={{ marginBottom: 'var(--sp-32)' }}>
           <label className="field-label">Consultores Iniciais (atribuídos a todas as etapas geradas)</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)', marginTop: 'var(--sp-8)' }}>
+          <div className="form-coluna" style={{ gap: 'var(--sp-8)', marginTop: 'var(--sp-8)' }}>
             {consultoresIds.map((valor, i) => (
-              <div key={i} style={{ display: 'flex', gap: 'var(--sp-8)' }}>
+              <div key={i} className="form-linha">
                 <select className="input-field" value={valor} onChange={setConsultor(i)} style={{ flex: 1 }}>
                   <option value="">Selecione um consultor...</option>
                   {colaboradores
@@ -239,7 +237,7 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
           </button>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--sp-24)', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="form-rodape">
           <button type="submit" className="btn btn-primary" disabled={salvando}
             style={{ padding: '12px 32px' }}>
             {salvando ? 'Criando...' : 'Criar Projeto'}

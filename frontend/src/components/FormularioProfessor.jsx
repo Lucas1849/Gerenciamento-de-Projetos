@@ -24,7 +24,7 @@ export default function FormularioProfessor({ toast, aoCriar }) {
 
   return (
     <div className="ui-card" style={{ borderTop: '4px solid var(--color-brand)', maxWidth: '500px' }}>
-      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h3)', color: 'var(--color-brand)', marginBottom: 'var(--sp-16)' }}>
+      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-h3)', color: 'var(--color-brand-glow)', marginBottom: 'var(--sp-16)' }}>
         Novo Professor Orientador
       </h3>
       <form onSubmit={salvar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-16)' }}>

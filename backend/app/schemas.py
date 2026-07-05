@@ -204,6 +204,11 @@ class ProjetoAtualizar(BaseModel):
     tap_assinado: Optional[bool] = None
 
 
+class ProjetoListaResposta(ProjetoResposta):
+    # Card da galeria (Kanban de fases): equipe derivada embutida para os avatares.
+    equipe: List[TrabalhadorResposta] = []
+
+
 class ProjetoDetalheResposta(ProjetoResposta):
     etapas: List[EtapaResposta] = []
     # Equipe derivada: união dos consultores ativos de todas as etapas.

@@ -1,12 +1,13 @@
 // ─── Fases do ciclo de vida do projeto (ADR-003) ────────────────────────────
 // Compartilhado entre KanbanFases (colunas) e PaginaProjeto (chip da fase).
+// Títulos e cores dos dots seguem as colunas do Kanban do Apoio Hub.
 
 export const FASES = [
-  { valor: 'kickoff',     titulo: 'Kick-off',    cor: 'var(--color-text-secondary)' },
-  { valor: 'andamento',   titulo: 'Andamento',   cor: 'var(--color-accent)' },
-  { valor: 'finalizacao', titulo: 'Finalização', cor: 'var(--color-brand)' },
-  { valor: 'ajustes',     titulo: 'Ajustes',     cor: 'var(--color-warning, #b45309)' },
-  { valor: 'concluido',   titulo: 'Concluído',   cor: 'var(--color-success)' },
+  { valor: 'kickoff',     titulo: 'Kick-off',     cor: 'var(--fase-kickoff)' },
+  { valor: 'andamento',   titulo: 'Em Andamento', cor: 'var(--fase-andamento)' },
+  { valor: 'finalizacao', titulo: 'Finalização',  cor: 'var(--fase-finalizacao)' },
+  { valor: 'ajustes',     titulo: 'Ajustes',      cor: 'var(--fase-ajustes)' },
+  { valor: 'concluido',   titulo: 'Concluído',    cor: 'var(--fase-concluido)' },
 ];
 
 export const FASE_LABEL = Object.fromEntries(FASES.map(f => [f.valor, f.titulo]));

@@ -1,4 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import {
+  Home, User, Users, MessageCircle, Building2, CalendarClock, Trophy,
+  Briefcase, GraduationCap, CalendarDays, ClipboardList, LogOut,
+  ChevronRight, Menu, Flame,
+} from 'lucide-react';
 import './App.css';
 import FormularioColaborador from './components/FormularioColaborador';
 import FormularioProjeto from './components/FormularioProjetos';
@@ -6,13 +11,36 @@ import FormularioGestao from './components/FormularioGestao';
 import FormularioProfessor from './components/FormularioProfessor';
 import KanbanFases from './components/KanbanFases';
 import PaginaProjeto from './components/PaginaProjeto';
+import AvatarIniciais from './components/AvatarIniciais';
 import { useToast, ToastContainer } from './components/Toast';
-import { listarProjetos, listarTrabalhadores, listarGestoes, listarProfessores } from './services/api';
+import {
+  listarProjetos, listarTrabalhadores, listarGestoes, listarProfessores, listarServicos,
+} from './services/api';
 
 const TELAS = {
   PROJETOS: 'projetos',
-  EQUIPE:   'equipe',
+  MEMBROS:  'membros',
 };
+
+// Usuário decorativo do shell: o piloto não tem autenticação; os dados reais
+// virão do Apoio Hub quando houver integração (roadmap).
+const USUARIO_DEMO = { nome: 'Lucas', streak: '0 semanas' };
+
+// Sidebar réplica do Apoio Hub. Apenas Projetos e Membros são funcionais no
+// piloto; os demais itens existem só na plataforma real (shell decorativo).
+const ITENS_MENU_HUB = [
+  { rotulo: 'Home',             Icone: Home },
+  { rotulo: 'Meu Perfil',       Icone: User },
+  { rotulo: 'Membros',          Icone: Users,         tela: TELAS.MEMBROS },
+  { rotulo: 'Chat',             Icone: MessageCircle },
+  { rotulo: 'Sede Agora',       Icone: Building2 },
+  { rotulo: 'Escalas',          Icone: CalendarClock },
+  { rotulo: 'Rankings',         Icone: Trophy },
+  { rotulo: 'Projetos',         Icone: Briefcase,     tela: TELAS.PROJETOS },
+  { rotulo: 'Academia',         Icone: GraduationCap },
+  { rotulo: 'Agenda',           Icone: CalendarDays },
+  { rotulo: 'Central de Forms', Icone: ClipboardList },
+];
 
 // ─── Hooks de dados ─────────────────────────────────────────────────────────────
 function useDados() {
@@ -20,6 +48,7 @@ function useDados() {
   const [equipe,      setEquipe]      = useState([]);
   const [gestoes,     setGestoes]     = useState([]);
   const [professores, setProfessores] = useState([]);
+  const [servicos,    setServicos]    = useState([]);
   const [carregando,  setCarregando]  = useState(true);
   const [erro,        setErro]        = useState(null);
 
@@ -27,17 +56,19 @@ function useDados() {
     setCarregando(true);
     setErro(null);
     try {
-      const [dadosProjetos, dadosEquipe, dadosGestoes, dadosProfessores] = await Promise.all([
+      const [dadosProjetos, dadosEquipe, dadosGestoes, dadosProfessores, dadosServicos] = await Promise.all([
         listarProjetos(),
         listarTrabalhadores(),
         listarGestoes(),
         listarProfessores(),
+        listarServicos(),
       ]);
 
       setProjetos(dadosProjetos);
       setEquipe(dadosEquipe);
       setGestoes(dadosGestoes);
       setProfessores(dadosProfessores);
+      setServicos(dadosServicos);
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -48,11 +79,11 @@ function useDados() {
   useEffect(() => { carregar(); }, [carregar]);
 
   return {
-    projetos, equipe, gestoes, professores,
+    projetos, equipe, gestoes, professores, servicos,
     carregando, erro,
     recarregar: carregar,
     atualizarProjetoLocal: (projetoAtualizado) =>
-      setProjetos(prev => prev.map(p => (p.id === projetoAtualizado.id ? projetoAtualizado : p))),
+      setProjetos(prev => prev.map(p => (p.id === projetoAtualizado.id ? { ...p, ...projetoAtualizado } : p))),
   };
 }
 
@@ -116,33 +147,18 @@ function CardGestao({ gestao, totalProjetos, aoAbrir }) {
   );
 }
 
-function CardColaborador({ pessoa }) {
+function CardMembro({ nome, cargo, detalhe }) {
   return (
-    <div className="ui-card card-colaborador">
-      <div className="avatar">{pessoa.nome.charAt(0).toUpperCase()}</div>
-      <div className="card-colaborador-info">
-        <h3>{pessoa.nome}</h3>
-        <p className="cargo">{pessoa.cargo}</p>
-        <p className="email">📧 {pessoa.emailInstitucional}</p>
-      </div>
+    <div className="ui-card card-membro">
+      <AvatarIniciais nome={nome} tamanho={72} />
+      <h3 className="card-membro-nome">{nome}</h3>
+      {cargo && <p className="card-membro-cargo">{cargo}</p>}
+      {detalhe && <p className="card-membro-detalhe">{detalhe}</p>}
     </div>
   );
 }
 
-function CardProfessor({ professor }) {
-  return (
-    <div className="ui-card card-colaborador">
-      <div className="avatar">{professor.nome.charAt(0).toUpperCase()}</div>
-      <div className="card-colaborador-info">
-        <h3>{professor.nome}</h3>
-        <p className="cargo">Professor Orientador</p>
-        <p className="email">📧 {professor.email || 'Sem e-mail'}</p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Tela: Galeria de Gestões ───────────────────────────────────────────────────
+// ─── Tela: Galeria de Gestões (entrada de "Projetos") ──────────────────────────
 function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAbrirGestao, onRecarregar, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
 
@@ -153,8 +169,11 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Gestões</h1>
-          <p className="page-subtitle">{gestoes.length} gestão(ões) cadastrada(s)</p>
+          <h1 className="page-title">
+            <span className="page-title-icone"><Briefcase size={26} /></span>
+            Projetos
+          </h1>
+          <p className="page-subtitle">Acompanhe o andamento dos projetos da Apoio</p>
         </div>
         <button
           className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
@@ -196,7 +215,7 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
 }
 
 // ─── Tela: Kanban de fases de uma Gestão ────────────────────────────────────────
-function TelaGestao({ gestao, projetos, aoVoltar, onAbrirProjeto, onAtualizarProjeto, onRecarregar, toast }) {
+function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProjeto, onAtualizarProjeto, onRecarregar, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
 
   const projetosDaGestao = projetos.filter(p => p.gestao_id === gestao.id);
@@ -209,7 +228,10 @@ function TelaGestao({ gestao, projetos, aoVoltar, onAbrirProjeto, onAtualizarPro
 
       <div className="page-header">
         <div>
-          <h1 className="page-title">Gestão {gestao.nome}</h1>
+          <h1 className="page-title">
+            <span className="page-title-icone"><Briefcase size={26} /></span>
+            Gestão {gestao.nome}
+          </h1>
           <p className="page-subtitle">{projetosDaGestao.length} projeto(s) nesta gestão</p>
         </div>
         <button
@@ -230,26 +252,23 @@ function TelaGestao({ gestao, projetos, aoVoltar, onAbrirProjeto, onAtualizarPro
         </div>
       )}
 
-      {projetosDaGestao.length === 0 ? (
-        <EstadoVazio
-          mensagem="Nenhum projeto nesta gestão."
-          acao={() => setMostrarForm(true)}
-          rotulo="Criar primeiro projeto"
-        />
-      ) : (
-        <KanbanFases
-          projetos={projetosDaGestao}
-          aoAbrirProjeto={onAbrirProjeto}
-          aoAtualizarProjeto={onAtualizarProjeto}
-          toast={toast}
-        />
-      )}
+      <KanbanFases
+        projetos={projetosDaGestao}
+        servicos={servicos}
+        equipe={equipe}
+        aoAbrirProjeto={onAbrirProjeto}
+        aoAtualizarProjeto={onAtualizarProjeto}
+        aoNovoProjeto={() => setMostrarForm(true)}
+        toast={toast}
+      />
     </div>
   );
 }
 
-// ─── Tela: Equipe ───────────────────────────────────────────────────────────────
-function TelaEquipe({ equipe, professores, carregando, erro, onRetry, onRecarregar, toast }) {
+// ─── Tela: Membros (equipe ativa; cadastro provisório de testes) ────────────────
+function TelaMembros({ equipe, professores, carregando, erro, onRetry, onRecarregar, toast }) {
+  // O cadastro abaixo é provisório: no Apoio Hub real os membros já existem;
+  // remover quando o piloto tiver acesso às tabelas do Hub (roadmap).
   const [mostrarForm,     setMostrarForm]     = useState(false);
   const [mostrarFormProf, setMostrarFormProf] = useState(false);
 
@@ -260,51 +279,33 @@ function TelaEquipe({ equipe, professores, carregando, erro, onRetry, onRecarreg
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Equipe</h1>
-          <p className="page-subtitle">{equipe.length} colaborador(es) cadastrado(s)</p>
+          <h1 className="page-title">
+            <span className="page-title-icone"><Users size={26} /></span>
+            Membros
+          </h1>
+          <p className="page-subtitle">Equipe da Apoio Consultoria Júnior</p>
         </div>
-        <button
-          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
-          onClick={() => setMostrarForm(v => !v)}
-        >
-          {mostrarForm ? '✕ Cancelar' : '+ Novo Colaborador'}
-        </button>
+        <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => { setMostrarForm(v => !v); setMostrarFormProf(false); }}
+          >
+            {mostrarForm ? '✕ Cancelar' : '+ Cadastrar membro'}
+          </button>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => { setMostrarFormProf(v => !v); setMostrarForm(false); }}
+          >
+            {mostrarFormProf ? '✕ Cancelar' : '+ Cadastrar professor'}
+          </button>
+        </div>
       </div>
 
       {mostrarForm && (
         <div className="form-container">
-          <FormularioColaborador toast={toast}/>
+          <FormularioColaborador toast={toast} />
         </div>
       )}
-
-      {equipe.length === 0 ? (
-        <EstadoVazio
-          mensagem="Nenhum colaborador cadastrado."
-          acao={() => setMostrarForm(true)}
-          rotulo="Adicionar colaborador"
-        />
-      ) : (
-        <div className="card-grid">
-          {equipe.map(p => (
-            <CardColaborador key={p.id} pessoa={p} />
-          ))}
-        </div>
-      )}
-
-      {/* Professores orientadores */}
-      <div className="page-header" style={{ marginTop: 'var(--sp-32)' }}>
-        <div>
-          <h1 className="page-title">Professores Orientadores</h1>
-          <p className="page-subtitle">{professores.length} professor(es) cadastrado(s)</p>
-        </div>
-        <button
-          className={mostrarFormProf ? 'btn btn-secondary' : 'btn btn-primary'}
-          onClick={() => setMostrarFormProf(v => !v)}
-        >
-          {mostrarFormProf ? '✕ Cancelar' : '+ Novo Professor'}
-        </button>
-      </div>
-
       {mostrarFormProf && (
         <div className="form-container">
           <FormularioProfessor
@@ -314,18 +315,37 @@ function TelaEquipe({ equipe, professores, carregando, erro, onRetry, onRecarreg
         </div>
       )}
 
-      {professores.length === 0 ? (
+      {equipe.length === 0 ? (
         <EstadoVazio
-          mensagem="Nenhum professor cadastrado."
-          acao={() => setMostrarFormProf(true)}
-          rotulo="Adicionar professor"
+          mensagem="Nenhum membro cadastrado."
+          acao={() => setMostrarForm(true)}
+          rotulo="Cadastrar membro"
         />
       ) : (
-        <div className="card-grid">
-          {professores.map(p => (
-            <CardProfessor key={p.id} professor={p} />
+        <div className="membros-grid">
+          {equipe.map(p => (
+            <CardMembro key={p.id} nome={p.nome} cargo={p.cargo} detalhe={p.emailInstitucional} />
           ))}
         </div>
+      )}
+
+      {professores.length > 0 && (
+        <>
+          <div className="page-header" style={{ marginTop: 'var(--sp-48)', marginBottom: 'var(--sp-24)' }}>
+            <div>
+              <h2 className="page-title" style={{ fontSize: 'var(--text-h2)' }}>
+                <span className="page-title-icone"><GraduationCap size={22} /></span>
+                Professores Orientadores
+              </h2>
+              <p className="page-subtitle">{professores.length} professor(es) cadastrado(s)</p>
+            </div>
+          </div>
+          <div className="membros-grid">
+            {professores.map(p => (
+              <CardMembro key={p.id} nome={p.nome} cargo="Professor Orientador" detalhe={p.email || 'Sem e-mail'} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -336,9 +356,10 @@ export default function App() {
   const [telaAtual,          setTelaAtual]          = useState(TELAS.PROJETOS);
   const [gestaoSelecionada,  setGestaoSelecionada]  = useState(null);
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
+  const [menuAberto,         setMenuAberto]         = useState(false);
 
   const {
-    projetos, equipe, gestoes, professores,
+    projetos, equipe, gestoes, professores, servicos,
     carregando, erro, recarregar, atualizarProjetoLocal,
   } = useDados();
   const { toasts, remover, toast } = useToast();
@@ -347,6 +368,7 @@ export default function App() {
     setTelaAtual(tela);
     setGestaoSelecionada(null);
     setProjetoSelecionado(null);
+    setMenuAberto(false);
   }
 
   const gestaoAtual = gestaoSelecionada
@@ -372,6 +394,8 @@ export default function App() {
           <TelaGestao
             gestao={gestaoAtual}
             projetos={projetos}
+            servicos={servicos}
+            equipe={equipe}
             aoVoltar={() => setGestaoSelecionada(null)}
             onAbrirProjeto={setProjetoSelecionado}
             onAtualizarProjeto={atualizarProjetoLocal}
@@ -397,7 +421,7 @@ export default function App() {
     }
 
     return (
-      <TelaEquipe
+      <TelaMembros
         equipe={equipe}
         professores={professores}
         carregando={carregando}
@@ -411,26 +435,64 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <aside className="sidebar">
+      {/* Topbar visível só no mobile (abre o drawer) */}
+      <header className="topbar">
+        <button
+          type="button"
+          className="topbar-hamburger"
+          aria-label="Abrir menu"
+          onClick={() => setMenuAberto(true)}
+        >
+          <Menu size={22} />
+        </button>
+        <span className="topbar-titulo">Apoio Hub</span>
+      </header>
+
+      {menuAberto && <div className="sidebar-overlay" onClick={() => setMenuAberto(false)} />}
+
+      <aside className={`sidebar ${menuAberto ? 'aberta' : ''}`}>
         <div className="sidebar-logo">
-          Apoio
-          <span>Sistema de Gestão</span>
+          <span className="sidebar-logo-icone">A</span>
+          <div className="sidebar-logo-textos">
+            <div className="sidebar-logo-nome">Apoio Hub</div>
+            <div className="sidebar-logo-sub">Apoio Consultoria Júnior · EJ</div>
+          </div>
+        </div>
+
+        <div className="sidebar-user">
+          <AvatarIniciais nome={USUARIO_DEMO.nome} tamanho={40} />
+          <div className="sidebar-user-textos">
+            <div className="sidebar-user-nome">{USUARIO_DEMO.nome}</div>
+            <div className="sidebar-user-detalhe">
+              <Flame size={12} color="var(--color-warning)" /> {USUARIO_DEMO.streak}
+            </div>
+          </div>
         </div>
 
         <nav>
-          <button
-            className={`menu-btn ${telaAtual === TELAS.PROJETOS && !projetoSelecionado ? 'ativo' : ''}`}
-            onClick={() => navegar(TELAS.PROJETOS)}
-          >
-            📁 Projetos
-          </button>
-          <button
-            className={`menu-btn ${telaAtual === TELAS.EQUIPE ? 'ativo' : ''}`}
-            onClick={() => navegar(TELAS.EQUIPE)}
-          >
-            👥 Equipe
-          </button>
+          {ITENS_MENU_HUB.map(item => {
+            const { rotulo, Icone, tela } = item;
+            const funcional = tela != null;
+            const ativo = funcional && telaAtual === tela;
+            return (
+              <button
+                key={rotulo}
+                className={`menu-btn ${ativo ? 'ativo' : ''}`}
+                aria-disabled={!funcional}
+                onClick={funcional ? () => navegar(tela) : undefined}
+              >
+                <span className="menu-icone"><Icone size={18} /></span>
+                <span className="menu-rotulo">{rotulo}</span>
+                {ativo && <span className="menu-chevron"><ChevronRight size={16} /></span>}
+              </button>
+            );
+          })}
         </nav>
+
+        <button className="menu-btn menu-sair" aria-disabled="true">
+          <span className="menu-icone"><LogOut size={18} /></span>
+          <span className="menu-rotulo">Sair</span>
+        </button>
       </aside>
 
       <main className="main-content">
