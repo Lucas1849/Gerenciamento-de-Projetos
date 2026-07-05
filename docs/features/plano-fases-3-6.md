@@ -7,7 +7,7 @@ Registro do planejamento aprovado pelo responsável do projeto em **04–05/07/2
 | 3 | Identidade visual Apoio Hub + shell da sidebar + responsividade | ✅ **Concluída** (05/07/2026) |
 | 4 | Status do TAP editável na página do projeto + Clicksign no roadmap | ✅ **Concluída** (05/07/2026) |
 | 5 | Datas nas etapas + cards editáveis/adicionáveis/reordenáveis na criação | ✅ **Concluída** (05/07/2026) |
-| 6 | Entregas em bloco interativas (card único, ligação com o mouse, desfazer) | ⏳ Pendente (depende da 5) |
+| 6 | Entregas em bloco interativas (card único, ligação com o mouse, desfazer) | ✅ **Concluída** (05/07/2026) |
 
 ## Decisões de produto (tomadas com o responsável)
 
@@ -80,7 +80,9 @@ Registro do planejamento aprovado pelo responsável do projeto em **04–05/07/2
 
 **Notas de execução (05/07/2026):** testes em `backend/tests/test_fase5.py` (8 novos; 12 no total com os smoke). Helpers do editor em `frontend/src/components/etapasEditorUtils.js` (separados de `EtapasEditor.jsx` por exigência do Fast Refresh/lint). O gesto de **ligar etapas em bloco no formulário ficou para a Fase 6** (como planejado — o backend já aceita `bloco_grupo` no payload); blocos vindos do catálogo aparecem no editor como card único com um só prazo/data. Fluxo ADR-001 executado (banco recriado + re-seed do catálogo). **Verificação:** `pytest` 12/12; `npm run lint` e `npm run build` limpos.
 
-## Fase 6 — Entregas em bloco interativas (⏳ pendente, depende da 5)
+## Fase 6 — Entregas em bloco interativas (✅ concluída em 05/07/2026)
+
+**O plano abaixo foi executado como especificado.** Notas de execução: novo `ModalBloco.jsx` compartilhado entre os dois contextos do gesto; no Kanban de etapas os drag types convivem via `useDraggable` (id `link-{id}`) + `useDroppable` por card avulso; no editor o handle 🔗 usa id prefixado `link:` dentro do mesmo `DndContext` do sortable (sem animação de reordenação porque o id não pertence ao `SortableContext`). Ligação restrita a cards avulsos nos dois contextos. Testes em `backend/tests/test_fase6.py` (3 novos; 15 no total). **Verificação:** `pytest` 15/15; `npm run lint` e `npm run build` limpos. Plano original:
 
 **Backend:** `POST /projetos/{id}/blocos` (`etapa_ids` min 2, `dias_uteis_esperados`, `data_inicio?` — valida mesmo projeto e ausência de bloco prévio; aplica chave uuid + prazo/data compartilhados) e `DELETE /projetos/{id}/blocos/{chave}` (limpa a chave; membros mantêm valores). Testes de criação, rejeições e desfazer.
 

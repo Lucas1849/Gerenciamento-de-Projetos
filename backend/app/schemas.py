@@ -203,6 +203,19 @@ class ProjetoCriar(BaseModel):
     etapas: Optional[List[EtapaProjetoCriar]] = Field(default=None, min_length=1)
 
 
+class BlocoCriar(BaseModel):
+    """Formação de bloco de entrega em projeto existente (ADR-009).
+
+    As etapas recebem uma chave uuid compartilhada em `bloco_entrega` e o
+    prazo/data informados (redundantes em cada membro; status permanece
+    individual por etapa).
+    """
+
+    etapa_ids: List[int] = Field(min_length=2)
+    dias_uteis_esperados: int
+    data_inicio: Optional[date] = None
+
+
 class ProjetoResposta(BaseModel):
     id: int
     nome: str

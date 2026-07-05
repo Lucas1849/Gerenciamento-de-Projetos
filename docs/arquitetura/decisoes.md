@@ -93,3 +93,19 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** customizar as etapas de UM projeto não viola o ADR-005 — o catálogo (templates) permanece intocado e diretoria-validado; o que muda é a instância. Guardar só `data_inicio` e derivar `data_fim` evita datas inconsistentes armazenadas.
 
 **Status:** implementado na Fase 5 (05/07/2026).
+---
+
+### ADR-009 — Blocos de entrega interativos: chave compartilhada, prazo redundante e status individual (Fase 6)
+
+**Contexto:** a Fase 6 torna os blocos de entrega interativos: card único no Kanban de etapas, gesto de ligação com o mouse (arrastar o 🔗 de uma etapa sobre outra + confirmar) nos dois contextos (Kanban de etapas e editor de criação) e botão de desfazer.
+
+**Decisão:**
+- **Sem tabela nova**: o bloco continua modelado pela chave uuid compartilhada em `Etapa.bloco_entrega` (ADR-008), com **prazo/data gravados redundantes em cada membro** (`dias_uteis_esperados`/`data_inicio` idênticos). Trade-off deliberado — promover a entidade própria se blocos ganharem mais atributos.
+- **Status permanece individual por etapa**: o card do bloco mostra o progresso ("X/Y concluídas") e fica na coluna da **etapa menos avançada**; cada membro mantém status e equipe próprios.
+- `POST /projetos/{id}/blocos` (`etapa_ids` mín. 2, `dias_uteis_esperados`, `data_inicio?`) valida que as etapas pertencem ao projeto (404) e que nenhuma já está em bloco (409); aplica a chave uuid e o prazo/data compartilhados. `DELETE /projetos/{id}/blocos/{chave}` desfaz o bloco limpando só a chave — **os membros mantêm prazo/data/status** (404 se a chave não existir no projeto).
+- **Gesto nos dois contextos, com semânticas distintas**: no Kanban de etapas o gesto chama a API; no editor de criação apenas mescla os cards localmente (o backend materializa via `bloco_grupo` no `POST /projetos/`). O modal de confirmação (`ModalBloco.jsx`, compartilhado) pré-preenche o prazo com o **maior** entre os membros e a data com a **mais cedo**.
+- Os dois gestos de arrastar convivem por **drag types distintos** (handle ⠿ reordenar via sortable; handle 🔗 ligar via draggable com id prefixado `link:`); ligação restrita a cards avulsos (formar bloco a partir de bloco existente fica de fora).
+
+**Justificativa:** reusar a chave do ADR-008 mantém um único modelo de bloco nos dois caminhos (criação e pós-criação) sem migração de schema; desfazer preservando os valores dos membros evita perda de dados num gesto reversível.
+
+**Status:** implementado na Fase 6 (05/07/2026).
