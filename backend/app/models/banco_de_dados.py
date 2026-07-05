@@ -127,6 +127,11 @@ class Etapa(Base):
     nome = Column(String, nullable=False)
     descricao = Column(String, nullable=True)
     dias_uteis_esperados = Column(Integer, nullable=True)
+    # Data de início prevista; a data final é derivada (data_inicio + dias
+    # úteis, feriados nacionais via workalendar) e nunca é armazenada.
+    data_inicio = Column(Date, nullable=True)
+    # Chave de bloco de entrega (uuid compartilhado entre etapas do mesmo
+    # bloco), não um rótulo humano — ver ADR-008.
     bloco_entrega = Column(String, nullable=True)
     # Kanban interno (ADR-003): nao_iniciada | em_andamento | concluida
     status = Column(String, nullable=False, default="nao_iniciada")

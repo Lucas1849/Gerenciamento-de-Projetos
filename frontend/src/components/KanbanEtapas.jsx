@@ -7,6 +7,10 @@ import {
   removerConsultorEtapa,
 } from '../services/api';
 
+// Datas vêm prontas do backend (data_fim é derivada lá); aqui só formata.
+const formatarData = (iso) =>
+  new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(iso));
+
 const COLUNAS = [
   { status: 'nao_iniciada', titulo: 'Não Iniciada', cor: 'var(--color-text-secondary)', next: 'em_andamento', nextLabel: 'Iniciar →' },
   { status: 'em_andamento', titulo: 'Em Andamento', cor: 'var(--fase-andamento)',        prev: 'nao_iniciada', next: 'concluida', nextLabel: 'Concluir ✓' },
@@ -140,7 +144,7 @@ export default function KanbanEtapas({ projetoId, toast }) {
                 <div key={etapa.id} className="ui-card kanban-card">
                   {etapa.bloco_entrega && (
                     <span className="chip" style={{ backgroundColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)', fontSize: '10px', marginBottom: 'var(--sp-8)', display: 'inline-flex' }}>
-                      📦 {etapa.bloco_entrega}
+                      📦 Entrega em bloco
                     </span>
                   )}
 
@@ -156,6 +160,13 @@ export default function KanbanEtapas({ projetoId, toast }) {
                   {etapa.dias_uteis_esperados != null && (
                     <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
                       ⏳ Prazo: {etapa.dias_uteis_esperados} dia(s) útil(eis)
+                    </p>
+                  )}
+
+                  {etapa.data_inicio && (
+                    <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
+                      📅 {formatarData(etapa.data_inicio)}
+                      {etapa.data_fim && ` → ${formatarData(etapa.data_fim)}`}
                     </p>
                   )}
 

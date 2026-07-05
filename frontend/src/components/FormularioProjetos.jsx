@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import EtapasEditor from './EtapasEditor';
+import { itensDosTemplates, etapasParaPayload } from './etapasEditorUtils';
 import {
   listarTrabalhadores,
   listarGestoes,
@@ -24,7 +26,11 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
   const [gestoes,       setGestoes]       = useState([]);
   const [professores,   setProfessores]   = useState([]);
   const [servicos,      setServicos]      = useState([]);
-  const [etapasTemplate, setEtapasTemplate] = useState([]);
+  const [itensEtapas,   setItensEtapas]   = useState([]);
+  // true se o usuário editou/reordenou as etapas: só então o payload inclui
+  // `etapas` (senão o backend copia os templates literalmente — ADR-008).
+  const [etapasSujas,   setEtapasSujas]   = useState(false);
+  const etapasSujasRef = useRef(false);
   const [consultoresIds, setConsultoresIds] = useState(['']);
   const [salvando,      setSalvando]      = useState(false);
 
@@ -39,16 +45,28 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
       .catch(() => toast.error('Erro ao carregar dados do formulário.'));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Ao trocar o serviço, carrega as etapas-template para pré-visualização.
+  // Ao trocar o serviço, recarrega o editor de etapas a partir dos templates;
+  // customizações feitas para o serviço anterior são descartadas (com aviso).
   useEffect(() => {
+    if (etapasSujasRef.current) {
+      toast.warning('Troca de serviço: as etapas customizadas foram descartadas.');
+    }
+    etapasSujasRef.current = false;
+    setEtapasSujas(false);
     if (!campos.servicoId) {
-      setEtapasTemplate([]);
+      setItensEtapas([]);
       return;
     }
     obterServico(campos.servicoId)
-      .then(s => setEtapasTemplate(s.etapas_template ?? []))
+      .then(s => setItensEtapas(itensDosTemplates(s.etapas_template ?? [])))
       .catch(() => toast.error('Erro ao carregar as etapas do serviço.'));
   }, [campos.servicoId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const aoEditarEtapas = (novos) => {
+    setItensEtapas(novos);
+    setEtapasSujas(true);
+    etapasSujasRef.current = true;
+  };
 
   const set = (campo) => (e) => setCampos(prev => ({ ...prev, [campo]: e.target.value }));
 
@@ -81,8 +99,15 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
         gerente_id:               parseInt(campos.gerenteId),
         professor_orientador_id:  campos.professorId ? parseInt(campos.professorId) : null,
         consultores_iniciais_ids: idsValidos,
+        // Só viaja se houve customização; omitido = cópia literal dos templates.
+        ...(etapasSujas && itensEtapas.length > 0
+          ? { etapas: etapasParaPayload(itensEtapas) }
+          : {}),
       });
       toast.success('Projeto criado com sucesso!');
+      // Zera a flag antes do reset para o aviso de descarte não disparar.
+      etapasSujasRef.current = false;
+      setEtapasSujas(false);
       setCampos({ ...CAMPO_VAZIO, gestaoId: gestaoInicialId ? String(gestaoInicialId) : '' });
       setConsultoresIds(['']);
       if (aoCriar) aoCriar(projeto);
@@ -129,17 +154,14 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
           </div>
         </div>
 
-        {/* Pré-visualização das etapas do serviço escolhido */}
-        {etapasTemplate.length > 0 && (
+        {/* Editor das etapas que serão geradas (Fase 5 / ADR-008) */}
+        {itensEtapas.length > 0 && (
           <div className="form-bloco">
-            <span className="field-label">Etapas que serão geradas automaticamente</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-8)', marginTop: 'var(--sp-8)' }}>
-              {[...etapasTemplate].sort((a, b) => a.ordem - b.ordem).map(et => (
-                <span key={et.id} className="chip chip-brand">
-                  {et.ordem}. {et.nome}
-                  {et.dias_uteis_esperados_padrao != null && ` (${et.dias_uteis_esperados_padrao}d)`}
-                </span>
-              ))}
+            <span className="field-label">
+              Etapas do projeto — edite nome, prazo e data de início; arraste (⠿) ou use as setas para reordenar
+            </span>
+            <div style={{ marginTop: 'var(--sp-12)' }}>
+              <EtapasEditor itens={itensEtapas} onChange={aoEditarEtapas} />
             </div>
           </div>
         )}

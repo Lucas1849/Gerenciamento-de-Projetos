@@ -78,7 +78,8 @@ Removidos: `consultor1_id`, `consultor2_id`, `consultor3_id`, `status`, `kickoff
 | nome | string | |
 | descricao | string | opcional |
 | dias_uteis_esperados | int | opcional |
-| bloco_entrega | string | opcional, mantido como está |
+| data_inicio | date | opcional (Fase 5). A **data final nunca é armazenada**: é derivada (`data_inicio + dias_uteis_esperados`, feriados nacionais via workalendar) e exposta em `EtapaResposta.data_fim` (ADR-008) |
+| bloco_entrega | string | opcional. Desde a Fase 5 é **chave de bloco** (uuid compartilhado entre as etapas do mesmo bloco de entrega), não um rótulo humano (ADR-008) |
 | status | string | `nao_iniciada \| em_andamento \| concluida` |
 
 ### EtapaConsultor (associação N:N)
@@ -100,10 +101,10 @@ Sem mudanças nesta fase (`nome`, `cargo`, `emailInstitucional`). Campo de "pont
 ## Fluxo de criação de projeto (regra de negócio central)
 
 1. Gerente/diretora escolhe o `Servico` no formulário → backend retorna os `EtapaTemplate` daquele serviço (dias úteis e descrição pré-preenchidos, editáveis).
-2. Ao submeter o formulário com gerente, diretor, professor orientador (opcional), gestão e N consultores iniciais, o backend:
-   - Cria o `Projeto`.
-   - Gera uma `Etapa` para cada `EtapaTemplate` do serviço escolhido.
-   - Atribui automaticamente os N consultores iniciais a **todas** as etapas geradas, criando uma linha em `EtapaConsultor` por (etapa, consultor) com `data_entrada = hoje`.
+2. Ao submeter o formulário com gerente, diretor, professor orientador (opcional), gestão e N consultores iniciais, o backend gera as etapas por **um de dois caminhos** (ADR-008, Fase 5):
+   - **Sem `etapas` no payload**: gera uma `Etapa` para cada `EtapaTemplate` do serviço escolhido (cópia literal). Templates com a mesma `ordem` materializam como bloco de entrega (mesma chave uuid em `bloco_entrega`).
+   - **Com `etapas` no payload**: usa a lista customizada (reordenada/editada/com etapas manuais). A `ordem` não viaja — o backend atribui `ordem = índice + 1`. Itens com o mesmo `bloco_grupo` viram bloco (chave uuid compartilhada, prazo/data normalizados pelo primeiro item). Lista vazia ⇒ 422; template de outro serviço ⇒ 404.
+   - Nos dois caminhos, atribui automaticamente os N consultores iniciais a **todas** as etapas geradas, criando uma linha em `EtapaConsultor` por (etapa, consultor) com `data_entrada = hoje`.
 3. A partir daí, a equipe de cada etapa pode ser ajustada individualmente (adicionar/remover consultor), sem afetar as demais etapas.
 4. A "equipe do projeto" mostrada na Visão Geral é **derivada**: união de todos os `trabalhador_id` com `data_saida IS NULL` em qualquer etapa daquele projeto. Não existe uma lista de equipe armazenada no nível do projeto. Desde a Fase 3, o `GET /projetos/` (listagem) também embute essa equipe derivada em cada item (`ProjetoListaResposta.equipe`) para alimentar os avatares dos cards do Kanban de fases.
 
