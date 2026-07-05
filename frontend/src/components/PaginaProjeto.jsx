@@ -31,7 +31,7 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
     if (!novoValor && !window.confirm('Reverter o TAP para pendente?')) return;
     atualizarProjeto(projeto.id, { tap_assinado: novoValor })
       .then(resp => {
-        // Merge parcial: o PUT devolve o projeto sem etapas/equipe.
+        // Merge parcial: o PUT devolve equipe mas não etapas; o detalhe local tem mais campos.
         setProjeto(prev => ({ ...prev, tap_assinado: resp.tap_assinado }));
         toast.success(novoValor ? 'TAP marcado como assinado.' : 'TAP revertido para pendente.');
       })

@@ -60,11 +60,15 @@ def obter_projeto(projeto_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.put("/{projeto_id}", response_model=schemas.ProjetoResposta)
+@router.put("/{projeto_id}", response_model=schemas.ProjetoListaResposta)
 def atualizar_projeto(
     projeto_id: int, atualizacao: schemas.ProjetoAtualizar, db: Session = Depends(get_db)
 ):
-    """Atualiza fase (Kanban da galeria) e/ou tap_assinado (ADR-003/ADR-007)."""
+    """Atualiza fase (Kanban da galeria) e/ou tap_assinado (ADR-003/ADR-007).
+
+    Devolve a mesma forma da listagem (equipe derivada embutida) para que a
+    resposta possa ser escrita de volta no estado da galeria sem perder campos.
+    """
     projeto = db.get(Projeto, projeto_id)
     if projeto is None:
         raise HTTPException(status_code=404, detail="Projeto não encontrado")
@@ -74,7 +78,10 @@ def atualizar_projeto(
         projeto.tap_assinado = atualizacao.tap_assinado
     db.commit()
     db.refresh(projeto)
-    return projeto
+    return schemas.ProjetoListaResposta(
+        **schemas.ProjetoResposta.model_validate(projeto).model_dump(),
+        equipe=equipe_derivada(projeto),
+    )
 
 
 @router.get("/{projeto_id}/etapas", response_model=list[schemas.EtapaResposta])
