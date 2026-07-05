@@ -5,14 +5,15 @@
 // aparecem como card único com um só prazo/data para o conjunto.
 
 import { useState, useEffect } from 'react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable } from '@dnd-kit/core';
 import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
+import { GripVertical, ArrowUp, ArrowDown, Trash2, Plus, Link2, Unlink } from 'lucide-react';
 import { calcularDataFim } from '../services/api';
 import { novoUid } from './etapasEditorUtils';
+import ModalBloco from './ModalBloco';
 
 function DataFimPreview({ dias, dataInicio }) {
   // Guarda o resultado junto com a chave dos inputs: se os inputs mudarem,
@@ -39,11 +40,37 @@ function DataFimPreview({ dias, dataInicio }) {
   );
 }
 
-function CardEtapa({ item, indice, total, onEditar, onMover, onRemover }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+// Handle 🔗: origem do gesto de ligação (drag type distinto do reordenar ⠿).
+function HandleLigacao({ uid }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({ id: `link:${uid}` });
+  return (
+    <button
+      type="button"
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      title="Arraste sobre outra etapa para formar um bloco de entrega"
+      aria-label="Ligar em bloco de entrega"
+      style={{
+        transform: CSS.Translate.toString(transform),
+        background: 'none', border: 'none', padding: 'var(--sp-4)',
+        cursor: 'grab', color: isDragging ? 'var(--color-brand-glow)' : 'var(--color-text-disabled)',
+        zIndex: isDragging ? 10 : 'auto', position: 'relative', touchAction: 'none',
+      }}
+    >
+      <Link2 size={16} />
+    </button>
+  );
+}
+
+function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover, onDesfazer }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
     useSortable({ id: item.uid });
   const ehBloco = item.membros.length > 1;
   const ehManual = !ehBloco && item.membros[0].etapaTemplateId == null;
+  // Realce de alvo válido enquanto um 🔗 está sendo arrastado.
+  const alvoDeLigacao = ligando && !ehBloco && isOver;
 
   return (
     <div
@@ -52,6 +79,7 @@ function CardEtapa({ item, indice, total, onEditar, onMover, onRemover }) {
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
+        outline: alvoDeLigacao ? '2px solid var(--color-brand)' : 'none',
         opacity: isDragging ? 0.6 : 1,
         display: 'flex',
         gap: 'var(--sp-12)',
@@ -126,6 +154,15 @@ function CardEtapa({ item, indice, total, onEditar, onMover, onRemover }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
+        {ehBloco ? (
+          <button type="button" className="btn btn-secondary btn-sm"
+            title="Desfazer bloco (as etapas voltam a ser cards avulsos)"
+            aria-label="Desfazer bloco" onClick={() => onDesfazer(indice)}>
+            <Unlink size={14} />
+          </button>
+        ) : (
+          <HandleLigacao uid={item.uid} />
+        )}
         <button type="button" className="btn btn-secondary btn-sm" disabled={indice === 0}
           aria-label="Mover para cima" onClick={() => onMover(indice, indice - 1)}>
           <ArrowUp size={14} />
@@ -145,14 +182,66 @@ function CardEtapa({ item, indice, total, onEditar, onMover, onRemover }) {
 
 export default function EtapasEditor({ itens, onChange }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  // true enquanto um handle 🔗 está sendo arrastado (drag type de ligação).
+  const [ligando, setLigando] = useState(false);
+  // Índices [origem, alvo] aguardando confirmação no modal de bloco.
+  const [parLigacao, setParLigacao] = useState(null);
 
   const mover = (de, para) => onChange(arrayMove(itens, de, para));
 
+  const aoIniciarDrag = ({ active }) =>
+    setLigando(String(active.id).startsWith('link:'));
+
   const aoSoltarDrag = ({ active, over }) => {
+    setLigando(false);
+    const activeId = String(active.id);
+    // Gesto de ligação: soltar o 🔗 sobre outro card avulso → modal (ADR-009).
+    if (activeId.startsWith('link:')) {
+      if (!over) return;
+      const origem = itens.findIndex(i => i.uid === activeId.slice(5));
+      const alvo = itens.findIndex(i => i.uid === String(over.id));
+      if (origem < 0 || alvo < 0 || origem === alvo) return;
+      if (itens[alvo].membros.length > 1) return; // só entre cards avulsos
+      setParLigacao([origem, alvo]);
+      return;
+    }
     if (!over || active.id === over.id) return;
     const de = itens.findIndex(i => i.uid === active.id);
     const para = itens.findIndex(i => i.uid === over.id);
     mover(de, para);
+  };
+
+  // Mescla os dois cards num bloco local (o backend materializa via
+  // `bloco_grupo` na criação do projeto).
+  const confirmarLigacao = ({ dias, dataInicio }) => {
+    const [origem, alvo] = parLigacao;
+    setParLigacao(null);
+    onChange(
+      itens
+        .map((item, idx) =>
+          idx === alvo
+            ? {
+                ...item,
+                membros: [...item.membros, ...itens[origem].membros],
+                dias: String(dias),
+                dataInicio: dataInicio ?? '',
+              }
+            : item
+        )
+        .filter((_, idx) => idx !== origem)
+    );
+  };
+
+  // Desfaz o bloco: um card avulso por membro, herdando prazo/data do bloco.
+  const desfazer = (indice) => {
+    const item = itens[indice];
+    const soltos = item.membros.map(m => ({
+      uid: novoUid(),
+      membros: [m],
+      dias: item.dias,
+      dataInicio: item.dataInicio,
+    }));
+    onChange([...itens.slice(0, indice), ...soltos, ...itens.slice(indice + 1)]);
   };
 
   const editar = (indice, novo) =>
@@ -173,7 +262,13 @@ export default function EtapasEditor({ itens, onChange }) {
 
   return (
     <div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={aoSoltarDrag}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={aoIniciarDrag}
+        onDragEnd={aoSoltarDrag}
+        onDragCancel={() => setLigando(false)}
+      >
         <SortableContext items={itens.map(i => i.uid)} strategy={verticalListSortingStrategy}>
           {itens.map((item, indice) => (
             <CardEtapa
@@ -181,9 +276,11 @@ export default function EtapasEditor({ itens, onChange }) {
               item={item}
               indice={indice}
               total={itens.length}
+              ligando={ligando}
               onEditar={novo => editar(indice, novo)}
               onMover={mover}
               onRemover={remover}
+              onDesfazer={desfazer}
             />
           ))}
         </SortableContext>
@@ -191,6 +288,16 @@ export default function EtapasEditor({ itens, onChange }) {
       <button type="button" className="kanban-ghost" onClick={adicionar}>
         <Plus size={16} /> Adicionar etapa
       </button>
+
+      {parLigacao && (
+        <ModalBloco
+          nomes={parLigacao.flatMap(idx => itens[idx].membros.map(m => m.nome))}
+          diasInicial={Math.max(...parLigacao.map(idx => Number(itens[idx].dias) || 0)) || ''}
+          dataInicial={parLigacao.map(idx => itens[idx].dataInicio).filter(Boolean).sort()[0] ?? ''}
+          onConfirmar={confirmarLigacao}
+          onCancelar={() => setParLigacao(null)}
+        />
+      )}
     </div>
   );
 }

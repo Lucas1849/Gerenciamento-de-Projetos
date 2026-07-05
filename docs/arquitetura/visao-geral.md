@@ -51,9 +51,9 @@ A página do projeto permite marcar o TAP como assinado (e reverter, com confirm
 
 `Etapa.data_inicio` foi adicionada (mudança de schema — fluxo ADR-001 executado) e a **data final é sempre derivada** por dias úteis com feriados nacionais (`workalendar`, `app/utils/calendario.py`; prévia via `GET /calendario/data-fim` — o frontend nunca calcula datas localmente). `POST /projetos/` aceita o campo opcional `etapas` (criação customizada: reordenada/editada/etapas manuais, ordem posicional atribuída pelo backend; blocos por `bloco_grupo`; `bloco_entrega` virou chave uuid de bloco) — ver ADR-008. No frontend, `EtapasEditor.jsx` (+ `etapasEditorUtils.js`) substitui o preview de chips no `FormularioProjetos.jsx`: cards editáveis (nome, dias úteis, data de início; data final calculada pelo backend), reordenação por arrastar (`@dnd-kit`) com setas ↑/↓ como fallback acessível, "+ Adicionar etapa" e badge "manual"; o payload só inclui `etapas` se houve edição. `KanbanEtapas.jsx` exibe `data_inicio → data_fim` nos cards.
 
-## Próxima fase (6 — planejada)
+## Fase 6 — entregas em bloco interativas (concluída em 05/07/2026)
 
-Entregas em bloco interativas (card único no Kanban de etapas, gesto de ligação com o mouse, desfazer) — detalhada em [../features/plano-fases-3-6.md](../features/plano-fases-3-6.md).
+Blocos de entrega viraram interativos (ADR-009): no backend, `POST /projetos/{id}/blocos` forma um bloco a partir de etapas existentes (chave uuid compartilhada em `bloco_entrega` + prazo/data aplicados aos membros; 404 para etapa de outro projeto, 409 para etapa já em bloco) e `DELETE /projetos/{id}/blocos/{chave}` o desfaz limpando só a chave (membros mantêm prazo/data/status). No frontend, `KanbanEtapas.jsx` mostra o bloco como **card único** na coluna da etapa menos avançada, com progresso "X/Y concluídas", prazo/data do bloco, lista interna de etapas (status e equipe individuais) e botão "Desfazer bloco"; o **gesto de ligação** (arrastar o handle 🔗 de um card avulso sobre outro + confirmar no `ModalBloco.jsx`) existe no Kanban de etapas (chama a API) e no editor de criação (mescla local; o backend materializa via `bloco_grupo`). Detalhes em [../features/plano-fases-3-6.md](../features/plano-fases-3-6.md).
 
 ## Estado alvo (to-be)
 

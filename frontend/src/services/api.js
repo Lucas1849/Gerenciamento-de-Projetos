@@ -142,6 +142,23 @@ export function listarEtapasDoProjeto(projetoId) {
   return request(`/projetos/${projetoId}/etapas`);
 }
 
+/** Forma um bloco de entrega com etapas existentes do projeto (ADR-009). */
+export function criarBloco(projetoId, { etapaIds, diasUteis, dataInicio }) {
+  return request(`/projetos/${projetoId}/blocos`, {
+    method: 'POST',
+    body: JSON.stringify({
+      etapa_ids: etapaIds,
+      dias_uteis_esperados: diasUteis,
+      data_inicio: dataInicio || null,
+    }),
+  });
+}
+
+/** Desfaz um bloco de entrega (limpa a chave; membros mantêm prazo/data). */
+export function desfazerBloco(projetoId, chave) {
+  return request(`/projetos/${projetoId}/blocos/${chave}`, { method: 'DELETE' });
+}
+
 // ─── Calendário ─────────────────────────────────────────────────────────────
 
 /** Prévia da data final (data_inicio + dias úteis, feriados nacionais).
