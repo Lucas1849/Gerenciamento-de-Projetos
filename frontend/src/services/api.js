@@ -142,6 +142,14 @@ export function listarEtapasDoProjeto(projetoId) {
   return request(`/projetos/${projetoId}/etapas`);
 }
 
+// ─── Calendário ─────────────────────────────────────────────────────────────
+
+/** Prévia da data final (data_inicio + dias úteis, feriados nacionais).
+ *  O cálculo vive só no backend — o frontend nunca calcula datas localmente. */
+export function calcularDataFim(dataInicio, diasUteis) {
+  return request(`/calendario/data-fim?data_inicio=${dataInicio}&dias_uteis=${diasUteis}`);
+}
+
 // ─── Etapas ─────────────────────────────────────────────────────────────────
 
 /** Atualiza o status (coluna) de uma etapa. */

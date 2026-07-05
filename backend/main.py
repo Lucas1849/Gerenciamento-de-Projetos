@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
 from app.models import banco_de_dados
 from app.routes import (
+    calendario,
     catalogo,
     colaboradores,
     etapas,
@@ -36,3 +37,4 @@ app.include_router(gestoes.router)
 app.include_router(catalogo.router)
 app.include_router(projetos.router)
 app.include_router(etapas.router)
+app.include_router(calendario.router)

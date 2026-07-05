@@ -47,9 +47,13 @@ O frontend foi rethemado para a identidade dark do Apoio Hub (tokens em `App.css
 
 A página do projeto permite marcar o TAP como assinado (e reverter, com confirmação) após a criação, via `PUT /projetos/{id}` — endpoint que já existia; a fase adicionou a UI, o toast e o teste de contrato que sela a independência TAP × fase (ADR-007). A ideia de atualização automática via Clicksign ficou **somente no roadmap** ([../features/roadmap.md](../features/roadmap.md)).
 
-## Próximas fases (5 e 6 — planejadas)
+## Fase 5 — datas nas etapas + editor de cards na criação (concluída em 05/07/2026)
 
-O planejamento aprovado das próximas entregas — etapas com data de início/data final calculada por dias úteis (com feriados nacionais, `workalendar`), cards de etapa editáveis/reordenáveis na criação (`@dnd-kit`) e entregas em bloco interativas — está detalhado em [../features/plano-fases-3-6.md](../features/plano-fases-3-6.md). A Fase 5 inclui mudança de schema (`Etapa.data_inicio`) e aciona o fluxo ADR-001.
+`Etapa.data_inicio` foi adicionada (mudança de schema — fluxo ADR-001 executado) e a **data final é sempre derivada** por dias úteis com feriados nacionais (`workalendar`, `app/utils/calendario.py`; prévia via `GET /calendario/data-fim` — o frontend nunca calcula datas localmente). `POST /projetos/` aceita o campo opcional `etapas` (criação customizada: reordenada/editada/etapas manuais, ordem posicional atribuída pelo backend; blocos por `bloco_grupo`; `bloco_entrega` virou chave uuid de bloco) — ver ADR-008. No frontend, `EtapasEditor.jsx` (+ `etapasEditorUtils.js`) substitui o preview de chips no `FormularioProjetos.jsx`: cards editáveis (nome, dias úteis, data de início; data final calculada pelo backend), reordenação por arrastar (`@dnd-kit`) com setas ↑/↓ como fallback acessível, "+ Adicionar etapa" e badge "manual"; o payload só inclui `etapas` se houve edição. `KanbanEtapas.jsx` exibe `data_inicio → data_fim` nos cards.
+
+## Próxima fase (6 — planejada)
+
+Entregas em bloco interativas (card único no Kanban de etapas, gesto de ligação com o mouse, desfazer) — detalhada em [../features/plano-fases-3-6.md](../features/plano-fases-3-6.md).
 
 ## Estado alvo (to-be)
 

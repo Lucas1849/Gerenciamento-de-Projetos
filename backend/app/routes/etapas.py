@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.models.banco_de_dados import Etapa, EtapaConsultor, Projeto, Trabalhador
+from app.utils.calendario import calcular_data_fim
 from app.utils.db import get_db
 
 router = APIRouter(prefix="/etapas", tags=["Etapas"])
@@ -27,6 +28,13 @@ def serializar_etapa(etapa: Etapa) -> schemas.EtapaResposta:
         nome=etapa.nome,
         descricao=etapa.descricao,
         dias_uteis_esperados=etapa.dias_uteis_esperados,
+        data_inicio=etapa.data_inicio,
+        # Derivada, nunca armazenada (ADR-008).
+        data_fim=(
+            calcular_data_fim(etapa.data_inicio, etapa.dias_uteis_esperados)
+            if etapa.data_inicio is not None and etapa.dias_uteis_esperados is not None
+            else None
+        ),
         bloco_entrega=etapa.bloco_entrega,
         status=etapa.status,
         consultores=[
@@ -48,6 +56,7 @@ def criar_etapa(etapa: schemas.EtapaCriar, db: Session = Depends(get_db)):
         nome=etapa.nome,
         descricao=etapa.descricao,
         dias_uteis_esperados=etapa.dias_uteis_esperados,
+        data_inicio=etapa.data_inicio,
         bloco_entrega=etapa.bloco_entrega,
     )
     db.add(nova)

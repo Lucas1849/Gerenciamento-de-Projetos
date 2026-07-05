@@ -6,9 +6,9 @@ Itens fora do escopo da "base sólida" (Fases 0–5 do plano de continuidade). C
 
 Gerar calendário mostrando os dias úteis de cada etapa, feriados e período de férias da universidade — usado para preparar slides de apresentação ao cliente.
 
-- **Depende de:** `Etapa.dias_uteis_esperados` (já existe desde a Fase 1 da base sólida).
-- **Falta levantar:** fonte de feriados nacionais/estaduais e calendário de férias da universidade (avaliar lib tipo `workalendar` ou tabela própria de feriados/exceções).
-- **Falta decidir:** algoritmo de "próximo dia útil" e formato/estilo visual do calendário gerado.
+- **Depende de:** `Etapa.dias_uteis_esperados` e `Etapa.data_inicio` (existem; a Fase 5 adotou `workalendar` com feriados nacionais para o cálculo de data final — `app/utils/calendario.py`).
+- **Falta levantar:** feriados estaduais/municipais e calendário de férias da universidade (fora do escopo da Fase 5).
+- **Falta decidir:** formato/estilo visual do calendário gerado (o cálculo de dias úteis já existe; o que falta é a geração visual).
 
 ## Exportação automática para SIEX (ficha de cadastro de projeto de extensão)
 

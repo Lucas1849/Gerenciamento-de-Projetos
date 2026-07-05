@@ -6,7 +6,7 @@ Registro do planejamento aprovado pelo responsável do projeto em **04–05/07/2
 |---|---|---|
 | 3 | Identidade visual Apoio Hub + shell da sidebar + responsividade | ✅ **Concluída** (05/07/2026) |
 | 4 | Status do TAP editável na página do projeto + Clicksign no roadmap | ✅ **Concluída** (05/07/2026) |
-| 5 | Datas nas etapas + cards editáveis/adicionáveis/reordenáveis na criação | ⏳ Pendente |
+| 5 | Datas nas etapas + cards editáveis/adicionáveis/reordenáveis na criação | ✅ **Concluída** (05/07/2026) |
 | 6 | Entregas em bloco interativas (card único, ligação com o mouse, desfazer) | ⏳ Pendente (depende da 5) |
 
 ## Decisões de produto (tomadas com o responsável)
@@ -60,9 +60,9 @@ Registro do planejamento aprovado pelo responsável do projeto em **04–05/07/2
 
 ---
 
-## Fase 5 — Datas nas etapas + editor de cards na criação (⏳ pendente)
+## Fase 5 — Datas nas etapas + editor de cards na criação (✅ concluída em 05/07/2026)
 
-> Nota: um início desta fase (coluna `Etapa.data_inicio`, `utils/calendario.py`, `workalendar` no requirements) foi aplicado e **revertido** em 05/07/2026 para manter o repositório consistente enquanto a documentação era consolidada — a fase deve ser executada por inteiro, incluindo o fluxo ADR-001.
+**O que foi feito** (o plano abaixo foi executado como especificado; desvios menores anotados no fim da seção):
 
 **Backend:**
 - `Etapa.data_inicio` (Date, nullable) no modelo — **mudança de schema ⇒ fluxo ADR-001** (apagar `piloto_projetos.db`, reiniciar, `python -m app.seed_catalogo`).
@@ -77,6 +77,8 @@ Registro do planejamento aprovado pelo responsável do projeto em **04–05/07/2
 - `KanbanEtapas.jsx` exibe `data_inicio`/`data_fim` nos cards.
 
 **Docs da fase:** ADR-008 (etapas customizadas + ordem posicional + datas calculadas + por que não viola ADR-005), `modelo-dados.md` (campo novo, semântica de `bloco_entrega`, fluxo com dois caminhos), `CLAUDE.md`, `visao-geral.md`, `roadmap.md` (workalendar adotado para datas; calendário visual segue futuro).
+
+**Notas de execução (05/07/2026):** testes em `backend/tests/test_fase5.py` (8 novos; 12 no total com os smoke). Helpers do editor em `frontend/src/components/etapasEditorUtils.js` (separados de `EtapasEditor.jsx` por exigência do Fast Refresh/lint). O gesto de **ligar etapas em bloco no formulário ficou para a Fase 6** (como planejado — o backend já aceita `bloco_grupo` no payload); blocos vindos do catálogo aparecem no editor como card único com um só prazo/data. Fluxo ADR-001 executado (banco recriado + re-seed do catálogo). **Verificação:** `pytest` 12/12; `npm run lint` e `npm run build` limpos.
 
 ## Fase 6 — Entregas em bloco interativas (⏳ pendente, depende da 5)
 

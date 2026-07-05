@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date
 from typing import Literal
@@ -135,8 +135,25 @@ class EtapaCriar(BaseModel):
     nome: str
     descricao: Optional[str] = None
     dias_uteis_esperados: Optional[int] = None
+    data_inicio: Optional[date] = None
     bloco_entrega: Optional[str] = None
     etapa_template_id: Optional[int] = None
+
+
+class EtapaProjetoCriar(BaseModel):
+    """Etapa customizada dentro do payload de criação do projeto (ADR-008).
+
+    A `ordem` não viaja no payload: o backend atribui ordem = índice + 1.
+    Itens com o mesmo `bloco_grupo` são materializados como bloco de entrega
+    (chave uuid compartilhada em `bloco_entrega`, prazo/data normalizados).
+    """
+
+    nome: str
+    dias_uteis_esperados: Optional[int] = None
+    data_inicio: Optional[date] = None
+    # Nulo = etapa adicionada manualmente (fora do template).
+    etapa_template_id: Optional[int] = None
+    bloco_grupo: Optional[str] = None
 
 
 class EtapaAtualizar(BaseModel):
@@ -151,6 +168,9 @@ class EtapaResposta(BaseModel):
     nome: str
     descricao: Optional[str] = None
     dias_uteis_esperados: Optional[int] = None
+    data_inicio: Optional[date] = None
+    # Derivada: data_inicio + dias úteis (nunca armazenada).
+    data_fim: Optional[date] = None
     bloco_entrega: Optional[str] = None
     status: StatusEtapa
     # Equipe embutida: consultores ativos da etapa (data_saida IS NULL).
@@ -178,6 +198,9 @@ class ProjetoCriar(BaseModel):
     professor_orientador_id: Optional[int] = None
     # Consultores atribuídos a todas as etapas geradas na criação.
     consultores_iniciais_ids: List[int] = []
+    # Omitido/None ⇒ cópia literal dos templates do serviço (comportamento
+    # padrão). Presente ⇒ criação customizada (ADR-008); lista vazia é inválida.
+    etapas: Optional[List[EtapaProjetoCriar]] = Field(default=None, min_length=1)
 
 
 class ProjetoResposta(BaseModel):
