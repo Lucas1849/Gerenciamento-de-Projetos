@@ -42,3 +42,11 @@ Autenticação via login já existente no Apoio Hub, leitura da tabela de colabo
 - **Decisão já tomada:** adiado por escolha do responsável pelo projeto — o piloto continua isolado com seus próprios dados por enquanto.
 - **Limpeza pendente ligada a este item:** o cadastro de colaborador/professor na tela **Membros** é scaffolding provisório de testes (decisão de 05/07/2026, Fase 3) — remover quando o piloto tiver acesso às tabelas do Hub. O user card decorativo da sidebar (`USUARIO_DEMO`) também passa a vir do login real. As rotas DELETE de gestão/projeto (Fase 9 planejada) passam a ser **exclusivas de diretores/cargos de edição** via `nivel_acesso`.
 - **Risco reduzido:** o stack de dados deixou de ser desconhecido (era o "maior risco do roadmap inteiro"); o esforço remanescente está no acesso, na autenticação e na migração SQLite → MySQL.
+
+## Métricas e dashboards de projetos
+
+Painéis com indicadores dos projetos para a diretoria e os gerentes acompanharem saúde, prazo e alocação — ex.: projetos por fase, etapas atrasadas (data final derivada vs. hoje), % de conclusão por projeto, carga por consultor (quantas etapas ativas cada um tem), tempo médio por etapa/serviço, aderência ao prazo planejado. Pedido pelo responsável em **06/07/2026**, para **depois** das Fases 12 e 13 ([plano-fases-12-13.md](plano-fases-12-13.md)).
+
+- **Depende de:** dados que já existem no modelo — `Projeto.fase`, `Etapa.status`, `Etapa.data_inicio` + `data_fim` derivada (ADR-008), `EtapaConsultor.data_entrada`/`data_saida` (ADR-002). A Fase 13 acrescenta `EtapaDependencia`, que permitiria métricas de caminho crítico/bloqueios se desejado.
+- **Falta levantar:** quais indicadores a diretoria realmente usa para decidir (levantamento com a diretoria, mesmo tipo feito para o [catálogo de serviços](catalogo-servicos.md)) — evitar dashboards "bonitos e inúteis". Definir o conceito de "atrasado" (data final derivada vs. hoje? vs. prazo do TAP?).
+- **Falta decidir:** agregação no backend (novas rotas `GET /metricas/...` que devolvem números prontos) vs. cálculo no frontend a partir das rotas existentes; biblioteca de gráficos (o app hoje só tem react/react-dom/@dnd-kit/lucide como dependências de frontend — introduzir uma lib de chart é uma decisão de dependência) vs. SVG/CSS próprios no estilo do design system. **Não implementar antes desse levantamento.**
