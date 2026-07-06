@@ -23,7 +23,8 @@ from app.models.banco_de_dados import Base, Servico, EtapaTemplate
 CATALOGO = [
     (
         "Pesquisa de Mercado",
-        "Fonte: Proposta Esmalteria (bloco 4.1). Total: 74 dias úteis.",
+        "Fonte: Proposta Esmalteria (bloco 4.1). Ordem 7 é entrega em "
+        "bloco. Total: 73 dias úteis.",
         [
             (1, "Alinhamento e Kick Off", 10),
             (2, "Identificação do Problema", 3),
@@ -31,7 +32,8 @@ CATALOGO = [
             (4, "Definição do Público-alvo e Amostra", 7),
             (5, "Análise de Concorrência", 10),
             (6, "Análise de Tendências", 5),
-            (7, "Método de Pesquisa", 6),
+            (7, "Levantamento de Temas", 5),
+            (7, "Método de Pesquisa", 5),
             (8, "Aplicação do Método de Pesquisa", 20),
             (9, "Análise e Tabulação dos Resultados", 10),
         ],
