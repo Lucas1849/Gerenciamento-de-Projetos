@@ -12,7 +12,7 @@ const FASE_CHIP = {
 };
 
 export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
-  const [abaAtiva, setAbaAtiva] = useState('geral');
+  const [abaAtiva, setAbaAtiva] = useState('etapas');
   const [projeto,  setProjeto]  = useState(null);
   const [erro,     setErro]     = useState(null);
 
@@ -81,11 +81,11 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
 
       {/* Tabs */}
       <div className="tabs-container">
-        <div className={`tab ${abaAtiva === 'geral' ? 'active' : ''}`} onClick={() => setAbaAtiva('geral')}>
-          Visão Geral
-        </div>
         <div className={`tab ${abaAtiva === 'etapas' ? 'active' : ''}`} onClick={() => setAbaAtiva('etapas')}>
           Etapas
+        </div>
+        <div className={`tab ${abaAtiva === 'geral' ? 'active' : ''}`} onClick={() => setAbaAtiva('geral')}>
+          Visão Geral
         </div>
       </div>
 

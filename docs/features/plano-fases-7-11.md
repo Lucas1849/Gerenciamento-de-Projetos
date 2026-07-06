@@ -2,11 +2,11 @@
 
 Registro do planejamento aprovado pelo responsável do projeto em **05/07/2026**, na sequência das Fases 3–6 ([plano-fases-3-6.md](plano-fases-3-6.md)). Origem: correções e melhorias solicitadas após os testes do piloto, com referência visual das telas de projetos do Notion (visões Por status / Tabela / Cronograma / Calendário), mais o envio do **schema real do banco do Apoio Hub** pelo mantenedor da plataforma (analisado em [../arquitetura/integracao-apoio-hub.md](../arquitetura/integracao-apoio-hub.md)).
 
-> **⚠️ Nenhuma fase deste plano foi iniciada.** Instrução explícita do responsável: as fases só começam mediante comando direto. Este documento é o registro executável do que fazer quando o comando vier.
+> Instrução explícita do responsável: as fases só começam mediante comando direto. A **Fase 7a foi executada em 05/07/2026** mediante comando; as demais seguem aguardando.
 
 | Fase | Entrega | Status |
 |---|---|---|
-| 7a | Aba **Etapas** primeiro (e padrão); Visão Geral depois | ⏳ Aguardando comando |
+| 7a | Aba **Etapas** primeiro (e padrão); Visão Geral depois | ✅ Concluída (05/07/2026) |
 | 7b | Visualizações múltiplas de etapas (Por status / Tabela / Cronograma / Calendário) com submenu | ⏳ Aguardando comando |
 | 8 | Entregas em bloco com N etapas: estender, retirar etapa específica e romper | ⏳ Aguardando comando |
 | 9 | Exclusão (DELETE) de gestões e projetos pelos cards | ⏳ Aguardando comando |
