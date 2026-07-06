@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ArrowUp, ArrowDown, Trash2, Plus, Link2, Unlink } from 'lucide-react';
 import { calcularDataFim } from '../services/api';
 import { novoUid } from './etapasEditorUtils';
+import { janelaDatas } from './datasUtils';
 import ModalBloco from './ModalBloco';
 
 function DataFimPreview({ dias, dataInicio }) {
@@ -146,6 +147,8 @@ function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover,
               className="input-field"
               type="date"
               value={item.dataInicio}
+              min={janelaDatas().min}
+              max={janelaDatas().max}
               onChange={e => onEditar({ ...item, dataInicio: e.target.value })}
               style={{ padding: '6px 10px' }}
             />

@@ -2,7 +2,7 @@
 
 Registro do planejamento aprovado pelo responsável do projeto em **05/07/2026**, na sequência das Fases 3–6 ([plano-fases-3-6.md](plano-fases-3-6.md)). Origem: correções e melhorias solicitadas após os testes do piloto, com referência visual das telas de projetos do Notion (visões Por status / Tabela / Cronograma / Calendário), mais o envio do **schema real do banco do Apoio Hub** pelo mantenedor da plataforma (analisado em [../arquitetura/integracao-apoio-hub.md](../arquitetura/integracao-apoio-hub.md)).
 
-> Instrução explícita do responsável: as fases só começam mediante comando direto. As **Fases 7a e 7b foram executadas em 05/07/2026** e as **Fases 8 e 9 em 06/07/2026**, mediante comando; as demais seguem aguardando.
+> Instrução explícita do responsável: as fases só começam mediante comando direto. As **Fases 7a e 7b foram executadas em 05/07/2026** e as **Fases 8, 9 e 10 em 06/07/2026**, mediante comando; a Fase 11 segue aguardando o gatilho externo.
 
 | Fase | Entrega | Status |
 |---|---|---|
@@ -10,7 +10,7 @@ Registro do planejamento aprovado pelo responsável do projeto em **05/07/2026**
 | 7b | Visualizações múltiplas de etapas (Por status / Tabela / Cronograma / Calendário) com submenu | ✅ Concluída (05/07/2026, ADR-010) |
 | 8 | Entregas em bloco com N etapas: estender, retirar etapa específica e romper | ✅ Concluída (06/07/2026, ADR-011) |
 | 9 | Exclusão (DELETE) de gestões e projetos pelos cards | ✅ Concluída (06/07/2026, ADR-012) |
-| 10 | Tratamento/validação de datas (ano plausível, formato DD/MM/AAAA) | ⏳ Aguardando comando |
+| 10 | Tratamento/validação de datas (ano plausível, formato DD/MM/AAAA) | ✅ Concluída (06/07/2026, ADR-013) |
 | 11 | Go-live / integração com o Apoio Hub | 🔒 Gatilho externo (acesso ao banco do Hub) |
 
 **Ordem obrigatória: 7a → 7b → 8** (a UI da Fase 8 edita o `KanbanEtapas.jsx` refatorado na 7b; o backend da 8 pode andar em paralelo à 7b). **Fases 9 e 10 são independentes** entre si e das demais (a parte frontend da 10 reusa o `datasUtils.js` criado na 7b). ADRs novos (010, 011, 012) são escritos **na execução** de cada fase, seguindo o padrão do repo.

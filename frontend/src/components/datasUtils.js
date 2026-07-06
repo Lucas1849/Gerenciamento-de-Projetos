@@ -15,6 +15,20 @@ export function hojeISO() {
 
 export const isoDe = (ano, mes, dia) => `${ano}-${pad(mes)}-${pad(dia)}`;
 
+/** Janela de plausibilidade de datas (Fase 10), espelhando o backend:
+ *  01/01/(ano atual − 1) a 31/12/(ano atual + 2). Fonte única da regra é o
+ *  backend (422); aqui só se pré-bloqueia o input (min/max) e o submit. */
+export function janelaDatas() {
+  const ano = new Date().getFullYear();
+  return { min: `${ano - 1}-01-01`, max: `${ano + 2}-12-31` };
+}
+
+/** true se a data ISO está dentro da janela de plausibilidade. */
+export function dataPlausivel(iso) {
+  const { min, max } = janelaDatas();
+  return iso >= min && iso <= max;
+}
+
 /** Extrai { ano, mes } (mes 1–12) de uma string ISO. */
 export const mesDeISO = (iso) => ({ ano: +iso.slice(0, 4), mes: +iso.slice(5, 7) });
 
