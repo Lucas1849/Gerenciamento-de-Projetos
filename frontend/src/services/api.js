@@ -1,8 +1,9 @@
 // ─── Serviço de API Centralizado ────────────────────────────────────────────
 // Todas as chamadas ao backend passam por este módulo.
-// Para trocar o endereço do servidor, basta alterar a constante BASE_URL.
+// O endereço do servidor é configurável por ambiente (preparação da Fase 11):
+// defina VITE_API_URL num .env do Vite; sem ela, usa o backend local.
 
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
 // ─── Helper interno ─────────────────────────────────────────────────────────
 async function request(endpoint, options = {}) {

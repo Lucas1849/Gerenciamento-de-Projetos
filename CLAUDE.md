@@ -15,7 +15,7 @@ uvicorn main:app --reload
 ```
 - API: `http://127.0.0.1:8000`, interactive docs (Swagger): `http://127.0.0.1:8000/docs`
 - SQLite DB (`piloto_projetos.db`) is created automatically on first run via `Base.metadata.create_all()` — there is no migration tool (Alembic deliberately not adopted, see ADR-001). To apply a schema change, delete the `.db` file and restart.
-- `backend/requirements.txt` is populated with the real dependencies (fastapi, uvicorn, sqlalchemy>=2.0, pydantic>=2.0, workalendar); `backend/.env.example` documents the environment variables.
+- `backend/requirements.txt` is populated with the real dependencies (fastapi, uvicorn, sqlalchemy>=2.0, pydantic>=2.0, workalendar, python-dotenv); `backend/.env.example` documents the environment variables — `DATABASE_URL` (default SQLite) and `FRONTEND_ORIGIN` (comma-separated CORS origins, default `*`) are read from the environment/.env since the Fase 11 config prep.
 - Tests exist in `backend/tests/` (`conftest.py`, `test_smoke.py`, `test_fase5.py`, `test_fase6.py`, `test_fase8.py`, `test_fase9.py`, `test_fase10.py` — 31 tests). Run them from `backend/` with `pytest`.
 
 **Frontend** (from `frontend/`):
@@ -26,7 +26,7 @@ npm run build
 npm run lint
 npm run preview
 ```
-- Backend URL is configured via `BASE_URL` in `frontend/src/services/api.js`.
+- Backend URL: `VITE_API_URL` env var (see `frontend/.env.example`), falling back to `http://127.0.0.1:8000` in `frontend/src/services/api.js`.
 
 ## Architecture
 
