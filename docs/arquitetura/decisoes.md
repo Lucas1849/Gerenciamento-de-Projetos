@@ -109,3 +109,20 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** reusar a chave do ADR-008 mantém um único modelo de bloco nos dois caminhos (criação e pós-criação) sem migração de schema; desfazer preservando os valores dos membros evita perda de dados num gesto reversível.
 
 **Status:** implementado na Fase 6 (05/07/2026).
+---
+
+### ADR-010 — Visualizações múltiplas de etapas: container único, visão não persistida e calendário com chips pontuais (Fase 7b)
+
+**Contexto:** a Fase 7b adiciona à aba Etapas quatro visualizações (Por status / Tabela / Cronograma / Calendário), com referência visual nas telas de projetos do Notion.
+
+**Decisão:**
+- **Container único** (`EtapasProjeto.jsx`): busca etapas + colaboradores uma vez e concentra os handlers (mover status, equipe, recarregar), movidos do `KanbanEtapas` **sem alterar o corpo**. `KanbanEtapas.jsx` vira visão controlada por props; o `DndContext` e o gesto 🔗 de formar blocos permanecem encapsulados nele (chamadas `criarBloco`/`desfazerBloco` também, pois são exclusivas dessa visão).
+- **A visão ativa não persiste entre navegações** (useState local) — trade-off consciente: persistência exigiria estado global/URL que o app (sem router) não tem; custo de re-selecionar é baixo.
+- **Sem backend novo**: `EtapaResposta` já entrega `data_inicio` + `data_fim` derivada. Aritmética nova no frontend é só de **grade de calendário** (`datasUtils.js`, tudo em UTC, comparações por string ISO) — cálculo de dias úteis continua exclusivo do backend (ADR-008).
+- **Cronograma**: CSS grid por mês, barras com clamp nos limites do mês, **bloco = barra única** (prazo/data compartilhados, ADR-009), faixas de fim de semana, aside "Sem data de início". Mês exibido compartilhado com o Calendário (estado no container; inicial = mês do menor `data_inicio`).
+- **Calendário com chips pontuais** em `data_inicio` (▸) e `data_fim` (✔), **sem spans multi-semana** — a complexidade de layout de spans não se justifica para o piloto; máx. 3 chips por célula + "+N".
+- Agrupamento de blocos e rótulos "Bloco 1, 2…" extraídos para `etapasUtils.js`, compartilhados por todas as visões.
+
+**Justificativa:** um único fetch/conjunto de handlers evita divergência de estado entre visões; manter o Kanban como visão controlada preserva o comportamento validado na Fase 6 com risco mínimo de regressão.
+
+**Status:** implementado na Fase 7b (05/07/2026).
