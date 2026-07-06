@@ -216,6 +216,17 @@ class BlocoCriar(BaseModel):
     data_inicio: Optional[date] = None
 
 
+class BlocoEstender(BaseModel):
+    """Extensão de bloco existente com novas etapas (Fase 8).
+
+    As etapas adicionadas adotam o prazo/data já compartilhados pelo bloco
+    (copiados de um membro, redundância do ADR-009); o status permanece
+    individual por etapa.
+    """
+
+    etapa_ids: List[int] = Field(min_length=1)
+
+
 class ProjetoResposta(BaseModel):
     id: int
     nome: str

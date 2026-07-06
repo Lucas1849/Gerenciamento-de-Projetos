@@ -154,6 +154,23 @@ export function criarBloco(projetoId, { etapaIds, diasUteis, dataInicio }) {
   });
 }
 
+/** Estende um bloco existente com novas etapas (Fase 8): elas adotam o
+ *  prazo/data do bloco e mantêm status individual. */
+export function estenderBloco(projetoId, chave, etapaIds) {
+  return request(`/projetos/${projetoId}/blocos/${chave}/etapas`, {
+    method: 'POST',
+    body: JSON.stringify({ etapa_ids: etapaIds }),
+  });
+}
+
+/** Retira uma etapa específica do bloco (Fase 8); com 1 membro restante o
+ *  bloco inteiro dissolve. */
+export function removerEtapaDoBloco(projetoId, chave, etapaId) {
+  return request(`/projetos/${projetoId}/blocos/${chave}/etapas/${etapaId}`, {
+    method: 'DELETE',
+  });
+}
+
 /** Desfaz um bloco de entrega (limpa a chave; membros mantêm prazo/data). */
 export function desfazerBloco(projetoId, chave) {
   return request(`/projetos/${projetoId}/blocos/${chave}`, { method: 'DELETE' });

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Link2 } from 'lucide-react';
+import { Link2, Unlink } from 'lucide-react';
 import ModalBloco from './ModalBloco';
-import { criarBloco, desfazerBloco } from '../services/api';
+import { criarBloco, desfazerBloco, estenderBloco, removerEtapaDoBloco } from '../services/api';
 import { formatarData } from './datasUtils';
 import { agruparCards, statusDoCard, FLUXO } from './etapasUtils';
 
@@ -151,12 +151,21 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
 
 // Card único do bloco: fica na coluna da etapa menos avançada; progresso
 // "X/Y concluídas"; cada etapa interna mantém status e equipe próprios.
-function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRemover, aoDesfazer }) {
+function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRemover, aoDesfazer, aoRetirarMembro }) {
   const concluidas = membros.filter(e => e.status === 'concluida').length;
   const ref = membros[0]; // prazo/data compartilhados pelo bloco
+  // Alvo de soltura do 🔗 de uma etapa avulsa: estende o bloco (Fase 8).
+  const { setNodeRef, isOver } = useDroppable({ id: `bloco-${ref.bloco_entrega}` });
 
   return (
-    <div className="ui-card kanban-card">
+    <div
+      ref={setNodeRef}
+      className="ui-card kanban-card"
+      style={{
+        outline: isOver ? '2px solid var(--color-brand)' : 'none',
+        boxShadow: isOver ? 'var(--shadow-glow)' : undefined,
+      }}
+    >
       <span className="chip" style={{ backgroundColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)', fontSize: '10px', marginBottom: 'var(--sp-8)', display: 'inline-flex' }}>
         📦 Entrega em bloco · {rotulo}
       </span>
@@ -182,9 +191,20 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
 
       {membros.map(etapa => (
         <div key={etapa.id} style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--sp-12)', marginTop: 'var(--sp-12)' }}>
-          <h5 style={{ fontSize: 'var(--text-body1)', fontWeight: 600, textDecoration: etapa.status === 'concluida' ? 'line-through' : 'none', opacity: etapa.status === 'concluida' ? 0.6 : 1 }}>
-            {etapa.ordem}. {etapa.nome}
-          </h5>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--sp-8)' }}>
+            <h5 style={{ flex: 1, fontSize: 'var(--text-body1)', fontWeight: 600, textDecoration: etapa.status === 'concluida' ? 'line-through' : 'none', opacity: etapa.status === 'concluida' ? 0.6 : 1 }}>
+              {etapa.ordem}. {etapa.nome}
+            </h5>
+            <button
+              type="button"
+              title="Remover do bloco"
+              aria-label={`Remover ${etapa.nome} do bloco`}
+              style={{ background: 'none', border: 'none', padding: 'var(--sp-4)', cursor: 'pointer', color: 'var(--color-text-disabled)' }}
+              onClick={() => aoRetirarMembro(ref.bloco_entrega, etapa, membros.length)}
+            >
+              <Unlink size={14} />
+            </button>
+          </div>
           <EquipeEtapa etapa={etapa} colaboradores={colaboradores} aoAdicionar={aoAdicionar} aoRemover={aoRemover} />
           <BotoesStatus etapa={etapa} aoMover={aoMover} />
         </div>
@@ -208,17 +228,28 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
 export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, aoMover, aoAdicionar, aoRemover, recarregar }) {
   // Par de etapas aguardando confirmação de ligação no modal.
   const [parBloco, setParBloco] = useState(null);
+  // Extensão de bloco aguardando confirmação: { etapa, chave, membros }.
+  const [extensao, setExtensao] = useState(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  // Gesto de ligação: soltar o 🔗 de uma etapa avulsa sobre outra → modal.
+  // Gesto de ligação: soltar o 🔗 de uma etapa avulsa sobre outra avulsa
+  // (criar bloco) ou sobre um card de bloco (estender, Fase 8) → modal.
   const aoSoltarLigacao = ({ active, over }) => {
     if (!over) return;
     const origemId = Number(String(active.id).replace('link-', ''));
-    const alvoId = Number(String(over.id).replace('card-', ''));
-    if (origemId === alvoId) return;
     const origem = etapas.find(e => e.id === origemId);
+    if (!origem) return;
+    const overId = String(over.id);
+    if (overId.startsWith('bloco-')) {
+      const chave = overId.slice(6);
+      const membros = etapas.filter(e => e.bloco_entrega === chave);
+      if (membros.length) setExtensao({ etapa: origem, chave, membros });
+      return;
+    }
+    const alvoId = Number(overId.replace('card-', ''));
+    if (origemId === alvoId) return;
     const alvo = etapas.find(e => e.id === alvoId);
-    if (origem && alvo) setParBloco([origem, alvo]);
+    if (alvo) setParBloco([origem, alvo]);
   };
 
   const confirmarBloco = ({ dias, dataInicio }) => {
@@ -230,6 +261,31 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
         recarregar();
       })
       .catch(erro => toast.error(erro.message || 'Erro ao formar o bloco.'));
+  };
+
+  const confirmarExtensao = () => {
+    const { etapa, chave } = extensao;
+    setExtensao(null);
+    estenderBloco(projetoId, chave, [etapa.id])
+      .then(() => {
+        toast.success('Etapa adicionada ao bloco.');
+        recarregar();
+      })
+      .catch(erro => toast.error(erro.message || 'Erro ao estender o bloco.'));
+  };
+
+  const retirarMembro = (chave, etapa, totalMembros) => {
+    const dissolve = totalMembros <= 2;
+    const aviso = dissolve
+      ? `Remover "${etapa.nome}" do bloco? Com apenas 1 etapa restante, o bloco inteiro será desfeito.`
+      : `Remover "${etapa.nome}" do bloco? Ela volta a ser avulsa, mantendo prazo e datas.`;
+    if (!window.confirm(aviso)) return;
+    removerEtapaDoBloco(projetoId, chave, etapa.id)
+      .then(() => {
+        toast.success(dissolve ? 'Etapa removida — o bloco foi desfeito.' : 'Etapa removida do bloco.');
+        recarregar();
+      })
+      .catch(erro => toast.error(erro.message || 'Erro ao remover a etapa do bloco.'));
   };
 
   const desfazerBlocoLocal = (chave) => {
@@ -285,6 +341,7 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
                       aoAdicionar={aoAdicionar}
                       aoRemover={aoRemover}
                       aoDesfazer={desfazerBlocoLocal}
+                      aoRetirarMembro={retirarMembro}
                     />
                   )
                 )}
@@ -293,6 +350,17 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
           })}
         </div>
       </DndContext>
+
+      {extensao && (
+        <ModalBloco
+          modo="estender"
+          nomes={[extensao.etapa.nome, ...extensao.membros.map(e => e.nome)]}
+          diasInicial={extensao.membros[0].dias_uteis_esperados ?? ''}
+          dataInicial={extensao.membros[0].data_inicio ?? ''}
+          onConfirmar={confirmarExtensao}
+          onCancelar={() => setExtensao(null)}
+        />
+      )}
 
       {parBloco && (
         <ModalBloco

@@ -18,11 +18,12 @@ Depois de preenchido e aprovado, os dados aqui viram o script `backend/app/seed_
 |4|Definição do Público-alvo e Amostra|7||
 |5|Análise de Concorrência|10||
 |6|Análise de Tendências|5||
-|7|Método de Pesquisa|6||
+|7|Levantamento de Temas|5||
+|7|Método de Pesquisa|5||
 |8|Aplicação do Método de Pesquisa|20||
 |9|Análise e Tabulação dos Resultados|10||
 
-*Fonte: Proposta Esmalteria (bloco 4.1). Total: 74 dias úteis.*
+*Fonte: Proposta Esmalteria (bloco 4.1). Ordem 7 é entrega em bloco (Levantamento de Temas + Método de Pesquisa, 5 dias úteis para as duas juntas). Total: 73 dias úteis.*
 
 ## 2. Plano de Marketing
 
