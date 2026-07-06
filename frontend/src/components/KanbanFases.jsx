@@ -1,11 +1,11 @@
-import { Plus } from 'lucide-react';
-import { atualizarProjeto } from '../services/api';
+import { Plus, Trash2 } from 'lucide-react';
+import { atualizarProjeto, excluirProjeto } from '../services/api';
 import { FASES, FASE_LABEL } from './fases';
 import AvatarIniciais from './AvatarIniciais';
 
 export default function KanbanFases({
   projetos, servicos = [], equipe = [],
-  aoAbrirProjeto, aoAtualizarProjeto, aoNovoProjeto, toast,
+  aoAbrirProjeto, aoAtualizarProjeto, aoNovoProjeto, aoRecarregar, toast,
 }) {
   const servicoPorId     = new Map(servicos.map(s => [s.id, s]));
   const trabalhadorPorId = new Map(equipe.map(t => [t.id, t]));
@@ -17,6 +17,16 @@ export default function KanbanFases({
         toast.success(`Projeto movido para "${FASE_LABEL[novaFase]}".`);
       })
       .catch(() => toast.error('Erro ao mover o projeto de fase.'));
+  };
+
+  const excluirProjetoLocal = (projeto) => {
+    if (!window.confirm(`Excluir o projeto ${projeto.nome}? Isso apaga as etapas e o histórico de equipe. Não pode ser desfeito.`)) return;
+    excluirProjeto(projeto.id)
+      .then(() => {
+        toast.success(`Projeto ${projeto.nome} excluído.`);
+        aoRecarregar();
+      })
+      .catch(erro => toast.error(erro.message || 'Erro ao excluir o projeto.'));
   };
 
   return (
@@ -79,9 +89,20 @@ export default function KanbanFases({
                     )}
                   </div>
 
-                  <span className={`chip ${p.tap_assinado ? 'chip-success' : 'chip-warning'}`}>
-                    TAP: {p.tap_assinado ? 'Assinado' : 'Pendente'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span className={`chip ${p.tap_assinado ? 'chip-success' : 'chip-warning'}`}>
+                      TAP: {p.tap_assinado ? 'Assinado' : 'Pendente'}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-ghost-danger"
+                      title="Excluir projeto"
+                      aria-label={`Excluir o projeto ${p.nome}`}
+                      onClick={e => { e.stopPropagation(); excluirProjetoLocal(p); }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
 
                   <div style={{ display: 'flex', gap: 'var(--sp-8)', marginTop: 'var(--sp-12)' }}>
                     {anterior && (

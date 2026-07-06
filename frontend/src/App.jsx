@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Home, User, Users, MessageCircle, Building2, CalendarClock, Trophy,
   Briefcase, GraduationCap, CalendarDays, ClipboardList, LogOut,
-  ChevronRight, Menu, Flame,
+  ChevronRight, Menu, Flame, Trash2,
 } from 'lucide-react';
 import './App.css';
 import FormularioColaborador from './components/FormularioColaborador';
@@ -15,6 +15,7 @@ import AvatarIniciais from './components/AvatarIniciais';
 import { useToast, ToastContainer } from './components/Toast';
 import {
   listarProjetos, listarTrabalhadores, listarGestoes, listarProfessores, listarServicos,
+  excluirGestao,
 } from './services/api';
 
 const TELAS = {
@@ -127,7 +128,7 @@ function Skeleton() {
   );
 }
 
-function CardGestao({ gestao, totalProjetos, aoAbrir }) {
+function CardGestao({ gestao, totalProjetos, aoAbrir, aoExcluir }) {
   return (
     <div className="ui-card card-projeto">
       <div className="card-projeto-header">
@@ -138,7 +139,15 @@ function CardGestao({ gestao, totalProjetos, aoAbrir }) {
       <h3 className="card-projeto-nome">{gestao.nome}</h3>
       <p className="card-projeto-desc">{totalProjetos} projeto(s) nesta gestão</p>
       <div className="card-projeto-footer">
-        <span />
+        <button
+          type="button"
+          className="btn-ghost-danger"
+          title="Excluir gestão"
+          aria-label={`Excluir a gestão ${gestao.nome}`}
+          onClick={() => aoExcluir(gestao)}
+        >
+          <Trash2 size={16} />
+        </button>
         <button className="btn btn-primary btn-sm" onClick={() => aoAbrir(gestao.id)}>
           Abrir →
         </button>
@@ -164,6 +173,20 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
   if (carregando) return <Skeleton />;
+
+  const excluirGestaoLocal = (gestao) => {
+    if (!window.confirm(`Excluir a gestão ${gestao.nome}? Não pode ser desfeito.`)) return;
+    excluirGestao(gestao.id)
+      .then(() => {
+        toast.success(`Gestão ${gestao.nome} excluída.`);
+        onRecarregar();
+      })
+      .catch(erro => toast.error(
+        erro.status === 409
+          ? 'A gestão ainda tem projetos — exclua-os primeiro.'
+          : erro.message || 'Erro ao excluir a gestão.'
+      ));
+  };
 
   return (
     <div>
@@ -206,6 +229,7 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
               gestao={g}
               totalProjetos={projetos.filter(p => p.gestao_id === g.id).length}
               aoAbrir={onAbrirGestao}
+              aoExcluir={excluirGestaoLocal}
             />
           ))}
         </div>
@@ -259,6 +283,7 @@ function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProje
         aoAbrirProjeto={onAbrirProjeto}
         aoAtualizarProjeto={onAtualizarProjeto}
         aoNovoProjeto={() => setMostrarForm(true)}
+        aoRecarregar={onRecarregar}
         toast={toast}
       />
     </div>
