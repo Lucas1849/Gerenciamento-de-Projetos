@@ -2,13 +2,13 @@
 
 Registro do planejamento aprovado pelo responsável do projeto em **05/07/2026**, na sequência das Fases 3–6 ([plano-fases-3-6.md](plano-fases-3-6.md)). Origem: correções e melhorias solicitadas após os testes do piloto, com referência visual das telas de projetos do Notion (visões Por status / Tabela / Cronograma / Calendário), mais o envio do **schema real do banco do Apoio Hub** pelo mantenedor da plataforma (analisado em [../arquitetura/integracao-apoio-hub.md](../arquitetura/integracao-apoio-hub.md)).
 
-> Instrução explícita do responsável: as fases só começam mediante comando direto. As **Fases 7a e 7b foram executadas em 05/07/2026** mediante comando; as demais seguem aguardando.
+> Instrução explícita do responsável: as fases só começam mediante comando direto. As **Fases 7a e 7b foram executadas em 05/07/2026** e a **Fase 8 em 06/07/2026**, mediante comando; as demais seguem aguardando.
 
 | Fase | Entrega | Status |
 |---|---|---|
 | 7a | Aba **Etapas** primeiro (e padrão); Visão Geral depois | ✅ Concluída (05/07/2026) |
 | 7b | Visualizações múltiplas de etapas (Por status / Tabela / Cronograma / Calendário) com submenu | ✅ Concluída (05/07/2026, ADR-010) |
-| 8 | Entregas em bloco com N etapas: estender, retirar etapa específica e romper | ⏳ Aguardando comando |
+| 8 | Entregas em bloco com N etapas: estender, retirar etapa específica e romper | ✅ Concluída (06/07/2026, ADR-011) |
 | 9 | Exclusão (DELETE) de gestões e projetos pelos cards | ⏳ Aguardando comando |
 | 10 | Tratamento/validação de datas (ano plausível, formato DD/MM/AAAA) | ⏳ Aguardando comando |
 | 11 | Go-live / integração com o Apoio Hub | 🔒 Gatilho externo (acesso ao banco do Hub) |

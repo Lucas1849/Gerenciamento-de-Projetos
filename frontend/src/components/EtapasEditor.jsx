@@ -69,8 +69,9 @@ function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover,
     useSortable({ id: item.uid });
   const ehBloco = item.membros.length > 1;
   const ehManual = !ehBloco && item.membros[0].etapaTemplateId == null;
-  // Realce de alvo válido enquanto um 🔗 está sendo arrastado.
-  const alvoDeLigacao = ligando && !ehBloco && isOver;
+  // Realce de alvo válido enquanto um 🔗 está sendo arrastado (avulsa ou
+  // bloco — soltar sobre bloco estende, Fase 8).
+  const alvoDeLigacao = ligando && isOver;
 
   return (
     <div
@@ -201,7 +202,7 @@ export default function EtapasEditor({ itens, onChange }) {
       const origem = itens.findIndex(i => i.uid === activeId.slice(5));
       const alvo = itens.findIndex(i => i.uid === String(over.id));
       if (origem < 0 || alvo < 0 || origem === alvo) return;
-      if (itens[alvo].membros.length > 1) return; // só entre cards avulsos
+      // Alvo bloco = extensão (Fase 8); alvo avulso = criação de bloco.
       setParLigacao([origem, alvo]);
       return;
     }
@@ -212,8 +213,9 @@ export default function EtapasEditor({ itens, onChange }) {
   };
 
   // Mescla os dois cards num bloco local (o backend materializa via
-  // `bloco_grupo` na criação do projeto).
-  const confirmarLigacao = ({ dias, dataInicio }) => {
+  // `bloco_grupo` na criação do projeto). Na extensão (alvo já é bloco) o
+  // payload é omitido: o bloco mantém dias/data próprios.
+  const confirmarLigacao = (valores) => {
     const [origem, alvo] = parLigacao;
     setParLigacao(null);
     onChange(
@@ -223,8 +225,9 @@ export default function EtapasEditor({ itens, onChange }) {
             ? {
                 ...item,
                 membros: [...item.membros, ...itens[origem].membros],
-                dias: String(dias),
-                dataInicio: dataInicio ?? '',
+                ...(valores
+                  ? { dias: String(valores.dias), dataInicio: valores.dataInicio ?? '' }
+                  : {}),
               }
             : item
         )
@@ -291,9 +294,18 @@ export default function EtapasEditor({ itens, onChange }) {
 
       {parLigacao && (
         <ModalBloco
+          modo={itens[parLigacao[1]].membros.length > 1 ? 'estender' : 'criar'}
           nomes={parLigacao.flatMap(idx => itens[idx].membros.map(m => m.nome))}
-          diasInicial={Math.max(...parLigacao.map(idx => Number(itens[idx].dias) || 0)) || ''}
-          dataInicial={parLigacao.map(idx => itens[idx].dataInicio).filter(Boolean).sort()[0] ?? ''}
+          diasInicial={
+            itens[parLigacao[1]].membros.length > 1
+              ? itens[parLigacao[1]].dias
+              : Math.max(...parLigacao.map(idx => Number(itens[idx].dias) || 0)) || ''
+          }
+          dataInicial={
+            itens[parLigacao[1]].membros.length > 1
+              ? itens[parLigacao[1]].dataInicio
+              : parLigacao.map(idx => itens[idx].dataInicio).filter(Boolean).sort()[0] ?? ''
+          }
           onConfirmar={confirmarLigacao}
           onCancelar={() => setParLigacao(null)}
         />

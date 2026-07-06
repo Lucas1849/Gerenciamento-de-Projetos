@@ -126,3 +126,21 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** um único fetch/conjunto de handlers evita divergência de estado entre visões; manter o Kanban como visão controlada preserva o comportamento validado na Fase 6 com risco mínimo de regressão.
 
 **Status:** implementado na Fase 7b (05/07/2026).
+
+---
+
+### ADR-011 — Blocos com N etapas: estender, retirar membro específico e romper coexistem (Fase 8)
+
+**Contexto:** o modelo (chave uuid em `bloco_entrega`, ADR-008/009) já suporta N membros — blocos vindos do catálogo renderizam corretamente —, mas os gestos limitavam blocos interativos a 2 etapas: `CardBloco` não era droppable, o editor de criação recusava alvo-bloco e o backend não estendia bloco existente. Requisito explícito do responsável: além de estender, retirar uma etapa específica de dentro do bloco, mantendo o rompimento total intocado.
+
+**Decisão:**
+- **Três gestos coexistem, sem mudança de schema**: formar (ADR-009, intocado), **estender** e **retirar membro**; "Desfazer bloco" total permanece exatamente como está.
+- `POST /projetos/{id}/blocos/{chave}/etapas` (`BlocoEstender { etapa_ids: min 1 }`) estende bloco existente: as novas etapas **adotam o prazo/data do bloco** (copiados de um membro, redundância do ADR-009; sem re-perguntar ao usuário) e mantêm status individual. Validações: bloco/projeto inexistente (404), ids repetidos (422), etapa de outro projeto (404), etapa já em bloco — inclusive membro do próprio (409).
+- `DELETE /projetos/{id}/blocos/{chave}/etapas/{etapa_id}` retira etapa específica: volta a ser avulsa mantendo prazo/data/status; **se restar 1 membro, o bloco inteiro dissolve** (invariante: bloco mínimo = 2). 404 para bloco/etapa não pertencente.
+- **Kanban**: `CardBloco` vira droppable (`bloco-{chave}`) com realce; `aoSoltarLigacao` ramifica por prefixo do alvo (`card-` cria, `bloco-` estende). Blocos **não** ganham handle 🔗 (só avulsa→bloco; bloco→bloco fora de escopo). Botão `Unlink` por membro com `window.confirm` e toast específico quando a remoção dissolve o bloco.
+- **Editor de criação**: merge de card avulso em item-bloco permitido (append em `membros`); na extensão o alvo mantém dias/data próprios.
+- **`ModalBloco.jsx`** com prop retrocompatível `modo: 'criar' | 'estender'` — no modo estender o prazo/data são read-only ("a etapa adota o prazo e a data de início do bloco; o status continua individual").
+
+**Justificativa:** a limitação era de gesto/extensão, não de modelo; reusar a chave compartilhada evita migração e mantém a semântica do ADR-009 (redundância de prazo/data, status individual). O invariante de bloco mínimo = 2 impede blocos degenerados de 1 etapa.
+
+**Status:** implementado na Fase 8 (06/07/2026).
