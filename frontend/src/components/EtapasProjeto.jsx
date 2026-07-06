@@ -4,6 +4,7 @@ import KanbanEtapas from './KanbanEtapas';
 import TabelaEtapas from './TabelaEtapas';
 import CronogramaEtapas from './CronogramaEtapas';
 import CalendarioEtapas from './CalendarioEtapas';
+import ModalEditarEtapa from './ModalEditarEtapa';
 import { mesDeISO, hojeISO } from './datasUtils';
 import {
   listarEtapasDoProjeto,
@@ -29,6 +30,9 @@ export default function EtapasProjeto({ projetoId, toast }) {
   const [visao, setVisao] = useState('kanban');
   // Mês exibido, compartilhado entre Cronograma e Calendário.
   const [mesExibido, setMesExibido] = useState(mesDeISO(hojeISO()));
+  // Ids da etapa/bloco em edição no modal (Fase 12); os membros são derivados
+  // de `etapas` a cada render para o modal não segurar snapshot desatualizado.
+  const [edicaoIds, setEdicaoIds] = useState(null);
 
   const recarregar = useCallback(() => {
     return listarEtapasDoProjeto(projetoId)
@@ -77,6 +81,13 @@ export default function EtapasProjeto({ projetoId, toast }) {
       .catch(erro => toast.error(erro.message || 'Erro ao remover consultor.'));
   };
 
+  // Abre o modal de edição para a etapa avulsa ou para todo o bloco (Fase 12).
+  const abrirEdicao = (membros) => setEdicaoIds(membros.map(m => m.id));
+
+  const membrosEdicao = edicaoIds
+    ? etapas.filter(e => edicaoIds.includes(e.id))
+    : [];
+
   return (
     <div>
       <div className="page-header">
@@ -110,17 +121,29 @@ export default function EtapasProjeto({ projetoId, toast }) {
           aoMover={moverEtapa}
           aoAdicionar={adicionarConsultor}
           aoRemover={removerConsultor}
+          aoEditar={abrirEdicao}
           recarregar={recarregar}
         />
       )}
       {visao === 'tabela' && (
-        <TabelaEtapas etapas={etapas} aoMover={moverEtapa} />
+        <TabelaEtapas etapas={etapas} aoMover={moverEtapa} aoEditar={abrirEdicao} />
       )}
       {visao === 'cronograma' && (
         <CronogramaEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />
       )}
       {visao === 'calendario' && (
         <CalendarioEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />
+      )}
+
+      {edicaoIds && membrosEdicao.length > 0 && (
+        <ModalEditarEtapa
+          projetoId={projetoId}
+          membros={membrosEdicao}
+          etapas={etapas}
+          toast={toast}
+          aoFechar={() => setEdicaoIds(null)}
+          aoSalvo={() => { setEdicaoIds(null); recarregar(); }}
+        />
       )}
     </div>
   );

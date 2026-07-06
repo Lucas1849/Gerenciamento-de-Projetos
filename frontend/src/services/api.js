@@ -189,6 +189,15 @@ export function desfazerBloco(projetoId, chave) {
   return request(`/projetos/${projetoId}/blocos/${chave}`, { method: 'DELETE' });
 }
 
+/** Reordena as etapas do projeto (Fase 12): lista completa de ids na nova
+ *  ordem visual; o backend reatribui ordem = índice + 1. */
+export function reordenarEtapas(projetoId, ordemIds) {
+  return request(`/projetos/${projetoId}/etapas/ordem`, {
+    method: 'PUT',
+    body: JSON.stringify({ ordem: ordemIds }),
+  });
+}
+
 // ─── Calendário ─────────────────────────────────────────────────────────────
 
 /** Prévia da data final (data_inicio + dias úteis, feriados nacionais).
@@ -197,7 +206,25 @@ export function calcularDataFim(dataInicio, diasUteis) {
   return request(`/calendario/data-fim?data_inicio=${dataInicio}&dias_uteis=${diasUteis}`);
 }
 
+/** Encadeia datas de início por dias úteis (Fase 12): um round-trip resolve a
+ *  cascata inteira do editor — o frontend nunca calcula datas localmente. */
+export function cascataDatas(dataInicio, diasLista) {
+  return request('/calendario/cascata', {
+    method: 'POST',
+    body: JSON.stringify({ data_inicio: dataInicio, dias: diasLista }),
+  });
+}
+
 // ─── Etapas ─────────────────────────────────────────────────────────────────
+
+/** Edita campos da etapa pós-criação (Fase 12): aplica só os campos enviados;
+ *  dias/data de membro de bloco propagam a todos os membros (ADR-009). */
+export function atualizarEtapa(etapaId, dados) {
+  return request(`/etapas/${etapaId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dados),
+  });
+}
 
 /** Atualiza o status (coluna) de uma etapa. */
 export function atualizarStatusEtapa(etapaId, status) {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Link2, Unlink } from 'lucide-react';
+import { Link2, Unlink, Pencil } from 'lucide-react';
 import ModalBloco from './ModalBloco';
 import { criarBloco, desfazerBloco, estenderBloco, removerEtapaDoBloco } from '../services/api';
 import { formatarData } from './datasUtils';
@@ -89,7 +89,22 @@ function BotoesStatus({ etapa, aoMover }) {
 
 // Card de etapa avulsa: alvo de soltura (droppable) e origem do gesto de
 // ligação pelo handle 🔗 (draggable) — ADR-009.
-function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover }) {
+// Botão ✏️: abre o modal de edição pós-criação (Fase 12 / ADR-014).
+function BotaoEditar({ rotulo, onClick }) {
+  return (
+    <button
+      type="button"
+      title={rotulo}
+      aria-label={rotulo}
+      style={{ background: 'none', border: 'none', padding: 'var(--sp-4)', cursor: 'pointer', color: 'var(--color-text-disabled)' }}
+      onClick={onClick}
+    >
+      <Pencil size={15} />
+    </button>
+  );
+}
+
+function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover, aoEditar }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `card-${etapa.id}` });
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } =
     useDraggable({ id: `link-${etapa.id}` });
@@ -107,6 +122,7 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
         <h4 style={{ flex: 1, fontSize: 'var(--text-h4)', fontWeight: 600, textDecoration: etapa.status === 'concluida' ? 'line-through' : 'none', opacity: etapa.status === 'concluida' ? 0.6 : 1 }}>
           {etapa.ordem}. {etapa.nome}
         </h4>
+        <BotaoEditar rotulo="Editar etapa" onClick={() => aoEditar([etapa])} />
         <button
           type="button"
           ref={setDragRef}
@@ -151,7 +167,7 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
 
 // Card único do bloco: fica na coluna da etapa menos avançada; progresso
 // "X/Y concluídas"; cada etapa interna mantém status e equipe próprios.
-function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRemover, aoDesfazer, aoRetirarMembro }) {
+function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRemover, aoDesfazer, aoRetirarMembro, aoEditar }) {
   const concluidas = membros.filter(e => e.status === 'concluida').length;
   const ref = membros[0]; // prazo/data compartilhados pelo bloco
   // Alvo de soltura do 🔗 de uma etapa avulsa: estende o bloco (Fase 8).
@@ -166,9 +182,12 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
         boxShadow: isOver ? 'var(--shadow-glow)' : undefined,
       }}
     >
-      <span className="chip" style={{ backgroundColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)', fontSize: '10px', marginBottom: 'var(--sp-8)', display: 'inline-flex' }}>
-        📦 Entrega em bloco · {rotulo}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className="chip" style={{ backgroundColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)', fontSize: '10px', marginBottom: 'var(--sp-8)', display: 'inline-flex' }}>
+          📦 Entrega em bloco · {rotulo}
+        </span>
+        <BotaoEditar rotulo="Editar bloco" onClick={() => aoEditar(membros)} />
+      </div>
 
       <h4 style={{ fontSize: 'var(--text-h4)', fontWeight: 600 }}>
         Bloco de {membros.length} etapas
@@ -225,7 +244,7 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
 // Visão "Por status": Kanban de 3 colunas controlado por props (dados e
 // handlers vêm do container EtapasProjeto). O DndContext e o gesto 🔗 de
 // formar blocos permanecem encapsulados aqui.
-export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, aoMover, aoAdicionar, aoRemover, recarregar }) {
+export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, aoMover, aoAdicionar, aoRemover, aoEditar, recarregar }) {
   // Par de etapas aguardando confirmação de ligação no modal.
   const [parBloco, setParBloco] = useState(null);
   // Extensão de bloco aguardando confirmação: { etapa, chave, membros }.
@@ -330,6 +349,7 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
                       aoMover={aoMover}
                       aoAdicionar={aoAdicionar}
                       aoRemover={aoRemover}
+                      aoEditar={aoEditar}
                     />
                   ) : (
                     <CardBloco
@@ -342,6 +362,7 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
                       aoRemover={aoRemover}
                       aoDesfazer={desfazerBlocoLocal}
                       aoRetirarMembro={retirarMembro}
+                      aoEditar={aoEditar}
                     />
                   )
                 )}

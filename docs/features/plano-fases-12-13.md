@@ -2,11 +2,11 @@
 
 Registro do planejamento aprovado pelo responsável do projeto em **06/07/2026**, na sequência das Fases 7–11 ([plano-fases-7-11.md](plano-fases-7-11.md)). Origem: correções e melhorias solicitadas após os testes do piloto, com referência visual de um vídeo das telas de cronograma do Notion (arrastar/redimensionar barras e ligar etapas por dependência "Bloqueado por / Bloqueando").
 
-> Instrução explícita do responsável: **as fases só começam mediante comando direto**. Este documento **define e especifica** as Fases 12 e 13 — nada aqui está implementado. As Fases 11, 12 e 13 seguem **planejadas, não iniciadas**.
+> Instrução explícita do responsável: **as fases só começam mediante comando direto**. A Fase 12 foi executada em 06/07/2026 sob comando direto; a Fase 13 segue **planejada, não iniciada** (assim como a 11).
 
 | Fase | Entrega | Status |
 |---|---|---|
-| 12 | Cascata reativa de datas na criação + edição pós-criação de etapas/blocos (rota + formulário nas visões) | 📝 Planejada (06/07/2026, ADR-014) |
+| 12 | Cascata reativa de datas na criação + edição pós-criação de etapas/blocos (rota + formulário nas visões) | ✅ Concluída (06/07/2026, ADR-014) |
 | 13 | Dependências informativas entre etapas + cronograma interativo (arrastar/redimensionar/ligar) | 📝 Planejada (06/07/2026, ADR-015) |
 
 **Ordem obrigatória: 12 → 13.** A Fase 12 não mexe em schema (fluxo ADR-001 não é acionado) e deve ser **validada pelo gerente antes** de iniciar a 13. A Fase 13 **reintroduz dependência entre etapas** (revertendo a decisão do ADR-006, que já previa isso como "mudança de schema isolada") → **exige apagar e recriar o `.db`** e re-rodar `python -m app.seed_catalogo` (ADR-001). O cronograma interativo da Fase 13 depende do `PATCH /etapas/{id}` entregue na 12. Os ADRs 014 e 015 já estão **pré-registrados** em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) com status "planejado"; na execução de cada fase, virar o status para "implementado".

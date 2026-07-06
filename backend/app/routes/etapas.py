@@ -79,6 +79,49 @@ def atualizar_status_etapa(
     return serializar_etapa(etapa)
 
 
+@router.patch("/{etapa_id}", response_model=schemas.EtapaResposta)
+def editar_etapa(
+    etapa_id: int, edicao: schemas.EtapaEditar, db: Session = Depends(get_db)
+):
+    """Edita campos da etapa pós-criação (Fase 12, ADR-014).
+
+    Aplica só os campos enviados. Se a etapa pertence a um bloco de entrega,
+    dias_uteis_esperados/data_inicio propagam a todos os membros (redundância
+    do ADR-009); nome/descricao permanecem individuais.
+    """
+    etapa = db.get(Etapa, etapa_id)
+    if etapa is None:
+        raise HTTPException(status_code=404, detail="Etapa não encontrada")
+
+    campos = edicao.model_dump(exclude_unset=True)
+    if "nome" in campos:
+        etapa.nome = campos["nome"]
+    if "descricao" in campos:
+        etapa.descricao = campos["descricao"]
+
+    compartilhados = {
+        c: campos[c] for c in ("dias_uteis_esperados", "data_inicio") if c in campos
+    }
+    if compartilhados:
+        alvos = [etapa]
+        if etapa.bloco_entrega is not None:
+            alvos = (
+                db.query(Etapa)
+                .filter(
+                    Etapa.projeto_id == etapa.projeto_id,
+                    Etapa.bloco_entrega == etapa.bloco_entrega,
+                )
+                .all()
+            )
+        for alvo in alvos:
+            for campo, valor in compartilhados.items():
+                setattr(alvo, campo, valor)
+
+    db.commit()
+    db.refresh(etapa)
+    return serializar_etapa(etapa)
+
+
 @router.post("/{etapa_id}/consultores", response_model=schemas.EtapaConsultorResposta)
 def adicionar_consultor(
     etapa_id: int, dados: schemas.EtapaConsultorCriar, db: Session = Depends(get_db)

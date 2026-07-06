@@ -22,6 +22,29 @@ export function itensDosTemplates(templates) {
   }));
 }
 
+/** Cascata reativa de datas (Fase 12 / ADR-014): recomputa as datas de início
+ *  dos cards à frente de `indice`, encadeando pelos dias úteis via a rota
+ *  POST /calendario/cascata (`cascatear` = cliente da API, injetado para não
+ *  acoplar este helper ao fetch). Card sem `dias` quebra a cadeia dali para
+ *  frente (os seguintes mantêm o que têm). Devolve a lista atualizada. */
+export async function cascatearItens(itens, indice, cascatear) {
+  const ancora = itens[indice];
+  if (!ancora?.dataInicio) return itens;
+  // Trecho contíguo com dias preenchidos a partir do ponto alterado.
+  const dias = [];
+  for (let i = indice; i < itens.length && itens[i].dias !== ''; i++) {
+    dias.push(Number(itens[i].dias));
+  }
+  if (dias.length === 0) return itens;
+  // O último valor não é consumido; o 0 extra devolve também o início do card
+  // logo após o trecho (ele herda o fim do anterior mesmo sem dias próprios).
+  const { inicios } = await cascatear(ancora.dataInicio, [...dias, 0]);
+  return itens.map((item, idx) => {
+    const k = idx - indice;
+    return k > 0 && k < inicios.length ? { ...item, dataInicio: inicios[k] } : item;
+  });
+}
+
 /** Expande os itens do editor para o payload `etapas` de POST /projetos/.
  *  A ordem NÃO viaja: o backend atribui ordem = índice + 1 (ADR-008). */
 export function etapasParaPayload(itens) {

@@ -4,19 +4,19 @@
 // (fallback acessível). Blocos do catálogo (templates com a mesma ordem)
 // aparecem como card único com um só prazo/data para o conjunto.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable } from '@dnd-kit/core';
 import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ArrowUp, ArrowDown, Trash2, Plus, Link2, Unlink } from 'lucide-react';
-import { calcularDataFim } from '../services/api';
-import { novoUid } from './etapasEditorUtils';
+import { calcularDataFim, cascataDatas } from '../services/api';
+import { novoUid, cascatearItens } from './etapasEditorUtils';
 import { janelaDatas } from './datasUtils';
 import ModalBloco from './ModalBloco';
 
-function DataFimPreview({ dias, dataInicio }) {
+export function DataFimPreview({ dias, dataInicio }) {
   // Guarda o resultado junto com a chave dos inputs: se os inputs mudarem,
   // o valor antigo deixa de ser exibido sem precisar de setState no effect.
   const [resultado, setResultado] = useState(null);
@@ -190,6 +190,8 @@ export default function EtapasEditor({ itens, onChange }) {
   const [ligando, setLigando] = useState(false);
   // Índices [origem, alvo] aguardando confirmação no modal de bloco.
   const [parLigacao, setParLigacao] = useState(null);
+  // Sequência das cascatas em voo: só a resposta mais recente é aplicada.
+  const cascataSeq = useRef(0);
 
   const mover = (de, para) => onChange(arrayMove(itens, de, para));
 
@@ -250,8 +252,23 @@ export default function EtapasEditor({ itens, onChange }) {
     onChange([...itens.slice(0, indice), ...soltos, ...itens.slice(indice + 1)]);
   };
 
-  const editar = (indice, novo) =>
-    onChange(itens.map((i, idx) => (idx === indice ? novo : i)));
+  // Cascata reativa (Fase 12 / ADR-014): mudar os dias úteis ou a data de
+  // início de qualquer card recomputa as datas dos cards seguintes (o topo
+  // manda; card sem dias quebra a cadeia). Aritmética só no backend (ADR-008).
+  const editar = (indice, novo) => {
+    const anterior = itens[indice];
+    const novos = itens.map((i, idx) => (idx === indice ? novo : i));
+    const recascatear =
+      novo.dias !== anterior.dias || novo.dataInicio !== anterior.dataInicio;
+    if (!recascatear) return onChange(novos);
+    onChange(novos);
+    const seq = ++cascataSeq.current;
+    cascatearItens(novos, indice, cascataDatas)
+      .then(atualizados => {
+        if (seq === cascataSeq.current && atualizados !== novos) onChange(atualizados);
+      })
+      .catch(() => {});
+  };
 
   const remover = (indice) => {
     if (itens.length === 1) return; // guarda: o projeto precisa de ao menos 1 etapa

@@ -168,6 +168,43 @@ class EtapaAtualizar(BaseModel):
     status: StatusEtapa
 
 
+class EtapaEditar(BaseModel):
+    """Edição pós-criação de campos da etapa (Fase 12, ADR-014).
+
+    Aplica só os campos enviados. Se a etapa pertence a um bloco, mudanças de
+    dias_uteis_esperados/data_inicio propagam a todos os membros (ADR-009);
+    nome/descricao permanecem individuais. O status tem rota própria.
+    """
+
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    dias_uteis_esperados: Optional[int] = None
+    data_inicio: Optional[date] = None
+
+    # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
+    _valida_data = field_validator("data_inicio")(validar_data_plausivel)
+
+
+class OrdemEtapas(BaseModel):
+    """Reordenação das etapas de um projeto (Fase 12): lista completa de ids
+    na nova ordem visual; o backend reatribui ordem = índice + 1."""
+
+    ordem: List[int] = Field(min_length=1)
+
+
+class CascataCriar(BaseModel):
+    """Encadeamento de datas de início por dias úteis (Fase 12, ADR-014).
+
+    inicios[0] = data_inicio; inicios[k] = calcular_data_fim(inicios[k-1],
+    dias[k-1]) — um único round-trip para a cascata do editor de criação.
+    """
+
+    data_inicio: date
+    dias: List[int] = Field(min_length=1)
+
+    _valida_data = field_validator("data_inicio")(validar_data_plausivel)
+
+
 class EtapaResposta(BaseModel):
     id: int
     projeto_id: int

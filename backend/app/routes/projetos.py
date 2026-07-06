@@ -241,6 +241,33 @@ def desfazer_bloco(projeto_id: int, chave: str, db: Session = Depends(get_db)):
     return [serializar_etapa(e) for e in etapas]
 
 
+@router.put("/{projeto_id}/etapas/ordem", response_model=list[schemas.EtapaResposta])
+def reordenar_etapas(
+    projeto_id: int, dados: schemas.OrdemEtapas, db: Session = Depends(get_db)
+):
+    """Reordena as etapas do projeto (Fase 12, ADR-014).
+
+    A lista deve conter exatamente os ids das etapas do projeto, na nova ordem
+    visual; o backend reatribui ordem = índice + 1 (cobre etapas avulsas e
+    membros de bloco).
+    """
+    projeto = db.get(Projeto, projeto_id)
+    if projeto is None:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+
+    etapas_por_id = {e.id: e for e in projeto.etapas}
+    if sorted(dados.ordem) != sorted(etapas_por_id):
+        raise HTTPException(
+            status_code=422,
+            detail="A lista deve conter exatamente os ids das etapas do projeto",
+        )
+
+    for indice, etapa_id in enumerate(dados.ordem):
+        etapas_por_id[etapa_id].ordem = indice + 1
+    db.commit()
+    return [serializar_etapa(etapas_por_id[i]) for i in dados.ordem]
+
+
 @router.get("/{projeto_id}/etapas", response_model=list[schemas.EtapaResposta])
 def listar_etapas_do_projeto(projeto_id: int, db: Session = Depends(get_db)):
     projeto = db.get(Projeto, projeto_id)
