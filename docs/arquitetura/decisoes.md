@@ -160,3 +160,19 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** cascata no ORM mantém o banco livre de órfãos sem trigger/migração; o bloqueio da gestão força exclusão consciente projeto a projeto em vez de um clique apagar um semestre inteiro.
 
 **Status:** implementado na Fase 9 (06/07/2026).
+
+---
+
+### ADR-013 — Janela de plausibilidade de datas com fonte única no backend (Fase 10)
+
+**Contexto:** o `<input type="date">` aceita qualquer ano digitado (ex. 05/12/8250) e o backend aceitava qualquer data válida — projetos nasciam com datas absurdas.
+
+**Decisão:**
+- **Regra com fonte única no backend**: `data_inicio` deve estar entre **01/01/(ano atual − 1)** e **31/12/(ano atual + 2)** — janela dinâmica baseada no ano corrente (em 2026: 2025–2028), cobrindo gestões passadas recentes e planejamento futuro razoável. `janela_datas_plausiveis()` + `validar_data_plausivel()` em `app/utils/calendario.py`, aplicados via `field_validator` do Pydantic em **todos** os pontos de entrada de data: `EtapaProjetoCriar`, `EtapaCriar` e `BlocoCriar` (`BlocoEstender` não carrega data) → 422 com mensagem em português; `None` passa (data opcional).
+- **Frontend só pré-valida por UX**: `janelaDatas()`/`dataPlausivel()` em `datasUtils.js` espelham a regra; os inputs de data (`EtapasEditor`, `ModalBloco`) ganham `min`/`max` e o submit bloqueia com mensagem antes do POST (`FormularioProjetos`; no `ModalBloco` o CTA desabilita com aviso inline).
+- **Exibição permanece DD/MM/AAAA** em todo lugar (`Intl.DateTimeFormat('pt-BR')`, padrão do repo).
+- **Risco aceito**: janela fixa em código — se a empresa planejar mais de 2 anos à frente, ajustar as constantes no helper (decisão barata, registrada no código).
+
+**Justificativa:** validar no schema Pydantic cobre qualquer cliente (UI, Swagger, integração futura) num ponto só; o espelho no frontend evita o round-trip para o caso comum de erro de digitação.
+
+**Status:** implementado na Fase 10 (06/07/2026).

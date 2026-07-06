@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import EtapasEditor from './EtapasEditor';
 import { itensDosTemplates, etapasParaPayload } from './etapasEditorUtils';
+import { janelaDatas, dataPlausivel, formatarData } from './datasUtils';
 import {
   listarTrabalhadores,
   listarGestoes,
@@ -83,6 +84,14 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
     const idsValidos = [...new Set(
       consultoresIds.filter(v => v !== '').map(v => parseInt(v))
     )];
+
+    // Fase 10: bloqueia datas implausíveis antes do POST (o backend também
+    // rejeita com 422 — a regra vive lá; aqui é só pré-validação de UX).
+    if (etapasSujas && itensEtapas.some(i => i.dataInicio && !dataPlausivel(i.dataInicio))) {
+      const { min, max } = janelaDatas();
+      toast.error(`Há etapa com data implausível — use datas entre ${formatarData(min)} e ${formatarData(max)}.`);
+      return;
+    }
 
     setSalvando(true);
     try {

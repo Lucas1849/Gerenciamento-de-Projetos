@@ -1,7 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import date
 from typing import Literal
+
+from app.utils.calendario import validar_data_plausivel
 
 # Valores permitidos nos campos de ciclo de vida (ADR-003 / ADR-007).
 Fase = Literal["kickoff", "andamento", "finalizacao", "ajustes", "concluido"]
@@ -139,6 +141,9 @@ class EtapaCriar(BaseModel):
     bloco_entrega: Optional[str] = None
     etapa_template_id: Optional[int] = None
 
+    # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
+    _valida_data = field_validator("data_inicio")(validar_data_plausivel)
+
 
 class EtapaProjetoCriar(BaseModel):
     """Etapa customizada dentro do payload de criação do projeto (ADR-008).
@@ -154,6 +159,9 @@ class EtapaProjetoCriar(BaseModel):
     # Nulo = etapa adicionada manualmente (fora do template).
     etapa_template_id: Optional[int] = None
     bloco_grupo: Optional[str] = None
+
+    # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
+    _valida_data = field_validator("data_inicio")(validar_data_plausivel)
 
 
 class EtapaAtualizar(BaseModel):
@@ -214,6 +222,9 @@ class BlocoCriar(BaseModel):
     etapa_ids: List[int] = Field(min_length=2)
     dias_uteis_esperados: int
     data_inicio: Optional[date] = None
+
+    # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
+    _valida_data = field_validator("data_inicio")(validar_data_plausivel)
 
 
 class BlocoEstender(BaseModel):

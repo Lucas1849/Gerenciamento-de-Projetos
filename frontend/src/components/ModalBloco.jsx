@@ -7,12 +7,14 @@
 
 import { useState } from 'react';
 import { Link2 } from 'lucide-react';
-import { formatarData } from './datasUtils';
+import { formatarData, janelaDatas, dataPlausivel } from './datasUtils';
 
 export default function ModalBloco({ nomes, diasInicial, dataInicial, onConfirmar, onCancelar, modo = 'criar' }) {
   const [dias, setDias] = useState(diasInicial ?? '');
   const [dataInicio, setDataInicio] = useState(dataInicial ?? '');
   const estender = modo === 'estender';
+  // Fase 10: bloqueia datas fora da janela de plausibilidade antes do POST.
+  const dataImplausivel = !estender && dataInicio !== '' && !dataPlausivel(dataInicio);
 
   return (
     <div
@@ -59,9 +61,16 @@ export default function ModalBloco({ nomes, diasInicial, dataInicial, onConfirma
             <label style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
               Data de início
               <input className="input-field" type="date" value={dataInicio}
+                min={janelaDatas().min} max={janelaDatas().max}
                 onChange={e => setDataInicio(e.target.value)} />
             </label>
           </div>
+        )}
+
+        {dataImplausivel && (
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-error)', marginBottom: 'var(--sp-12)' }}>
+            Data implausível: use uma data entre {formatarData(janelaDatas().min)} e {formatarData(janelaDatas().max)}.
+          </p>
         )}
 
         <div style={{ display: 'flex', gap: 'var(--sp-8)', justifyContent: 'flex-end' }}>
@@ -71,7 +80,7 @@ export default function ModalBloco({ nomes, diasInicial, dataInicial, onConfirma
           <button
             type="button"
             className="btn btn-primary"
-            disabled={!estender && dias === ''}
+            disabled={(!estender && dias === '') || dataImplausivel}
             onClick={() =>
               estender
                 ? onConfirmar()
