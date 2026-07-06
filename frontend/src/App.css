@@ -1000,3 +1000,228 @@ body {
   .form-grid-2, .form-bloco-grid-2 { grid-template-columns: 1fr; }
   .form-grid-2 .form-span-2 { grid-column: span 1; }
 }
+
+/* ─── Fase 7b: submenu de visualizações de etapas ───────────────────────── */
+.subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+  margin-bottom: var(--sp-20);
+}
+.subnav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  padding: var(--sp-8) var(--sp-16);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--text-button);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.subnav-pill:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-brand);
+}
+.subnav-pill.active {
+  background: var(--color-brand-light);
+  border-color: var(--color-brand);
+  color: var(--color-brand-glow);
+}
+
+/* ─── Fase 7b: visão Tabela ─────────────────────────────────────────────── */
+.tabela-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.tabela-etapas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body2);
+  color: var(--color-text-primary);
+}
+.tabela-etapas th {
+  text-align: left;
+  padding: var(--sp-12) var(--sp-16);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.tabela-etapas td {
+  padding: var(--sp-12) var(--sp-16);
+  border-bottom: 1px solid var(--color-border-subtle);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.tabela-etapas tbody tr:last-child td { border-bottom: none; }
+.tabela-etapas tbody tr:hover { background: var(--color-background-alt); }
+.tabela-nome { font-weight: 600; }
+.tabela-status { min-width: 150px; }
+.tabela-chips { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+.tabela-chip-bloco {
+  background: var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+
+/* ─── Fase 7b: navegação de mês (cronograma/calendário) ─────────────────── */
+.nav-mes {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  margin-bottom: var(--sp-16);
+}
+.nav-mes-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.nav-mes-btn:hover { color: var(--color-text-primary); border-color: var(--color-brand); }
+.nav-mes-rotulo {
+  min-width: 140px;
+  text-align: center;
+  font-size: var(--text-body1);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+}
+
+/* ─── Fase 7b: visão Cronograma ─────────────────────────────────────────── */
+.cronograma-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--sp-8);
+}
+.cronograma { min-width: 720px; }
+.crono-linha {
+  display: grid;
+  align-items: center;
+  min-height: 32px;
+}
+.crono-header .crono-dia {
+  text-align: center;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: var(--sp-4) 0;
+}
+.crono-dia--fds { color: var(--color-text-disabled); }
+.crono-rotulo {
+  font-size: var(--text-body2);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  padding: var(--sp-4) var(--sp-8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  grid-column: 1;
+  grid-row: 1;
+}
+.crono-cel {
+  height: 100%;
+  min-height: 32px;
+  border-left: 1px solid var(--color-border-subtle);
+}
+.crono-cel--fds { background: var(--color-background-alt); }
+.crono-barra {
+  height: 16px;
+  border-radius: var(--radius-full);
+  margin: 0 1px;
+  z-index: 1;
+}
+.crono-barra--nao_iniciada { background: var(--color-text-disabled); }
+.crono-barra--em_andamento { background: var(--fase-andamento); }
+.crono-barra--concluida    { background: var(--fase-concluido); }
+.crono-vazio {
+  padding: var(--sp-16);
+  font-size: var(--text-body2);
+  color: var(--color-text-secondary);
+}
+.sem-data-aside {
+  margin-top: var(--sp-16);
+  padding: var(--sp-16);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.sem-data-aside ul {
+  margin-top: var(--sp-8);
+  padding-left: var(--sp-20);
+  font-size: var(--text-body2);
+  color: var(--color-text-secondary);
+}
+.sem-data-aside li { margin-bottom: var(--sp-4); }
+
+/* ─── Fase 7b: visão Calendário ─────────────────────────────────────────── */
+.calendario {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.cal-dia-semana {
+  padding: var(--sp-8);
+  text-align: center;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+.cal-celula {
+  min-height: 88px;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  border-right: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cal-celula--fora { background: var(--color-background-alt); }
+.cal-celula--hoje {
+  background: var(--color-brand-light);
+  box-shadow: inset 0 0 0 1px var(--color-brand);
+}
+.cal-numero {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.cal-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px var(--sp-4);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-chip--nao_iniciada { background: var(--color-border-subtle); color: var(--color-text-primary); }
+.cal-chip--em_andamento { background: var(--color-warning-bg); color: var(--fase-andamento); }
+.cal-chip--concluida    { background: var(--color-success-bg); color: var(--fase-concluido); }
+.cal-mais {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}

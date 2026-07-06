@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import KanbanEtapas from './KanbanEtapas';
+import EtapasProjeto from './EtapasProjeto';
 import { FASE_LABEL } from './fases';
 import { obterProjeto, atualizarProjeto } from '../services/api';
 
@@ -148,7 +148,7 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
       )}
 
       {abaAtiva === 'etapas' && (
-        <KanbanEtapas projetoId={projeto.id} toast={toast} />
+        <EtapasProjeto projetoId={projeto.id} toast={toast} />
       )}
 
     </div>
