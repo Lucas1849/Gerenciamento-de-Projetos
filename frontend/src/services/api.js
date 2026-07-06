@@ -33,6 +33,8 @@ async function request(endpoint, options = {}) {
     throw erro;
   }
 
+  // DELETEs de exclusão respondem 204 sem corpo.
+  if (response.status === 204) return null;
   return response.json();
 }
 
@@ -135,6 +137,16 @@ export function atualizarProjeto(projetoId, dados) {
     method: 'PUT',
     body: JSON.stringify(dados),
   });
+}
+
+/** Exclui um projeto em cascata (etapas + histórico de equipe — Fase 9). */
+export function excluirProjeto(projetoId) {
+  return request(`/projetos/${projetoId}`, { method: 'DELETE' });
+}
+
+/** Exclui uma gestão vazia (409 se ainda tiver projetos — Fase 9). */
+export function excluirGestao(gestaoId) {
+  return request(`/gestoes/${gestaoId}`, { method: 'DELETE' });
 }
 
 /** Retorna as etapas de um projeto específico. */

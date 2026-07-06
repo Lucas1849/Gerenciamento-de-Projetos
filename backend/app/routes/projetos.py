@@ -86,6 +86,20 @@ def atualizar_projeto(
     )
 
 
+@router.delete("/{projeto_id}", status_code=204)
+def excluir_projeto(projeto_id: int, db: Session = Depends(get_db)):
+    """Exclui o projeto em cascata: EtapaConsultor → Etapas → Projeto (Fase 9).
+
+    ADR-012: apaga o histórico de equipe (dado da futura ficha SIEX) —
+    aceitável no piloto; em produção a rota será restrita por cargo.
+    """
+    projeto = db.get(Projeto, projeto_id)
+    if projeto is None:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    db.delete(projeto)
+    db.commit()
+
+
 @router.post("/{projeto_id}/blocos", response_model=list[schemas.EtapaResposta])
 def criar_bloco(
     projeto_id: int, dados: schemas.BlocoCriar, db: Session = Depends(get_db)

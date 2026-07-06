@@ -144,3 +144,19 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** a limitação era de gesto/extensão, não de modelo; reusar a chave compartilhada evita migração e mantém a semântica do ADR-009 (redundância de prazo/data, status individual). O invariante de bloco mínimo = 2 impede blocos degenerados de 1 etapa.
 
 **Status:** implementado na Fase 8 (06/07/2026).
+
+---
+
+### ADR-012 — Exclusão de projetos e gestões: cascata deliberada e bloqueio de gestão com projetos (Fase 9)
+
+**Contexto:** o piloto acumulou dados de teste e projetos cancelados sem forma de removê-los pela UI. A exclusão de projeto tensiona o ADR-002: apagar EtapaConsultor destrói o histórico de participação (dado da futura ficha SIEX).
+
+**Decisão:**
+- `DELETE /projetos/{id}` exclui em cascata (EtapaConsultor → Etapas → Projeto) via `cascade="all, delete-orphan"` nos relationships `Projeto.etapas` e `Etapa.consultores` — mudança só de ORM, **não** de schema de banco (fluxo ADR-001 não é acionado). 404 se inexistente; 204 sem corpo no sucesso.
+- `DELETE /gestoes/{id}` é **bloqueado (409)** se a gestão tiver projetos ("Gestão possui N projeto(s); exclua-os primeiro") — default seguro contra perda em massa; gestão vazia exclui normalmente.
+- **A perda do histórico SIEX é deliberada e aceitável no piloto** (a exclusão existe para dados de teste/projetos cancelados). Em produção (Fase 11), as rotas serão restritas a diretores/cargos com permissão de edição (`funcionarios.nivel_acesso` do Hub) e possivelmente trocadas por arquivamento.
+- **Frontend**: botão de lixeira (`Trash2`, classe `btn-ghost-danger`) no card de gestão (galeria) e no rodapé do card de projeto (`KanbanFases`, com `stopPropagation`); confirmação forte via `window.confirm` explicitando o efeito; o 409 da gestão vira mensagem clara no toast.
+
+**Justificativa:** cascata no ORM mantém o banco livre de órfãos sem trigger/migração; o bloqueio da gestão força exclusão consciente projeto a projeto em vez de um clique apagar um semestre inteiro.
+
+**Status:** implementado na Fase 9 (06/07/2026).

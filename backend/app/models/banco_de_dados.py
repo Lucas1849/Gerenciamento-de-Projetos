@@ -108,8 +108,13 @@ class Projeto(Base):
         "Professor", foreign_keys=[professor_orientador_id]
     )
 
+    # cascade: excluir o projeto apaga etapas e vínculos (Fase 9, ADR-012);
+    # mudança só de ORM, não de schema de banco (ADR-001 não é acionado).
     etapas = relationship(
-        "Etapa", back_populates="projeto", order_by="Etapa.ordem"
+        "Etapa",
+        back_populates="projeto",
+        order_by="Etapa.ordem",
+        cascade="all, delete-orphan",
     )
 
 
@@ -138,7 +143,9 @@ class Etapa(Base):
 
     projeto = relationship("Projeto", back_populates="etapas")
     etapa_template = relationship("EtapaTemplate")
-    consultores = relationship("EtapaConsultor", back_populates="etapa")
+    consultores = relationship(
+        "EtapaConsultor", back_populates="etapa", cascade="all, delete-orphan"
+    )
 
 
 # 8. EtapaConsultor — associação N:N entre Etapa e Trabalhador (ADR-002).
