@@ -55,6 +55,10 @@ A página do projeto permite marcar o TAP como assinado (e reverter, com confirm
 
 Blocos de entrega viraram interativos (ADR-009): no backend, `POST /projetos/{id}/blocos` forma um bloco a partir de etapas existentes (chave uuid compartilhada em `bloco_entrega` + prazo/data aplicados aos membros; 404 para etapa de outro projeto, 409 para etapa já em bloco) e `DELETE /projetos/{id}/blocos/{chave}` o desfaz limpando só a chave (membros mantêm prazo/data/status). No frontend, `KanbanEtapas.jsx` mostra o bloco como **card único** na coluna da etapa menos avançada, com progresso "X/Y concluídas", prazo/data do bloco, lista interna de etapas (status e equipe individuais) e botão "Desfazer bloco"; o **gesto de ligação** (arrastar o handle 🔗 de um card avulso sobre outro + confirmar no `ModalBloco.jsx`) existe no Kanban de etapas (chama a API) e no editor de criação (mescla local; o backend materializa via `bloco_grupo`). Detalhes em [../features/plano-fases-3-6.md](../features/plano-fases-3-6.md).
 
+## Próximas fases (7–11 — planejadas, aguardando comando)
+
+O plano aprovado em 05/07/2026 está em [../features/plano-fases-7-11.md](../features/plano-fases-7-11.md) — **nenhuma fase iniciada** por instrução explícita do responsável: 7a (aba Etapas primeiro/padrão), 7b (visualizações múltiplas de etapas: kanban/tabela/cronograma/calendário com submenu), 8 (blocos com N etapas: estender, retirar etapa específica, romper), 9 (DELETE de gestões/projetos pelos cards), 10 (validação de datas plausíveis) e 11 (go-live/integração com o Hub). O schema real do banco do Apoio Hub foi mapeado — análise e definições piloto → produção em [integracao-apoio-hub.md](integracao-apoio-hub.md).
+
 ## Estado alvo (to-be)
 
 O modelo de dados e a navegação precisam suportar o que o produto realmente exige (ver [../features/modelo-dados.md](../features/modelo-dados.md) para o detalhamento completo das entidades):

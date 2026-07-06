@@ -23,3 +23,6 @@ Thumbs.db
 
 # Banco de dados SQLite (recriado via create_all() — ver ADR-001)
 *.db
+
+# Dump de schema do banco do Apoio Hub (referência local, não versionar)
+docs/arquitetura/dados/apoio-hub-columns.csv
