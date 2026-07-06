@@ -61,9 +61,9 @@ Tudo abaixo já está marcado no código como provisório:
 | Sidebar shell decorativa inteira | `ITENS_MENU_HUB` em `App.jsx` | Navegação real do Hub — o piloto vira só as telas acessadas por "Projetos" |
 | Avatar por iniciais como fonte única | `AvatarIniciais.jsx` | `foto_url` real do membro (iniciais permanecem como fallback) |
 | Tabela `Trabalhador` própria | `banco_de_dados.py` | Leitura de `funcionarios`; `Gestao`/`Servico`/`EtapaTemplate`/`Projeto`/`Etapa`/`EtapaConsultor` migram/estendem o schema do Hub |
-| SQLite local | `database.py` (ADR-001) | Banco MySQL/MariaDB do Hub (aí sim com ferramenta de migração — gatilho do ADR-001) |
-| CORS aberto (`allow_origins=["*"]`) | `main.py` | CORS restrito ao domínio do Hub |
-| `BASE_URL` hardcoded | `services/api.js` | Configuração por ambiente |
+| SQLite local | `database.py` (ADR-001) | Banco MySQL/MariaDB do Hub (aí sim com ferramenta de migração — gatilho do ADR-001). **Preparado em 06/07/2026**: `DATABASE_URL` já é lida do ambiente/.env (default SQLite) — no go-live basta apontar para o MySQL |
+| CORS aberto (`allow_origins=["*"]`) | `main.py` | CORS restrito ao domínio do Hub. **Preparado em 06/07/2026**: `FRONTEND_ORIGIN` (lista separada por vírgula) já é lida do ambiente/.env (default `*`) |
+| `BASE_URL` hardcoded | `services/api.js` | Configuração por ambiente. **Preparado em 06/07/2026**: `VITE_API_URL` já é lida do ambiente Vite (default localhost; ver `frontend/.env.example`) |
 | Rotas DELETE abertas (Fase 9) | `routes/projetos.py`/`gestoes.py` | **Exclusivas de diretores/cargos de edição** via `nivel_acesso` |
 | Ausência de autenticação | — | Sessão/login do Hub |
 

@@ -1,17 +1,26 @@
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# 1. Definimos o endereço do banco de dados. 
-# Para o piloto, usaremos o SQLite, que cria um arquivo chamado 'piloto_projetos.db' na sua pasta.
-# No futuro, no HostGator, mudaremos apenas esta linha para algo como: "mysql://usuario:senha@localhost/nome_do_banco"
-URL_DO_BANCO = "sqlite:///./piloto_projetos.db"
+# Carrega o .env do diretório backend/ (se existir); variáveis já definidas
+# no ambiente têm precedência.
+load_dotenv()
 
-# 2. O 'engine' é o motor que faz a comunicação real com o banco de dados
-engine = create_engine(
-    URL_DO_BANCO, 
-    # check_same_thread=False é uma configuração necessária apenas para o SQLite funcionar bem com o FastAPI
-    connect_args={"check_same_thread": False} 
+# Endereço do banco, configurável por ambiente (preparação da Fase 11).
+# Piloto: SQLite local (default). Produção (HostGator/Hub): apontar
+# DATABASE_URL para o MySQL/MariaDB, ex. "mysql://usuario:senha@localhost/db".
+URL_DO_BANCO = os.getenv("DATABASE_URL", "sqlite:///./piloto_projetos.db")
+
+# check_same_thread=False é necessário apenas para o SQLite com FastAPI;
+# outros bancos não aceitam esse argumento.
+_connect_args = (
+    {"check_same_thread": False} if URL_DO_BANCO.startswith("sqlite") else {}
 )
 
-# 3. SessionLocal é a nossa "sessão" de trabalho. Toda vez que formos salvar ou buscar algo, usaremos uma sessão.
+# O 'engine' faz a comunicação real com o banco de dados.
+engine = create_engine(URL_DO_BANCO, connect_args=_connect_args)
+
+# SessionLocal é a "sessão" de trabalho usada para salvar/buscar dados.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

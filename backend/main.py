@@ -1,5 +1,7 @@
 """Entrypoint fino da API: instância, CORS, create_all e routers por domínio."""
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,9 +25,14 @@ app = FastAPI(
     description="Backend para o piloto do sistema de controle de projetos da consultoria.",
 )
 
+# CORS configurável por ambiente (preparação da Fase 11): piloto usa "*";
+# em produção, FRONTEND_ORIGIN restringe ao domínio do Hub (lista separada
+# por vírgula). O .env é carregado em app.database no import acima.
+_origens = [o.strip() for o in os.getenv("FRONTEND_ORIGIN", "*").split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # piloto sem autenticação; restringir em produção
+    allow_origins=_origens,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
