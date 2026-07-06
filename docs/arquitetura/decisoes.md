@@ -176,3 +176,34 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** validar no schema Pydantic cobre qualquer cliente (UI, Swagger, integração futura) num ponto só; o espelho no frontend evita o round-trip para o caso comum de erro de digitação.
 
 **Status:** implementado na Fase 10 (06/07/2026).
+
+---
+
+### ADR-014 — Edição pós-criação de etapas + cascata reativa de datas na criação (Fase 12)
+
+**Contexto:** após os testes do piloto, o responsável pediu (1) que, ao preencher datas no formulário de criação, as datas de início se encadeiem pelos dias úteis de cada etapa e (2) poder **editar** etapas e blocos depois de criados (nome, dias úteis, data de início, ordem e consultores). Hoje não existe rota para alterar campos de etapa além do `status`, e não há cascata de datas.
+
+**Decisão:**
+- **Cascata reativa e encadeada** no editor de criação (correção explícita do gerente: não é só a 1ª etapa que dispara — **qualquer** alteração de dias úteis recomputa a própria data final e o início das etapas seguintes). Modelo: `início[0]` = âncora manual; para `k ≥ 1`, `início[k] = calcular_data_fim(início[k-1], dias[k-1])`; alterar `dias[j]` ou `início[0]` recomputa tudo à frente. Card sem `dias` quebra a cadeia dali para frente. Cada card do editor é uma unidade (bloco = 1 card). A aritmética de dias úteis **continua exclusiva do backend** (ADR-008): nova rota `POST /calendario/cascata` (`{ data_inicio, dias:[…] }` → `{ inicios:[…] }`) resolve a cadeia num round-trip.
+- **Edição sem mudança de schema.** Schema novo `EtapaEditar` (nome, descrição, dias_uteis_esperados, data_inicio; com o validador de plausibilidade do ADR-013). `PATCH /etapas/{id}` aplica os campos enviados; **se a etapa é membro de bloco**, mudanças de `dias_uteis_esperados`/`data_inicio` propagam a **todos os membros** (redundância do ADR-009), enquanto `nome`/`descricao` permanecem individuais. `PUT /projetos/{id}/etapas/ordem` (lista completa de ids) reatribui `ordem = índice + 1` — cobre reordenar avulsas e membros de bloco. Consultores reusam as rotas existentes.
+- **Edição disponível em mais de uma visão**: `ModalEditarEtapa.jsx` acionado por um botão ✏️ tanto no Kanban quanto na Tabela; o container `EtapasProjeto.jsx` concentra os handlers `editarEtapa`/`reordenar` (+ `recarregar()`).
+
+**Justificativa:** reusar `calcular_data_fim` e a chave de bloco (ADR-008/009) entrega cascata e edição **sem migração de schema**; concentrar os handlers no container mantém o padrão do ADR-010 e evita divergência de estado entre as visões.
+
+**Status:** planejado (06/07/2026) — Fase 12, ainda **não implementada**. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md). Virar para "implementado" na execução.
+
+---
+
+### ADR-015 — Reintrodução de dependências informativas entre etapas + cronograma interativo (Fase 13)
+
+**Contexto:** o responsável pediu um cronograma no estilo Notion — arrastar barras (muda início), redimensionar (muda a data final) e **ligar uma etapa a outra** registrando "Bloqueado por / Bloqueando". Isso reintroduz a dependência entre etapas que o **ADR-006 havia removido** (por YAGNI), o qual previa que o retorno seria "uma mudança de schema isolada".
+
+**Decisão:**
+- **Dependências são só informativas.** Ligar A "bloqueada por" B **grava e exibe** a relação (seta no cronograma, colunas "Bloqueado por"/"Bloqueando" na Tabela). **Nada é reagendado automaticamente** — as datas continuam manuais (decisão explícita do responsável). Reagendamento por dependência e detecção de ciclos **indiretos** ficam fora de escopo.
+- **Coexistem com os blocos de entrega** (Fases 6–8, ADR-009), que permanecem intactos. São conceitos diferentes: bloco = entrega compartilhada (mesmo prazo/data); dependência = relação de precedência informativa. Uma etapa pode estar num bloco **e** ter dependências.
+- **Nova tabela `EtapaDependencia`** (`etapa_id` = bloqueada, `bloqueada_por_id` = bloqueadora, `UniqueConstraint` no par, cascade delete). `EtapaResposta` ganha `bloqueada_por[]`/`bloqueando[]`. Rotas `POST`/`DELETE /etapas/{id}/dependencias` com validações de mesmo projeto, auto-referência, duplicata e **ciclo direto**. **Muda schema ⇒ apagar e recriar o `.db` + re-seed (ADR-001).**
+- **Cronograma interativo** (`CronogramaEtapas.jsx`): mover/redimensionar via **pointer events nativos** chamando o `PATCH /etapas/{id}` da Fase 12; redimensionar converte a nova data final em `dias_uteis_esperados` por um **reverse-calendar novo** (`contar_dias_uteis` + `GET /calendario/dias-uteis`, inverso exato de `calcular_data_fim`). O **conector de dependência** reusa o padrão @dnd-kit do 🔗 (draggable → droppable), com semântica distinta do bloco. Bloco = barra única (arrastar/redimensionar propaga aos membros via o `PATCH`).
+
+**Justificativa:** a reintrodução é exatamente a "mudança isolada" que o ADR-006 antecipou; mantê-la **informativa** entrega o valor pedido (visibilidade de bloqueios) sem a complexidade de um motor de reagendamento; reusar o `PATCH` da Fase 12 e a chave de bloco evita duplicar lógica de escrita.
+
+**Status:** planejado (06/07/2026) — Fase 13, ainda **não implementada**, depende da Fase 12. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md). Virar para "implementado" na execução.

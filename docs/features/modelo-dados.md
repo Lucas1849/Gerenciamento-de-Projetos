@@ -94,6 +94,18 @@ O núcleo da equipe flexível (ADR-002). Permite qualquer número de consultores
 | data_entrada | date | |
 | data_saida | date | nullable = ainda ativo na etapa. Remoção de consultor é **soft delete**: preenche esta data, nunca apaga a linha (necessário para a futura ficha SIEX) |
 
+### EtapaDependencia (associação N:N — planejada, Fase 13)
+
+> **Ainda não implementada.** Reintroduz a dependência entre etapas que o ADR-006 havia removido (ali chamada `depende_de_id`), agora como **tabela própria** e **só informativa** (grava/exibe "Bloqueado por / Bloqueando"; não reagenda datas). Ver ADR-015 e [plano-fases-12-13.md](plano-fases-12-13.md). Como muda schema, exige o fluxo ADR-001 (recriar `.db` + re-seed).
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| id | int | PK |
+| etapa_id | int | FK → Etapa (a etapa **bloqueada** / sucessora) |
+| bloqueada_por_id | int | FK → Etapa (a etapa **bloqueadora** / predecessora) |
+
+`UniqueConstraint(etapa_id, bloqueada_por_id)`; cascade delete junto com as etapas (coerente com ADR-012). A `EtapaResposta` passa a expor `bloqueada_por: [{id, nome}]` e `bloqueando: [{id, nome}]`. Convive com `bloco_entrega` (bloco de entrega ≠ dependência — ver ADR-015).
+
 ### Trabalhador
 
 Sem mudanças nesta fase (`nome`, `cargo`, `emailInstitucional`). Campo de "pontos fortes" fica fora do escopo atual — ver [roadmap.md](roadmap.md).
