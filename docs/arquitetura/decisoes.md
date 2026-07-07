@@ -190,7 +190,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** reusar `calcular_data_fim` e a chave de bloco (ADR-008/009) entrega cascata e edição **sem migração de schema**; concentrar os handlers no container mantém o padrão do ADR-010 e evita divergência de estado entre as visões.
 
-**Status:** planejado (06/07/2026) — Fase 12, ainda **não implementada**. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md). Virar para "implementado" na execução.
+**Status:** implementado (06/07/2026) — Fase 12 executada sob comando direto do responsável. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md).
 
 ---
 
