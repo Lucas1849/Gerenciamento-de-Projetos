@@ -4,7 +4,9 @@
 # Sem Alembic (ADR-001): mudanças de schema aplicam-se apagando
 # piloto_projetos.db e deixando Base.metadata.create_all() recriar no boot.
 
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey
+from sqlalchemy import (
+    Column, Integer, String, Boolean, Date, ForeignKey, UniqueConstraint,
+)
 from sqlalchemy.orm import declarative_base, relationship
 
 # Base declarativa que liga as classes ORM às tabelas do banco.
@@ -147,6 +149,26 @@ class Etapa(Base):
         "EtapaConsultor", back_populates="etapa", cascade="all, delete-orphan"
     )
 
+    # Dependências informativas (Fase 13, ADR-015), em dois sentidos:
+    # - dependencias_bloqueada: linhas em que ESTA etapa é a bloqueada
+    #   (cada linha.bloqueada_por = a etapa que a bloqueia);
+    # - dependencias_bloqueando: linhas em que ESTA etapa é a bloqueadora
+    #   (cada linha.etapa = a etapa que ela bloqueia).
+    # cascade delete-orphan nos dois lados: apagar a etapa apaga suas
+    # dependências (coerente com o cascade de projeto do ADR-012).
+    dependencias_bloqueada = relationship(
+        "EtapaDependencia",
+        foreign_keys="EtapaDependencia.etapa_id",
+        back_populates="etapa",
+        cascade="all, delete-orphan",
+    )
+    dependencias_bloqueando = relationship(
+        "EtapaDependencia",
+        foreign_keys="EtapaDependencia.bloqueada_por_id",
+        back_populates="bloqueada_por",
+        cascade="all, delete-orphan",
+    )
+
 
 # 8. EtapaConsultor — associação N:N entre Etapa e Trabalhador (ADR-002).
 # Soft-delete only: remoção preenche data_saida, nunca apaga a linha.
@@ -162,3 +184,30 @@ class EtapaConsultor(Base):
 
     etapa = relationship("Etapa", back_populates="consultores")
     trabalhador = relationship("Trabalhador")
+
+
+# 9. EtapaDependencia — dependência informativa entre etapas (Fase 13, ADR-015).
+# Reintroduz o vínculo que o ADR-006 removera (então `depende_de_id`), agora
+# como tabela própria e SÓ informativa: grava/exibe "Bloqueado por / Bloqueando"
+# e NÃO reagenda datas. Convive com bloco_entrega (bloco de entrega ≠
+# dependência). Muda o schema ⇒ recriar o .db (ADR-001) — porém é adição pura
+# de tabela, então create_all a materializa sem apagar dados existentes.
+class EtapaDependencia(Base):
+    __tablename__ = "etapa_dependencias"
+    __table_args__ = (
+        UniqueConstraint("etapa_id", "bloqueada_por_id", name="uq_dependencia_par"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    # Etapa bloqueada (sucessora) e etapa que a bloqueia (predecessora).
+    etapa_id = Column(Integer, ForeignKey("etapas.id"), nullable=False)
+    bloqueada_por_id = Column(Integer, ForeignKey("etapas.id"), nullable=False)
+
+    etapa = relationship(
+        "Etapa", foreign_keys=[etapa_id], back_populates="dependencias_bloqueada"
+    )
+    bloqueada_por = relationship(
+        "Etapa",
+        foreign_keys=[bloqueada_por_id],
+        back_populates="dependencias_bloqueando",
+    )

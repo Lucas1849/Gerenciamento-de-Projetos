@@ -18,6 +18,25 @@ def calcular_data_fim(data_inicio: date, dias_uteis: int) -> date:
     return _calendario.add_working_days(data_inicio, dias_uteis)
 
 
+def contar_dias_uteis(data_inicio: date, data_fim: date) -> int:
+    """Inverso exato de calcular_data_fim (Fase 13, ADR-015): menor N tal que
+    calcular_data_fim(data_inicio, N) >= data_fim. Para data_fim caindo num dia
+    útil devolve o N exato; se cair em fim de semana/feriado, arredonda para
+    cima (o próximo dia útil que cobre a data). data_fim <= data_inicio → 0.
+
+    Itera add_working_days em vez de usar um delta pronto para garantir a
+    ida-e-volta exata com a mesma convenção (início exclusivo, mesmos feriados
+    nacionais) — risco registrado no plano da Fase 13."""
+    if data_fim <= data_inicio:
+        return 0
+    dias = 0
+    corrente = data_inicio
+    while corrente < data_fim:
+        corrente = _calendario.add_working_days(corrente, 1)
+        dias += 1
+    return dias
+
+
 def janela_datas_plausiveis() -> tuple[date, date]:
     """Janela dinâmica de plausibilidade (Fase 10): 01/01/(ano atual − 1) a
     31/12/(ano atual + 2) — cobre gestões passadas recentes e planejamento

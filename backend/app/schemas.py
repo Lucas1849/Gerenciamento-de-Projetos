@@ -205,6 +205,24 @@ class CascataCriar(BaseModel):
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
 
 
+class EtapaRef(BaseModel):
+    """Referência leve a uma etapa (id + nome), para os chips/setas de
+    dependência (Fase 13, ADR-015) — evita embutir a etapa inteira."""
+
+    id: int
+    nome: str
+
+    class Config:
+        from_attributes = True
+
+
+class DependenciaCriar(BaseModel):
+    """Cria uma dependência informativa (Fase 13, ADR-015): a etapa da rota
+    passa a ficar 'bloqueada por' `bloqueada_por_id`. Não reagenda datas."""
+
+    bloqueada_por_id: int
+
+
 class EtapaResposta(BaseModel):
     id: int
     projeto_id: int
@@ -220,6 +238,10 @@ class EtapaResposta(BaseModel):
     status: StatusEtapa
     # Equipe embutida: consultores ativos da etapa (data_saida IS NULL).
     consultores: List[TrabalhadorResposta] = []
+    # Dependências informativas (Fase 13, ADR-015): quem bloqueia esta etapa
+    # e quem esta etapa bloqueia (só id + nome).
+    bloqueada_por: List[EtapaRef] = []
+    bloqueando: List[EtapaRef] = []
 
     class Config:
         from_attributes = True

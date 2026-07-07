@@ -206,4 +206,8 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** a reintrodução é exatamente a "mudança isolada" que o ADR-006 antecipou; mantê-la **informativa** entrega o valor pedido (visibilidade de bloqueios) sem a complexidade de um motor de reagendamento; reusar o `PATCH` da Fase 12 e a chave de bloco evita duplicar lógica de escrita.
 
-**Status:** planejado (06/07/2026) — Fase 13, ainda **não implementada**, depende da Fase 12. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md). Virar para "implementado" na execução.
+**Ajustes na execução (06/07/2026):**
+- **Schema aditivo, sem dropar o `.db`.** A Fase 13 só *adiciona* a tabela `etapa_dependencias` — nenhuma coluna de tabela existente muda. Então `Base.metadata.create_all()` a materializa no próximo boot **sem perda de dados**; o fluxo destrutivo do ADR-001 (apagar o `.db` + re-seed) fica registrado como conservador, mas não foi necessário desta vez. Basta reiniciar o backend.
+- **Conector de dependência por pointer events nativos, não @dnd-kit.** No cronograma, mover e redimensionar a barra já usam pointer events nativos; colocar o conector em @dnd-kit na mesma barra conflitaria com esses gestos. O conector 🔗 usa o mesmo mecanismo de pointer nativo (arrasta do handle → `elementFromPoint` acha a barra-alvo no drop), mantendo a semântica distinta do bloco (risco #6 do plano). O cascade das dependências é ORM `delete-orphan` nos dois sentidos em `Etapa` (apagar a etapa/projeto apaga os vínculos).
+
+**Status:** implementado (06/07/2026) — Fase 13 executada sob comando direto do responsável, após a validação da Fase 12. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md).

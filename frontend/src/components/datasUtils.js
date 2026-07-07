@@ -15,6 +15,15 @@ export function hojeISO() {
 
 export const isoDe = (ano, mes, dia) => `${ano}-${pad(mes)}-${pad(dia)}`;
 
+/** Soma N dias de CALENDÁRIO (não úteis) a uma data ISO, em UTC. Usado só para
+ *  posicionar barras ao arrastar no cronograma (Fase 13); a data final por
+ *  dias ÚTEIS continua vindo do backend (ADR-008). */
+export function somaDias(iso, n) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+}
+
 /** Janela de plausibilidade de datas (Fase 10), espelhando o backend:
  *  01/01/(ano atual − 1) a 31/12/(ano atual + 2). Fonte única da regra é o
  *  backend (422); aqui só se pré-bloqueia o input (min/max) e o submit. */
