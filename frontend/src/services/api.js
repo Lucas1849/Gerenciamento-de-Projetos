@@ -215,6 +215,12 @@ export function cascataDatas(dataInicio, diasLista) {
   });
 }
 
+/** Reverse-calendar (Fase 13): dias úteis entre duas datas, inverso exato de
+ *  calcularDataFim. Usado ao redimensionar uma barra do cronograma. */
+export function contarDiasUteis(dataInicio, dataFim) {
+  return request(`/calendario/dias-uteis?data_inicio=${dataInicio}&data_fim=${dataFim}`);
+}
+
 // ─── Etapas ─────────────────────────────────────────────────────────────────
 
 /** Edita campos da etapa pós-criação (Fase 12): aplica só os campos enviados;
@@ -231,6 +237,22 @@ export function atualizarStatusEtapa(etapaId, status) {
   return request(`/etapas/${etapaId}/status`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
+  });
+}
+
+/** Cria uma dependência informativa (Fase 13): a etapa fica "bloqueada por"
+ *  bloqueadaPorId (nada é reagendado — ADR-015). */
+export function criarDependencia(etapaId, bloqueadaPorId) {
+  return request(`/etapas/${etapaId}/dependencias`, {
+    method: 'POST',
+    body: JSON.stringify({ bloqueada_por_id: bloqueadaPorId }),
+  });
+}
+
+/** Remove uma dependência informativa (Fase 13). */
+export function removerDependencia(etapaId, bloqueadaPorId) {
+  return request(`/etapas/${etapaId}/dependencias/${bloqueadaPorId}`, {
+    method: 'DELETE',
   });
 }
 

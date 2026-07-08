@@ -94,9 +94,9 @@ O núcleo da equipe flexível (ADR-002). Permite qualquer número de consultores
 | data_entrada | date | |
 | data_saida | date | nullable = ainda ativo na etapa. Remoção de consultor é **soft delete**: preenche esta data, nunca apaga a linha (necessário para a futura ficha SIEX) |
 
-### EtapaDependencia (associação N:N — planejada, Fase 13)
+### EtapaDependencia (associação N:N — implementada na Fase 13)
 
-> **Ainda não implementada.** Reintroduz a dependência entre etapas que o ADR-006 havia removido (ali chamada `depende_de_id`), agora como **tabela própria** e **só informativa** (grava/exibe "Bloqueado por / Bloqueando"; não reagenda datas). Ver ADR-015 e [plano-fases-12-13.md](plano-fases-12-13.md). Como muda schema, exige o fluxo ADR-001 (recriar `.db` + re-seed).
+> **Implementada (06/07/2026).** Reintroduz a dependência entre etapas que o ADR-006 havia removido (ali chamada `depende_de_id`), agora como **tabela própria** (`etapa_dependencias`) e **só informativa** (grava/exibe "Bloqueado por / Bloqueando"; não reagenda datas). Ver ADR-015 e [plano-fases-12-13.md](plano-fases-12-13.md). É **adição pura de tabela**, então `create_all` a materializa no próximo boot sem apagar dados — o fluxo ADR-001 (recriar `.db`) ficou como conservador, mas não foi necessário.
 
 | Campo | Tipo | Observação |
 |---|---|---|

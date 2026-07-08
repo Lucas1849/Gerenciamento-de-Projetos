@@ -10,8 +10,11 @@ import {
   listarEtapasDoProjeto,
   listarTrabalhadores,
   atualizarStatusEtapa,
+  atualizarEtapa,
   adicionarConsultorEtapa,
   removerConsultorEtapa,
+  criarDependencia,
+  removerDependencia,
 } from '../services/api';
 
 const VISOES = [
@@ -84,6 +87,24 @@ export default function EtapasProjeto({ projetoId, toast }) {
   // Abre o modal de edição para a etapa avulsa ou para todo o bloco (Fase 12).
   const abrirEdicao = (membros) => setEdicaoIds(membros.map(m => m.id));
 
+  // Fase 13: arrastar/redimensionar barra no cronograma → PATCH da etapa
+  // (bloco propaga aos membros). data_fim se re-deriva no backend (ADR-008).
+  const aplicarDatasEtapa = (etapaId, dados) =>
+    atualizarEtapa(etapaId, dados)
+      .then(() => recarregar())
+      .catch(erro => toast.error(erro.message || 'Erro ao atualizar a etapa.'));
+
+  // Fase 13: dependências informativas (ADR-015) — nada é reagendado.
+  const adicionarDependencia = (etapaId, bloqueadaPorId) =>
+    criarDependencia(etapaId, bloqueadaPorId)
+      .then(() => { toast.success('Dependência criada.'); recarregar(); })
+      .catch(erro => toast.error(erro.message || 'Erro ao criar dependência.'));
+
+  const removerDependenciaEtapa = (etapaId, bloqueadaPorId) =>
+    removerDependencia(etapaId, bloqueadaPorId)
+      .then(() => { toast.success('Dependência removida.'); recarregar(); })
+      .catch(erro => toast.error(erro.message || 'Erro ao remover dependência.'));
+
   const membrosEdicao = edicaoIds
     ? etapas.filter(e => edicaoIds.includes(e.id))
     : [];
@@ -126,10 +147,22 @@ export default function EtapasProjeto({ projetoId, toast }) {
         />
       )}
       {visao === 'tabela' && (
-        <TabelaEtapas etapas={etapas} aoMover={moverEtapa} aoEditar={abrirEdicao} />
+        <TabelaEtapas
+          etapas={etapas}
+          aoMover={moverEtapa}
+          aoEditar={abrirEdicao}
+          aoCriarDependencia={adicionarDependencia}
+          aoRemoverDependencia={removerDependenciaEtapa}
+        />
       )}
       {visao === 'cronograma' && (
-        <CronogramaEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />
+        <CronogramaEtapas
+          etapas={etapas}
+          mes={mesExibido}
+          aoMudarMes={setMesExibido}
+          aoAtualizarEtapa={aplicarDatasEtapa}
+          aoCriarDependencia={adicionarDependencia}
+        />
       )}
       {visao === 'calendario' && (
         <CalendarioEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />

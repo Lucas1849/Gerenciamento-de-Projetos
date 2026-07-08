@@ -206,4 +206,25 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** a reintrodução é exatamente a "mudança isolada" que o ADR-006 antecipou; mantê-la **informativa** entrega o valor pedido (visibilidade de bloqueios) sem a complexidade de um motor de reagendamento; reusar o `PATCH` da Fase 12 e a chave de bloco evita duplicar lógica de escrita.
 
-**Status:** planejado (06/07/2026) — Fase 13, ainda **não implementada**, depende da Fase 12. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md). Virar para "implementado" na execução.
+**Ajustes na execução (06/07/2026):**
+- **Schema aditivo, sem dropar o `.db`.** A Fase 13 só *adiciona* a tabela `etapa_dependencias` — nenhuma coluna de tabela existente muda. Então `Base.metadata.create_all()` a materializa no próximo boot **sem perda de dados**; o fluxo destrutivo do ADR-001 (apagar o `.db` + re-seed) fica registrado como conservador, mas não foi necessário desta vez. Basta reiniciar o backend.
+- **Conector de dependência por pointer events nativos, não @dnd-kit.** No cronograma, mover e redimensionar a barra já usam pointer events nativos; colocar o conector em @dnd-kit na mesma barra conflitaria com esses gestos. O conector 🔗 usa o mesmo mecanismo de pointer nativo (arrasta do handle → `elementFromPoint` acha a barra-alvo no drop), mantendo a semântica distinta do bloco (risco #6 do plano). O cascade das dependências é ORM `delete-orphan` nos dois sentidos em `Etapa` (apagar a etapa/projeto apaga os vínculos).
+
+**Status:** implementado (06/07/2026) — Fase 13 executada sob comando direto do responsável, após a validação da Fase 12. Ver [../features/plano-fases-12-13.md](../features/plano-fases-12-13.md).
+
+---
+
+### ADR-016 — Redesign de identidade visual da área de Projetos, sem impacto de comportamento (Fase 14)
+
+**Contexto:** o cliente aprovou um pacote de handoff de design ("Redesign de identidade visual do projeto") que substitui controles hoje com cara de "padrão do HTML" (checkbox, lixeira, chip de membro) e enriquece o botão primário, os cards do Kanban e o cronograma, mantendo o roxo do design system e trazendo o monograma da Apoio como detalhe de marca. A combinação aprovada é: botão `1c`, chip de remover `2b`, lixeira `3c`, checkbox `4a`, cronograma `5d`, cards `6a`/`6b`.
+
+**Decisão:**
+- **Redesign puramente visual/CSS.** Não toca backend, schema, modelo de dados nem lógica de comportamento — o toggle do TAP, o drag/resize/dependência do cronograma (ADR-015), a remoção de membro e as regras de negócio **permanecem intactos**; só a aparência muda. Consequentemente o fluxo destrutivo do `.db` (ADR-001) **não é acionado**.
+- **Aditivo ao design system existente, não substituto.** Os tokens do `App.css` (cores de marca, `--fase-*`, raios, sombras, easings) e as fontes (Inter + Plus Jakarta Sans, já via Google Fonts) já batem quase 1:1 com a proposta; a fase refina 7 componentes e adiciona a marca d'água.
+- **Monograma:** usar o `mono-light.png` do pacote de handoff (decisão do responsável — sem SVG oficial nesta fase), como utilitário `.marca-dagua` decorativo (`pointer-events:none`) reusado no botão `1c`, nos cards e no cronograma. O navy da logo **não** vira cor de UI.
+- **Controles nativos substituídos preservando semântica:** o checkbox `4a` e a lixeira `3c` mantêm `input`/`<label>` real e os handlers (`onChange`/`checked`, `window.confirm`) — a troca é só de aparência/animação. O botão `1c` é aplicado na classe global `.btn-primary`, propagando a todos os CTAs de uma vez.
+- **Cronograma `5d` é restyling sobre a engine viva da Fase 13:** o refino visual (linha 64px, barra 46px, progresso, linha "HOJE", seta com glow, bloco em hexágono, marca d'água) não pode alterar as medições por `%`/rects que o drag/resize/setas usam.
+
+**Justificativa:** como os tokens já estão alinhados, tratar o redesign como camada visual aditiva entrega a identidade aprovada sem risco de regressão de dados ou de lógica; concentrar o botão na classe global e reusar os handlers existentes garante consistência sem duplicar comportamento.
+
+**Status:** planejado — Fase 14 **não iniciada** (as fases só começam sob comando direto do responsável). Ver [../features/plano-fase-14.md](../features/plano-fase-14.md).

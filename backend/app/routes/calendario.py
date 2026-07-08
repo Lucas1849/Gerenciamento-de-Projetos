@@ -6,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from app import schemas
-from app.utils.calendario import calcular_data_fim
+from app.utils.calendario import calcular_data_fim, contar_dias_uteis
 
 router = APIRouter(prefix="/calendario", tags=["Calendário"])
 
@@ -21,6 +21,21 @@ def data_fim(
         "data_inicio": data_inicio,
         "dias_uteis": dias_uteis,
         "data_fim": calcular_data_fim(data_inicio, dias_uteis),
+    }
+
+
+@router.get("/dias-uteis")
+def dias_uteis(
+    data_inicio: date = Query(...),
+    data_fim: date = Query(...),
+):
+    """Reverse-calendar (Fase 13): dias úteis entre data_inicio e data_fim,
+    inverso exato de /data-fim. Usado pelo redimensionamento do cronograma
+    para converter a nova data final arrastada em dias_uteis_esperados."""
+    return {
+        "data_inicio": data_inicio,
+        "data_fim": data_fim,
+        "dias_uteis": contar_dias_uteis(data_inicio, data_fim),
     }
 
 
