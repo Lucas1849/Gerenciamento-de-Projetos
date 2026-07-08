@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { criarGestao } from '../services/api';
+import Checkbox from './Checkbox';
 
 export default function FormularioGestao({ toast, aoCriar }) {
   const [nome,     setNome]     = useState('');
@@ -33,10 +34,9 @@ export default function FormularioGestao({ toast, aoCriar }) {
           <input className="input-field" type="text" placeholder="Ex: 2026.2"
             value={nome} onChange={e => setNome(e.target.value)} required />
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-8)', cursor: 'pointer', fontSize: 'var(--text-body2)' }}>
-          <input type="checkbox" checked={ativa} onChange={e => setAtiva(e.target.checked)} />
+        <Checkbox checked={ativa} onChange={e => setAtiva(e.target.checked)}>
           Gestão ativa
-        </label>
+        </Checkbox>
         <div style={{ textAlign: 'right' }}>
           <button type="submit" className="btn btn-primary" disabled={salvando}>
             {salvando ? 'Criando...' : 'Criar Gestão'}

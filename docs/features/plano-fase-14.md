@@ -2,14 +2,14 @@
 
 Registro do planejamento do redesign visual aprovado pelo cliente, na sequência das Fases 12–13 ([plano-fases-12-13.md](plano-fases-12-13.md)). Origem: pacote de handoff de design **"Redesign de identidade visual do projeto"** (protótipo `Redesign Apoio Hub.dc.html` + `README.md` de especificação + screenshots), que substitui elementos hoje com cara de "padrão do HTML" por controles coesos com a identidade da marca, mantendo o roxo do design system e trazendo o monograma da Apoio como detalhe sutil.
 
-> Instrução explícita do responsável: **as fases só começam mediante comando direto**. Este documento é o registro do planejamento; **nenhuma entrega de código foi iniciada**. O ADR-016 já está pré-registrado em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) com status "planejado"; na execução, virar para "implementado".
+> **Fase executada em 08/07/2026 sob comando direto do responsável.** O ADR-016 em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) está com status "implementado". Notas de execução: `mono-light.png` em `frontend/public/`; marcas d'água por `background-position` com offset negativo (sem `overflow:hidden` — preservaria o corte do 🔗 arrastável); linha "HOJE" como borda-gradiente na célula do dia; checkbox como componente `Checkbox.jsx` (`.chk` em `App.css`), aplicado ao `tap_assinado` do formulário, ao toggle do TAP e ao "Gestão ativa"; verificação visual e dos gestos do Gantt (drag persistindo `data_inicio` nos dois sentidos) feita no browser, `lint`/`build` limpos.
 
 | Sub-fase | Entrega | Status |
 |---|---|---|
-| 14a | Fundações: asset do monograma + utilitário de marca d'água + botão primário `1c` | ⏳ Planejada |
-| 14b | Controles atômicos: checkbox `4a` + lixeira `3c` + chip de remover membro `2b` | ⏳ Planejada |
-| 14c | Cards do Kanban `6a`/`6b` (átomos aplicados em contexto) | ⏳ Planejada |
-| 14d | Refino visual do cronograma `5d` sobre a engine interativa da Fase 13 | ⏳ Planejada |
+| 14a | Fundações: asset do monograma + utilitário de marca d'água + botão primário `1c` | ✅ Entregue (08/07/2026) |
+| 14b | Controles atômicos: checkbox `4a` + lixeira `3c` + chip de remover membro `2b` | ✅ Entregue (08/07/2026) |
+| 14c | Cards do Kanban `6a`/`6b` (átomos aplicados em contexto) | ✅ Entregue (08/07/2026) |
+| 14d | Refino visual do cronograma `5d` sobre a engine interativa da Fase 13 | ✅ Entregue (08/07/2026) |
 
 **Ordem obrigatória: 14a → 14b → 14c → 14d** (fundações → átomos → composições → cronograma). Cada composição (14c/14d) consome os átomos entregues antes; começar pelas fundações evita retrabalho.
 
