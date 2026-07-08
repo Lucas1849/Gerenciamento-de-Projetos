@@ -227,4 +227,4 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** como os tokens já estão alinhados, tratar o redesign como camada visual aditiva entrega a identidade aprovada sem risco de regressão de dados ou de lógica; concentrar o botão na classe global e reusar os handlers existentes garante consistência sem duplicar comportamento.
 
-**Status:** planejado — Fase 14 **não iniciada** (as fases só começam sob comando direto do responsável). Ver [../features/plano-fase-14.md](../features/plano-fase-14.md).
+**Status:** implementado (08/07/2026) — Fase 14 executada sob comando direto do responsável. Nota de implementação: o `mono-light.png` foi ingerido em `frontend/public/` e as marcas d'água são aplicadas por `background-position` com offset negativo (recorte natural na borda, **sem** `overflow:hidden`, que cortaria o handle 🔗 arrastável dos cards); a linha "HOJE" é uma borda-gradiente na célula do dia atual, sem overlay medido. Ver [../features/plano-fase-14.md](../features/plano-fase-14.md).

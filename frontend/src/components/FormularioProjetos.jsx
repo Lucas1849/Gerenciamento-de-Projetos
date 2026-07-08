@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import EtapasEditor from './EtapasEditor';
+import Checkbox from './Checkbox';
 import { itensDosTemplates, etapasParaPayload } from './etapasEditorUtils';
 import { janelaDatas, dataPlausivel, formatarData } from './datasUtils';
 import {
@@ -205,14 +206,12 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
                   ))}
                 </select>
               </div>
-              <label className="form-checkbox">
-                <input
-                  type="checkbox"
-                  checked={campos.tapAssinado}
-                  onChange={e => setCampos(prev => ({ ...prev, tapAssinado: e.target.checked }))}
-                />
+              <Checkbox
+                checked={campos.tapAssinado}
+                onChange={e => setCampos(prev => ({ ...prev, tapAssinado: e.target.checked }))}
+              >
                 TAP assinado pelo cliente
-              </label>
+              </Checkbox>
             </div>
           </div>
         </div>

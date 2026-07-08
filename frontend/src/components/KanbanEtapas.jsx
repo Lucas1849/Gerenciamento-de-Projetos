@@ -3,6 +3,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDrop
 import { CSS } from '@dnd-kit/utilities';
 import { Link2, Unlink, Pencil } from 'lucide-react';
 import ModalBloco from './ModalBloco';
+import AvatarIniciais from './AvatarIniciais';
 import { criarBloco, desfazerBloco, estenderBloco, removerEtapaDoBloco } from '../services/api';
 import { formatarData } from './datasUtils';
 import { agruparCards, statusDoCard, FLUXO } from './etapasUtils';
@@ -30,13 +31,14 @@ function EquipeEtapa({ etapa, colaboradores, aoAdicionar, aoRemover }) {
           </span>
         )}
         {etapa.consultores.map(c => (
-          <span key={c.id} className="chip chip-brand" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-4)' }}>
+          <span key={c.id} className="chip-membro">
+            <AvatarIniciais nome={c.nome} tamanho={24} />
             {c.nome}
             <button
               type="button"
-              className="btn-ghost-danger"
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+              className="chip-membro-remover"
               title="Remover da etapa"
+              aria-label={`Remover ${c.nome} da etapa`}
               onClick={() => aoRemover(etapa.id, c.id)}
             >
               ✕
@@ -119,7 +121,7 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--sp-8)' }}>
-        <h4 style={{ flex: 1, fontSize: 'var(--text-h4)', fontWeight: 600, textDecoration: etapa.status === 'concluida' ? 'line-through' : 'none', opacity: etapa.status === 'concluida' ? 0.6 : 1 }}>
+        <h4 className="kanban-card-titulo" style={{ flex: 1, textDecoration: etapa.status === 'concluida' ? 'line-through' : 'none', opacity: etapa.status === 'concluida' ? 0.6 : 1 }}>
           {etapa.ordem}. {etapa.nome}
         </h4>
         <BotaoEditar rotulo="Editar etapa" onClick={() => aoEditar([etapa])} />

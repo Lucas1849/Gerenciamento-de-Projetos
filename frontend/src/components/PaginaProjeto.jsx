@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import EtapasProjeto from './EtapasProjeto';
+import Checkbox from './Checkbox';
 import { FASE_LABEL } from './fases';
 import { obterProjeto, atualizarProjeto } from '../services/api';
 
@@ -113,16 +114,10 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
                 Fase: {FASE_LABEL[projeto.fase] ?? projeto.fase}
               </span>
             </div>
-            <div style={{ marginTop: 'var(--sp-16)' }}>
-              {projeto.tap_assinado ? (
-                <button type="button" className="btn btn-secondary btn-sm" onClick={alternarTap}>
-                  Reverter para pendente
-                </button>
-              ) : (
-                <button type="button" className="btn btn-primary btn-sm" onClick={alternarTap}>
-                  ✓ Marcar TAP como assinado
-                </button>
-              )}
+            <div style={{ marginTop: 'var(--sp-16)', padding: 'var(--sp-12) var(--sp-16)', background: 'var(--color-background-alt)', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-md)' }}>
+              <Checkbox checked={projeto.tap_assinado} onChange={alternarTap}>
+                TAP assinado pelo cliente
+              </Checkbox>
             </div>
           </div>
 

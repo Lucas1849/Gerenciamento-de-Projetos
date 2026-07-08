@@ -3,7 +3,8 @@ import { Link2 } from 'lucide-react';
 import NavMes from './NavMes';
 import { agruparCards, statusDoCard, STATUS_LABEL } from './etapasUtils';
 import { contarDiasUteis } from '../services/api';
-import { isoDe, diaDeISO, diasNoMes, ehFimDeSemana, formatarData, somaDias } from './datasUtils';
+import { isoDe, diaDeISO, diasNoMes, ehFimDeSemana, formatarData, somaDias, hojeISO } from './datasUtils';
+import AvatarIniciais from './AvatarIniciais';
 
 // Visão "Cronograma" interativa (Fase 13, ADR-015): mantém o CSS grid por mês
 // e adiciona, por pointer events nativos, arrastar a barra (nova data_inicio),
@@ -39,6 +40,7 @@ export default function CronogramaEtapas({
         key: `e-${e.id}`, etapaId: e.id, ids: [e.id],
         nome: `${e.ordem}. ${e.nome}`, status: e.status,
         inicio: e.data_inicio, fim: e.data_fim, bloqueadaPor: e.bloqueada_por,
+        dias: e.dias_uteis_esperados, consultor: e.consultores?.[0]?.nome ?? null,
       };
     }
     const ref = card.membros[0];
@@ -50,8 +52,10 @@ export default function CronogramaEtapas({
     }));
     return {
       key: `b-${ref.bloco_entrega}`, etapaId: ref.id, ids: card.membros.map(mm => mm.id),
-      nome: `📦 ${card.rotulo} (${card.membros.length} etapas)`, status: statusDoCard(card),
+      nome: `⬡ ${card.rotulo} (${card.membros.length} etapas)`, status: statusDoCard(card),
       inicio: ref.data_inicio, fim: ref.data_fim, bloqueadaPor,
+      dias: ref.dias_uteis_esperados, consultor: null, bloco: true,
+      progresso: card.membros.filter(mm => mm.status === 'concluida').length / card.membros.length,
     };
   });
 
@@ -72,6 +76,9 @@ export default function CronogramaEtapas({
 
   const primeiroISO = isoDe(ano, m, 1);
   const ultimoISO = isoDe(ano, m, nDias);
+  // Linha "HOJE" (Fase 14d): só marcação visual na coluna do dia atual.
+  const hoje = hojeISO();
+  const diaHoje = hoje >= primeiroISO && hoje <= ultimoISO ? diaDeISO(hoje) : null;
   const noMes = items.filter(i => i.inicio && i.inicio <= ultimoISO && (i.fim ?? i.inicio) >= primeiroISO);
   const semData = items.filter(i => !i.inicio);
 
@@ -163,8 +170,15 @@ export default function CronogramaEtapas({
     <div>
       <NavMes mes={mes} aoMudar={aoMudarMes} />
 
-      <p className="crono-ajuda">
-        Arraste a barra para mover o início · a borda direita para mudar a duração · o 🔗 até outra etapa para criar dependência (Bloqueado por).
+      <p className="crono-ajuda" style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-16)', flexWrap: 'wrap' }}>
+        <span>
+          Arraste a barra para mover o início · a borda direita para mudar a duração · o 🔗 até outra etapa para criar dependência (Bloqueado por).
+        </span>
+        <span className="crono-legenda">
+          <span className="crono-legenda-item"><span className="crono-legenda-cor" style={{ background: 'linear-gradient(135deg,#3A3A4A,#2E2E3C)' }} />Não iniciada</span>
+          <span className="crono-legenda-item"><span className="crono-legenda-cor" style={{ background: 'var(--fase-andamento)' }} />Em andamento</span>
+          <span className="crono-legenda-item"><span className="crono-legenda-cor" style={{ background: 'var(--fase-concluido)' }} />Concluída</span>
+        </span>
       </p>
 
       <div className="cronograma-wrapper">
@@ -172,7 +186,7 @@ export default function CronogramaEtapas({
           <div className="crono-linha crono-header" style={template}>
             <div className="crono-rotulo" />
             {dias.map(d => (
-              <div key={d} className={`crono-dia${ehFimDeSemana(ano, m, d) ? ' crono-dia--fds' : ''}`}>
+              <div key={d} className={`crono-dia${ehFimDeSemana(ano, m, d) ? ' crono-dia--fds' : ''}${d === diaHoje ? ' crono-dia--hoje' : ''}`} title={d === diaHoje ? 'Hoje' : undefined}>
                 {d}
               </div>
             ))}
@@ -212,7 +226,7 @@ export default function CronogramaEtapas({
                 {dias.map(d => (
                   <div
                     key={d}
-                    className={`crono-cel${ehFimDeSemana(ano, m, d) ? ' crono-cel--fds' : ''}${alvoDeLigacao ? ' crono-cel--alvo' : ''}`}
+                    className={`crono-cel${ehFimDeSemana(ano, m, d) ? ' crono-cel--fds' : ''}${d === diaHoje ? ' crono-cel--hoje' : ''}${alvoDeLigacao ? ' crono-cel--alvo' : ''}`}
                     style={{ gridColumn: d + 1, gridRow: 1 }}
                   />
                 ))}
@@ -220,7 +234,7 @@ export default function CronogramaEtapas({
                   ref={el => { if (el) barrasRef.current.set(item.key, el); else barrasRef.current.delete(item.key); }}
                   data-barra-etapa={item.etapaId}
                   data-barra-key={item.key}
-                  className={`crono-barra crono-barra--${item.status}${ativo ? ' crono-barra--ativo' : ''}${alvoDeLigacao ? ' crono-barra--alvo' : ''}`}
+                  className={`crono-barra crono-barra--${item.status}${item.bloco ? ' crono-barra--bloco' : ''}${ativo ? ' crono-barra--ativo' : ''}${alvoDeLigacao ? ' crono-barra--alvo' : ''}`}
                   style={{ gridColumn: `${colIni + 1} / ${colFim + 2}`, gridRow: 1, transform, transformOrigin: 'left center' }}
                   title={`${item.nome} · ${STATUS_LABEL[item.status]} · ${formatarData(item.inicio)}${item.fim ? ` → ${formatarData(item.fim)}` : ''}`}
                   onPointerDown={e => iniciar('mover', item, e)}
@@ -237,6 +251,24 @@ export default function CronogramaEtapas({
                   >
                     <Link2 size={11} />
                   </span>
+                  {/* Conteúdo decorativo da barra (14d): não intercepta o pointer. */}
+                  <span className="crono-barra-conteudo">
+                    <span className="crono-barra-textos">
+                      <span className="crono-barra-nome">{item.nome}</span>
+                      <span className="crono-barra-periodo">
+                        {formatarData(item.inicio)}{item.fim ? ` → ${formatarData(item.fim)}` : ''}
+                        {item.dias != null ? ` · ${item.dias} dia(s)` : ''}
+                      </span>
+                    </span>
+                    {item.bloco ? (
+                      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.08em' }}>ENTREGA</span>
+                    ) : (
+                      item.consultor && <AvatarIniciais nome={item.consultor} tamanho={26} />
+                    )}
+                  </span>
+                  {item.bloco && item.progresso > 0 && (
+                    <span className="crono-barra-progresso" style={{ width: `${Math.round(item.progresso * 100)}%` }} />
+                  )}
                   {/* Handle de redimensionamento (muda a duração). */}
                   <span
                     className="crono-resize"

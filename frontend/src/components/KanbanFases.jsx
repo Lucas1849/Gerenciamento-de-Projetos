@@ -56,8 +56,9 @@ export default function KanbanFases({
                   style={{ cursor: 'pointer' }}
                   onClick={() => aoAbrirProjeto(p.id)}
                 >
+                  <span className="kanban-card-faixa" style={{ background: fase.cor }} aria-hidden="true" />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-8)', flexWrap: 'wrap', marginBottom: 'var(--sp-12)' }}>
-                    <h4 style={{ fontSize: 'var(--text-h4)', fontWeight: 700, flex: '0 1 auto' }}>{p.nome}</h4>
+                    <h4 className="kanban-card-titulo" style={{ flex: '0 1 auto' }}>{p.nome}</h4>
                     {servico && <span className="chip chip-servico">{servico.nome}</span>}
                   </div>
 
@@ -100,7 +101,7 @@ export default function KanbanFases({
                       aria-label={`Excluir o projeto ${p.nome}`}
                       onClick={e => { e.stopPropagation(); excluirProjetoLocal(p); }}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={15} /> Excluir
                     </button>
                   </div>
 
