@@ -1,6 +1,6 @@
 # Plano de ação — Fases 16, 17 e 18 (convenção de dias úteis + data final editável, Termo Aditivo, abas da gestão com documentos e dashboards)
 
-Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequência da Fase 15 ([plano-fase-15.md](plano-fase-15.md)). Origem: quatro pedidos numa mesma sessão — (1) correção do cálculo de dias úteis (a data final sai errada), (2) edição direta da data final de entrega na edição de etapa, (3) menu horizontal de abas na tela da gestão (Projetos / Documentos importantes / Dashboards) e (4) botão de **Termo Aditivo** nas entregas, formalizando dias adicionais para alimentar dashboards de atraso.
+Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequência da Fase 15 ([plano-fase-15.md](plano-fase-15.md)). Origem: quatro pedidos numa mesma sessão — (1) correção do cálculo de dias úteis (a data final sai errada), (2) edição direta da data final de entrega na edição de etapa, (3) menu horizontal de abas (Projetos / Documentos importantes / Dashboards) e (4) botão de **Termo Aditivo** nas entregas, formalizando dias adicionais para alimentar dashboards de atraso. **Revisão de 09/07/2026 (decisão do diretor, ainda na fase de planejamento):** a Fase 18 mudou — as abas e os links de documentos ficam na **galeria de gestões** (nível área), não dentro da gestão junto ao Kanban, e a aba **Dashboards foi retirada** (ideia movida ao [roadmap.md](roadmap.md)).
 
 > Instrução explícita do responsável: **as fases só começam mediante comando direto**. Este documento é **apenas o planejamento** — nada foi implementado. Os ADRs 018, 019 e 020 estão **pré-registrados** em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) com status "planejado"; na execução de cada fase, virar para "implementado". A Fase 11 (go-live/Hub) segue **gated no acesso externo**.
 
@@ -8,9 +8,9 @@ Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequênc
 |---|---|---|
 | 16 | Convenção **inclusiva** de dias úteis (dia de início conta como dia 1) + campo de **data final** na edição de etapa | ✅ Entregue (09/07/2026, ADR-018) |
 | 17 | **Termo Aditivo** por etapa: registro formal de dias adicionais, com efeito na data final e histórico para dashboards | ⏳ Planejada (ADR-019) |
-| 18 | Abas na tela da gestão: **Projetos** (Kanban atual) / **Documentos importantes** / **Dashboards** | ⏳ Planejada (ADR-020) — **18c gated na definição de KPIs com a diretoria** |
+| 18 | Abas na **galeria de gestões**: **Gestões** (galeria atual) / **Documentos importantes** (links da área) — *Dashboards retirado da fase, movido ao roadmap* | ⏳ Planejada (ADR-020, **revisada em 09/07/2026 por decisão do diretor**) |
 
-**Ordem obrigatória: 16 → 17 → 18.** A 16 corrige a base de cálculo de datas sobre a qual tudo se apoia (inclusive o efeito do termo aditivo); a 17 cria o dado que o dashboard da 18c consome (atrasos formalizados). As sub-fases 18a/18b não dependem da 17, mas executar a 18 por último evita entregar um dashboard vazio.
+**Ordem recomendada: 16 → 17 → 18.** A 16 corrige a base de cálculo de datas sobre a qual tudo se apoia (inclusive o efeito do termo aditivo). Com a revisão de 09/07/2026 (dashboards fora da fase), a 18 **não depende mais da 17** — a ordem segue como recomendação, não como bloqueio.
 
 ## Diagnóstico verificado no código (09/07/2026)
 
@@ -91,34 +91,26 @@ Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequênc
 
 ---
 
-## Fase 18 — Abas da gestão: Projetos / Documentos / Dashboards (ADR-020)
+## Fase 18 — Abas na galeria de gestões: Gestões / Documentos importantes (ADR-020, revisada em 09/07/2026)
 
-### 18a — Shell de abas na tela da gestão (frontend puro)
+> **Revisão de 09/07/2026 (decisão do diretor):** (1) os links de documentos são **da área** e ficam na **galeria de gestões** (`TelaGaleriaGestoes`), **não** dentro de cada gestão junto ao Kanban de projetos; (2) a aba **Dashboards sai da fase** — vira ideia registrada no [roadmap.md](roadmap.md) (seção "Métricas e dashboards de projetos", que já existia e foi atualizada), aguardando o levantamento de KPIs com a diretoria.
 
-- **`TelaGestao` (App.jsx)** ganha o menu horizontal no padrão visual já existente (`.tabs-container`/`.tab` de `PaginaProjeto.jsx`): **Projetos** (default — o `KanbanFases` atual, intocado), **Documentos** e **Dashboards**. Estado `abaAtiva` local e **não persistido** (coerente com ADR-010).
-- Extrair o conteúdo de cada aba para componentes próprios se `TelaGestao` crescer demais (padrão container da Fase 7b).
+### 18a — Shell de abas na galeria de gestões (frontend puro)
 
-### 18b — Documentos importantes (backend + frontend)
+- **`TelaGaleriaGestoes` (App.jsx)** ganha o menu horizontal no padrão visual já existente (`.tabs-container`/`.tab` de `PaginaProjeto.jsx`): **Gestões** (default — a galeria de cards atual, intocada, com o formulário "+ Nova Gestão") e **Documentos**. Estado `abaAtiva` local e **não persistido** (coerente com ADR-010). **Sem aba Dashboards** (nem placeholder — fora da fase por decisão do diretor).
+- Extrair o conteúdo de cada aba para componentes próprios se `TelaGaleriaGestoes` crescer demais (padrão container da Fase 7b).
 
-**Formato confirmado pelo responsável (09/07/2026): links nomeados para o Drive, replicando a página de "Documentos importantes" que a gestão mantém hoje no Notion** (print de referência da sessão: seções "Base de Dados", "Gestão 2026.1", "EAPs", "Escopos Padronizados", "Projetos 2026", cada uma apontando para o drive.google.com). Sem upload de arquivo — a informação continua concentrada no Drive; a aba é o índice.
+### 18b — Documentos importantes da área (backend + frontend)
 
-- **Nova tabela `Documento`** (aditiva — mesmo fluxo brando da 17a): `id`, `gestao_id` (FK), `nome`, `url`, `criado_em`. **Sem vínculo com projeto** — o formato atual é da gestão como um todo (print); vincular a projeto fica registrado como evolução, se pedida. Cascata ORM na exclusão da gestão (padrão ADR-012; documentos **não bloqueiam** a exclusão — são só links, diferente do 409 de gestão-com-projetos).
-- **Rotas** (`routes/gestoes.py` ou router novo `documentos.py`): `GET /gestoes/{id}/documentos`, `POST /gestoes/{id}/documentos`, `DELETE /documentos/{id}`. Validação leve de URL (esquema http/https) → 422 (mesma validação reusada no `documento_url` do termo aditivo, 17a).
+**Formato confirmado pelo responsável (09/07/2026): links nomeados para o Drive, replicando a página de "Documentos importantes" que a área mantém hoje no Notion** (print de referência da sessão: seções "Base de Dados", "Gestão 2026.1", "EAPs", "Escopos Padronizados", "Projetos 2026", cada uma apontando para o drive.google.com). Sem upload de arquivo — a informação continua concentrada no Drive; a aba é o índice. **Revisão de 09/07/2026: os documentos são da ÁREA (nível galeria), não de uma gestão** — o próprio print mistura links gerais ("Base de Dados", "EAPs") com links de gestões específicas ("Gestão 2026.1"), confirmando o escopo global.
+
+- **Nova tabela `Documento`** (aditiva — mesmo fluxo brando da 17a): `id`, `nome`, `url`, `criado_em`. **Sem FK** — nem gestão nem projeto (decisão do diretor: links da área). Vincular a gestão/projeto fica registrado como evolução, se um dia pedirem filtro por gestão.
+- **Rotas** (router novo `documentos.py`): `GET /documentos`, `POST /documentos`, `DELETE /documentos/{id}`. Validação leve de URL (esquema http/https) → 422 (mesma validação reusada no `documento_url` do termo aditivo, 17a). Sem interação com o 409 de exclusão de gestão — documentos não pertencem a gestões.
 - **Frontend:** aba com grid de cards de link (nome + `ExternalLink` abrindo em nova aba, visual `.ui-card`), formulário inline "+ Adicionar documento" (`.form-*`, `useToast`) e lixeira `3c`. Sem editor — para corrigir, exclui e recria (piloto).
 
-### 18c — Dashboards da gestão (backend + frontend)
+### ~~18c — Dashboards~~ (retirada da fase em 09/07/2026 — movida ao roadmap)
 
-> **Gated (09/07/2026): os KPIs ainda não foram levantados** — a aba veio de um comentário do diretor "por cima" e **precisa ser trabalhada com a diretoria antes de executar**. A 18a entrega a aba como **placeholder** ("em construção", coerente com o padrão dos itens `aria-disabled` da sidebar); o conteúdo abaixo é a **proposta-base para levar à diretoria**, não escopo fechado.
-
-**Primeiro dashboard proposto: atrasos e termos aditivos** (o motivo de negócio citado pelo responsável), mais uma visão geral de andamento. **Sem biblioteca nova de gráficos** — barras/donuts em CSS/SVG com os tokens do design system (mesma filosofia sem-dependências do resto do frontend).
-
-- **Rota agregadora** `GET /gestoes/{id}/dashboard` (evita N chamadas de etapas por projeto), devolvendo:
-  - `projetos_por_fase` (contagem por `Projeto.fase`);
-  - `etapas_por_status` (contagem por `Etapa.status`);
-  - `termos`: total de termos, Σ dias aditivos, e ranking por projeto e por serviço (`[{projeto/servico, qtd_termos, dias_aditivos}]`);
-  - `pontualidade`: etapas concluídas/em andamento com vs. sem termo aditivo (proxy de atraso formalizado — sem depender de "data real de conclusão", que o modelo não tem; se a diretoria quiser atraso *real*, isso é schema novo e fica registrado como evolução).
-- **Frontend:** aba com cards de KPI (nº projetos, % etapas concluídas, termos aditivos, dias aditivos totais) + barras por fase/status + tabela-ranking "projetos com mais dias aditivos". Estado vazio amigável ("nenhum termo aditivo registrado 🎉").
-- **Fora de escopo do 18c:** filtros por período, export, comparação entre gestões — registrar no roadmap se pedidos.
+**Decisão do diretor (09/07/2026): a aba Dashboards sai da Fase 18** — deixada de lado por enquanto, registrada como ideia no [roadmap.md](roadmap.md) (seção "Métricas e dashboards de projetos", atualizada com esta decisão). Os KPIs nunca foram levantados; quando a diretoria os definir, o item volta como fase própria. A **proposta-base** que estava aqui (rota agregadora `GET /gestoes/{id}/dashboard`; termos/dias aditivos por projeto e serviço como métrica de atraso formalizado — dado criado pela Fase 17/ADR-019; sem lib de gráficos) foi transcrita para o roadmap como pauta desse levantamento.
 
 ---
 
@@ -128,20 +120,22 @@ Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequênc
 2. **(17a) Bloco:** ✅ decidido — o termo é **do bloco inteiro**. Atraso de etapa interna se resolve realocando dias úteis entre as etapas do bloco; termo só quando o bloco atrasa. Botão no card/modal do bloco; membros sem termo individual.
 3. **(17a) Exclusão:** ✅ decidido — termo **sem documento anexado é descartável**; anexar o **documento formal do termo** (link) **trava** o registro (DELETE → 409).
 4. **(18b) Documentos:** ✅ confirmado — links nomeados para o Drive, replicando a página atual do Notion (print de referência da sessão).
-5. **(18c) KPIs:** ❌ **não definidos** — a aba nasce como placeholder (18a) e a execução da 18c fica **gated** até a diretoria levantar os KPIs (a proposta-base do plano serve de pauta para essa conversa).
+5. **(18c) KPIs:** ❌ não definidos → **resolvido por remoção (09/07/2026, decisão do diretor): Dashboards sai da Fase 18** e vira ideia no [roadmap.md](roadmap.md), aguardando o levantamento de KPIs com a diretoria (a proposta-base foi transcrita para lá como pauta).
+6. **(18a/18b, revisão de 09/07/2026 do diretor):** as abas e os links de documentos ficam na **galeria de gestões** (nível área), não dentro de cada gestão junto ao Kanban — `Documento` global, sem FK de gestão.
 
 ## Fora de escopo (registrado)
 
 - **Feriados municipais/estaduais no calendário** (ex.: Uberlândia): continua fora — a 16b dá a válvula de escape manual. Se um dia entrar, é evolução isolada em `utils/calendario.py` (workalendar tem subclasses regionais).
 - **Data real de conclusão de etapa** (para atraso real vs. formalizado): schema novo, fora desta leva; o dashboard usa o termo aditivo como proxy.
-- **Upload/armazenamento de arquivos** (18b) e **bibliotecas de gráficos** (18c).
+- **Upload/armazenamento de arquivos** (18b).
+- **Dashboards** — retirados da Fase 18 em 09/07/2026 (decisão do diretor); ideia registrada no roadmap, gated no levantamento de KPIs com a diretoria.
 - **Reagendamento automático por dependência** (segue ADR-015) e alterações no catálogo (ADR-005).
 
 ## Verificação por fase (roda na execução)
 
 - **16:** `pytest` com expectativas novas (todos os 43+ verdes) + caso 23/02/2026+5 → 27/02/2026; manual: criar etapa com o exemplo real e conferir Kanban/tabela/Gantt/calendário; editar a data final no modal e ver os dias recalcularem (e vice-versa); cascata na criação produz os mesmos inícios de antes.
 - **17:** reiniciar backend (tabela aditiva via `create_all`); `pytest test_fase17.py`; manual: lançar termo numa etapa avulsa (badge + data efetiva + `data_fim_original` preservada), num membro de bloco (efeito conforme decisão), excluir termo restaura.
-- **18:** `npm run lint`/`build`; manual: navegar as três abas (Kanban intocado), CRUD de documento com link abrindo em nova aba, dashboard batendo com os dados reais da gestão de teste; viewport 375/768/1024px.
+- **18:** reiniciar backend (tabela `Documento` aditiva via `create_all`); `npm run lint`/`build`; manual: navegar as duas abas da galeria (**Gestões** intocada — cards, formulário e exclusão funcionando; abrir uma gestão continua levando ao Kanban), CRUD de documento na aba **Documentos** com link abrindo em nova aba; viewport 375/768/1024px.
 
 ## Riscos registrados
 
@@ -150,6 +144,6 @@ Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequênc
 3. **(16b) Três campos sincronizados no modal:** loop de recomputação (dias→data→dias) — usar a mesma guarda de sequência da cascata (Fase 12) e definir "quem manda" por último campo tocado.
 4. **(17a) Σ de termos em bloco:** a derivação por membro precisa considerar os termos do bloco inteiro (se a proposta for aprovada) — testar explicitamente para não divergir entre membros.
 5. **(17) Confusão correção × formalização:** editar dias/data final (16b) e lançar termo (17) mudam a mesma data efetiva por caminhos diferentes. Mitigar com rótulos/microcopy distintos e seções separadas no modal.
-6. **(18c) Dashboard sem dado de conclusão real:** o "atraso" reportado é o formalizado (termos), não o observado. Está explícito na rota/UI para não induzir leitura errada da diretoria.
+6. ~~(18c) Dashboard sem dado de conclusão real~~ — **risco movido ao roadmap junto com o item (09/07/2026)**: registrado lá que o "atraso" mensurável hoje é o formalizado (termos), não o observado.
 7. **(17a) Desfazer bloco com termo lançado:** o termo permanece na etapa de referência em que foi gravado e passa a estender só ela — aceito no piloto; o confirm de desfazer deve avisar quando houver termo no bloco.
 8. **(17a) Trava por documento depende de anexar de verdade:** se o gerente formalizar com o cliente e esquecer de anexar o link, o termo continua excluível. Mitigar com microcopy no histórico ("anexe o documento para travar o registro"); trilha rígida (flag de cancelamento) fica como evolução se a diretoria exigir.
