@@ -52,18 +52,16 @@ export default function KanbanFases({
               return (
                 <div
                   key={p.id}
-                  className="ui-card kanban-card"
+                  className="ui-card kanban-card card-projeto-kanban"
                   style={{ cursor: 'pointer' }}
                   onClick={() => aoAbrirProjeto(p.id)}
                 >
                   <span className="kanban-card-faixa" style={{ background: fase.cor }} aria-hidden="true" />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-8)', flexWrap: 'wrap', marginBottom: 'var(--sp-12)' }}>
-                    <h4 className="kanban-card-titulo" style={{ flex: '0 1 auto' }}>{p.nome}</h4>
-                    {servico && <span className="chip chip-servico">{servico.nome}</span>}
-                  </div>
+                  <h4 className="kanban-card-titulo">{p.nome}</h4>
+                  {servico && <div><span className="chip chip-servico">{servico.nome}</span></div>}
 
                   {gerente && (
-                    <div className="card-gerente-bloco" style={{ marginBottom: 'var(--sp-12)' }}>
+                    <div className="card-gerente-bloco">
                       <AvatarIniciais nome={gerente.nome} tamanho={36} />
                       <div>
                         <div className="card-gerente-rotulo">Gerente</div>
@@ -72,7 +70,7 @@ export default function KanbanFases({
                     </div>
                   )}
 
-                  <div className="card-consultores-row" style={{ marginBottom: 'var(--sp-12)' }}>
+                  <div className="card-consultores-row">
                     <span className="card-consultores-rotulo">Consultores</span>
                     {consultores.length === 0 ? (
                       <span className="card-consultores-rotulo">—</span>
@@ -90,7 +88,7 @@ export default function KanbanFases({
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div className="card-projeto-footer-acoes">
                     <span className={`chip ${p.tap_assinado ? 'chip-success' : 'chip-warning'}`}>
                       TAP: {p.tap_assinado ? 'Assinado' : 'Pendente'}
                     </span>
@@ -105,7 +103,7 @@ export default function KanbanFases({
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 'var(--sp-8)', marginTop: 'var(--sp-12)' }}>
+                  <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
                     {anterior && (
                       <button
                         className="btn btn-secondary btn-sm"

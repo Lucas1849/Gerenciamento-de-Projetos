@@ -1105,6 +1105,26 @@ body {
   line-height: 1.3;
 }
 
+/* Fase 15c (ADR-017): estrutura do card de projeto — mesmos elementos, ritmo
+   vertical uniforme (flex + gap no lugar das margens ad-hoc), chips sem quebra
+   de linha (escopado ao card, não ao .chip global) e respiro sob a faixa. */
+.card-projeto-kanban {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-16);
+  padding-top: var(--sp-24);
+}
+.card-projeto-kanban .chip { white-space: nowrap; }
+.card-projeto-kanban .card-consultores-row { flex-wrap: wrap; }
+/* Footer TAP + Excluir: space-between com espaço; quebra em vez de espremer. */
+.card-projeto-footer-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8);
+  flex-wrap: wrap;
+}
+
 /* Affordance fantasma "+ Novo projeto" (coluna vazia, estilo Hub) */
 .kanban-ghost {
   width: 100%;
