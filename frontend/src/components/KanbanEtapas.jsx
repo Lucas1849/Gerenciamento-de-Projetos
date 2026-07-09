@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Link2, Unlink, Pencil } from 'lucide-react';
 import ModalBloco from './ModalBloco';
 import AvatarIniciais from './AvatarIniciais';
+import { IconePrazo, IconeData } from './Icones';
 import { criarBloco, desfazerBloco, estenderBloco, removerEtapaDoBloco } from '../services/api';
 import { formatarData } from './datasUtils';
 import { agruparCards, statusDoCard, FLUXO } from './etapasUtils';
@@ -150,13 +151,13 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
 
       {etapa.dias_uteis_esperados != null && (
         <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
-          ⏳ Prazo: {etapa.dias_uteis_esperados} dia(s) útil(eis)
+          <IconePrazo /> Prazo: {etapa.dias_uteis_esperados} dia(s) útil(eis)
         </p>
       )}
 
       {etapa.data_inicio && (
         <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
-          📅 {formatarData(etapa.data_inicio)}
+          <IconeData /> {formatarData(etapa.data_inicio)}
           {etapa.data_fim && ` → ${formatarData(etapa.data_fim)}`}
         </p>
       )}
@@ -200,12 +201,12 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
 
       {ref.dias_uteis_esperados != null && (
         <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
-          ⏳ Prazo do bloco: {ref.dias_uteis_esperados} dia(s) útil(eis)
+          <IconePrazo /> Prazo do bloco: {ref.dias_uteis_esperados} dia(s) útil(eis)
         </p>
       )}
       {ref.data_inicio && (
         <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
-          📅 {formatarData(ref.data_inicio)}
+          <IconeData /> {formatarData(ref.data_inicio)}
           {ref.data_fim && ` → ${formatarData(ref.data_fim)}`}
         </p>
       )}

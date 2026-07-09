@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { formatarData, janelaDatas, dataPlausivel } from './datasUtils';
+import { IconePrazo, IconeData } from './Icones';
 
 export default function ModalBloco({ nomes, diasInicial, dataInicial, onConfirmar, onCancelar, modo = 'criar' }) {
   const [dias, setDias] = useState(diasInicial ?? '');
@@ -48,8 +49,8 @@ export default function ModalBloco({ nomes, diasInicial, dataInicial, onConfirma
 
         {estender ? (
           <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: 'var(--sp-24)' }}>
-            ⏳ Prazo do bloco: {dias === '' || dias == null ? 'sem prazo definido' : `${dias} dia(s) útil(eis)`}
-            {' · '}📅 {dataInicio ? formatarData(dataInicio) : 'sem data de início'}
+            <IconePrazo /> Prazo do bloco: {dias === '' || dias == null ? 'sem prazo definido' : `${dias} dia(s) útil(eis)`}
+            {' · '}<IconeData /> {dataInicio ? formatarData(dataInicio) : 'sem data de início'}
           </p>
         ) : (
           <div style={{ display: 'flex', gap: 'var(--sp-12)', flexWrap: 'wrap', marginBottom: 'var(--sp-24)' }}>

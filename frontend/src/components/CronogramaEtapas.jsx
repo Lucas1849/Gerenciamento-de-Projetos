@@ -1,10 +1,11 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import { Link2 } from 'lucide-react';
 import NavMes from './NavMes';
-import { agruparCards, statusDoCard, STATUS_LABEL } from './etapasUtils';
+import { agruparCards, STATUS_LABEL } from './etapasUtils';
 import { contarDiasUteis } from '../services/api';
 import { isoDe, diaDeISO, diasNoMes, ehFimDeSemana, formatarData, somaDias, hojeISO } from './datasUtils';
 import AvatarIniciais from './AvatarIniciais';
+import { IconeHexagono, IconeCadeado } from './Icones';
 
 // Visão "Cronograma" interativa (Fase 13, ADR-015): mantém o CSS grid por mês
 // e adiciona, por pointer events nativos, arrastar a barra (nova data_inicio),
@@ -31,45 +32,47 @@ export default function CronogramaEtapas({
   // Arraste em curso (para o feedback visual): { tipo, key, dxCols, alvoKey }.
   const [arraste, setArraste] = useState(null);
 
-  // Um item de barra por card (etapa avulsa ou bloco); guarda o etapaId a
-  // patchar (bloco → membros[0], que propaga) e os ids cobertos (mapa de setas).
-  const items = agruparCards(etapas).map(card => {
+  // Um item de barra por etapa (Fase 15b, ADR-017): membros de um bloco viram
+  // barras individuais (mesmo intervalo, ADR-009) marcadas com grupoBloco —
+  // o indicador "entrega conjunta" é desenhado abaixo do grupo. Arrastar ou
+  // redimensionar qualquer membro patcha o próprio id; a propagação da Fase 12
+  // move as barras-irmãs juntas.
+  const items = agruparCards(etapas).flatMap(card => {
     if (card.tipo === 'etapa') {
       const e = card.etapa;
-      return {
+      return [{
         key: `e-${e.id}`, etapaId: e.id, ids: [e.id],
         nome: `${e.ordem}. ${e.nome}`, status: e.status,
         inicio: e.data_inicio, fim: e.data_fim, bloqueadaPor: e.bloqueada_por,
         dias: e.dias_uteis_esperados, consultor: e.consultores?.[0]?.nome ?? null,
-      };
+        grupoBloco: null,
+      }];
     }
-    const ref = card.membros[0];
     const idsMembros = new Set(card.membros.map(mm => mm.id));
-    const bloqueadaPor = [];
-    const vistos = new Set();
-    card.membros.forEach(mm => mm.bloqueada_por.forEach(d => {
-      if (!idsMembros.has(d.id) && !vistos.has(d.id)) { vistos.add(d.id); bloqueadaPor.push(d); }
+    return card.membros.map(mm => ({
+      key: `e-${mm.id}`, etapaId: mm.id, ids: [mm.id],
+      nome: `${mm.ordem}. ${mm.nome}`, status: mm.status,
+      inicio: mm.data_inicio, fim: mm.data_fim,
+      bloqueadaPor: mm.bloqueada_por.filter(d => !idsMembros.has(d.id)),
+      dias: mm.dias_uteis_esperados, consultor: mm.consultores?.[0]?.nome ?? null,
+      grupoBloco: mm.bloco_entrega, grupoRotulo: card.rotulo, grupoTamanho: card.membros.length,
     }));
-    return {
-      key: `b-${ref.bloco_entrega}`, etapaId: ref.id, ids: card.membros.map(mm => mm.id),
-      nome: `⬡ ${card.rotulo} (${card.membros.length} etapas)`, status: statusDoCard(card),
-      inicio: ref.data_inicio, fim: ref.data_fim, bloqueadaPor,
-      dias: ref.dias_uteis_esperados, consultor: null, bloco: true,
-      progresso: card.membros.filter(mm => mm.status === 'concluida').length / card.membros.length,
-    };
   });
 
   const idParaBarra = new Map();
   items.forEach(it => it.ids.forEach(id => idParaBarra.set(id, it.key)));
 
   // Arestas de dependência entre barras (dedup; ignora vínculos internos a um
-  // mesmo bloco). Direção: da bloqueadora (predecessora) para a bloqueada.
+  // mesmo bloco — os membros são uma entrega só, agora com barras próprias).
+  // Direção: da bloqueadora (predecessora) para a bloqueada.
+  const blocoDe = new Map(etapas.map(e => [e.id, e.bloco_entrega]));
   const arestas = [];
   const vistas = new Set();
   etapas.forEach(e => e.bloqueada_por.forEach(b => {
     const deKey = idParaBarra.get(b.id);
     const paraKey = idParaBarra.get(e.id);
     if (!deKey || !paraKey || deKey === paraKey) return;
+    if (blocoDe.get(b.id) && blocoDe.get(b.id) === blocoDe.get(e.id)) return;
     const chave = `${deKey}->${paraKey}`;
     if (!vistas.has(chave)) { vistas.add(chave); arestas.push({ deKey, paraKey }); }
   }));
@@ -81,6 +84,22 @@ export default function CronogramaEtapas({
   const diaHoje = hoje >= primeiroISO && hoje <= ultimoISO ? diaDeISO(hoje) : null;
   const noMes = items.filter(i => i.inicio && i.inicio <= ultimoISO && (i.fim ?? i.inicio) >= primeiroISO);
   const semData = items.filter(i => !i.inicio);
+
+  // Linhas de render (15b): barras na ordem dos items; após o último membro de
+  // cada bloco, uma linha-indicadora "Bloco N · entrega conjunta" no mesmo
+  // intervalo compartilhado (membros são contíguos por construção).
+  const linhas = [];
+  noMes.forEach((item, i) => {
+    linhas.push({ tipo: 'barra', item });
+    const prox = noMes[i + 1];
+    if (item.grupoBloco && (!prox || prox.grupoBloco !== item.grupoBloco)) {
+      linhas.push({
+        tipo: 'grupo', key: `g-${item.grupoBloco}`,
+        rotulo: item.grupoRotulo, tamanho: item.grupoTamanho,
+        inicio: item.inicio, fim: item.fim ?? item.inicio,
+      });
+    }
+  });
 
   // ── Medição (largura de coluna + posições das barras para as setas) ──────
   useLayoutEffect(() => {
@@ -196,7 +215,22 @@ export default function CronogramaEtapas({
             <p className="crono-vazio">Nenhuma etapa com datas neste mês.</p>
           )}
 
-          {noMes.map(item => {
+          {linhas.map(l => {
+            if (l.tipo === 'grupo') {
+              const gColIni = l.inicio < primeiroISO ? 1 : diaDeISO(l.inicio);
+              const gColFim = l.fim > ultimoISO ? nDias : diaDeISO(l.fim);
+              return (
+                <div key={l.key} className="crono-linha crono-linha--grupo" style={template}>
+                  <div className="crono-rotulo" />
+                  <div className="crono-grupo" style={{ gridColumn: `${gColIni + 1} / ${gColFim + 2}`, gridRow: 1 }}>
+                    <span className="crono-grupo-chip" title={`${l.tamanho} etapas com prazo e data compartilhados (ADR-009)`}>
+                      <IconeHexagono /> {l.rotulo} · entrega conjunta <IconeCadeado />
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+            const { item } = l;
             const fim = item.fim ?? item.inicio;
             const colIni = item.inicio < primeiroISO ? 1 : diaDeISO(item.inicio);
             const colFim = fim > ultimoISO ? nDias : diaDeISO(fim);
@@ -234,7 +268,7 @@ export default function CronogramaEtapas({
                   ref={el => { if (el) barrasRef.current.set(item.key, el); else barrasRef.current.delete(item.key); }}
                   data-barra-etapa={item.etapaId}
                   data-barra-key={item.key}
-                  className={`crono-barra crono-barra--${item.status}${item.bloco ? ' crono-barra--bloco' : ''}${ativo ? ' crono-barra--ativo' : ''}${alvoDeLigacao ? ' crono-barra--alvo' : ''}`}
+                  className={`crono-barra crono-barra--${item.status}${ativo ? ' crono-barra--ativo' : ''}${alvoDeLigacao ? ' crono-barra--alvo' : ''}`}
                   style={{ gridColumn: `${colIni + 1} / ${colFim + 2}`, gridRow: 1, transform, transformOrigin: 'left center' }}
                   title={`${item.nome} · ${STATUS_LABEL[item.status]} · ${formatarData(item.inicio)}${item.fim ? ` → ${formatarData(item.fim)}` : ''}`}
                   onPointerDown={e => iniciar('mover', item, e)}
@@ -260,15 +294,8 @@ export default function CronogramaEtapas({
                         {item.dias != null ? ` · ${item.dias} dia(s)` : ''}
                       </span>
                     </span>
-                    {item.bloco ? (
-                      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.08em' }}>ENTREGA</span>
-                    ) : (
-                      item.consultor && <AvatarIniciais nome={item.consultor} tamanho={26} />
-                    )}
+                    {item.consultor && <AvatarIniciais nome={item.consultor} tamanho={26} />}
                   </span>
-                  {item.bloco && item.progresso > 0 && (
-                    <span className="crono-barra-progresso" style={{ width: `${Math.round(item.progresso * 100)}%` }} />
-                  )}
                   {/* Handle de redimensionamento (muda a duração). */}
                   <span
                     className="crono-resize"
