@@ -258,7 +258,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** alinhar a convenção à contagem real da empresa corrige todas as superfícies de uma vez (a matemática é exclusiva do backend, ADR-008); converter data→dias no reverse-calendar já existente dá a válvula de escape para feriados municipais sem quebrar a fonte única de verdade nem persistir datas derivadas.
 
-**Status:** planejado — convenção inclusiva **confirmada pelo responsável em 09/07/2026** ("contar 23/02 como 1º dia da demanda é justamente a proposta"); Fase 16 não iniciada (fases só começam sob comando direto do responsável). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
+**Status:** implementado (09/07/2026) — Fase 16 executada sob comando direto do responsável. Nota de implementação: `_primeiro_dia_util()` normaliza o início e `proximo_dia_util()` alimenta a cascata (`utils/calendario.py`); 45 testes verdes com as expectativas novas (incluindo o caso real 23/02/2026 + 5 → 27/02/2026 e início em fim de semana); no modal, os três campos sincronizam com guarda de sequência e data final em fds/feriado é ajustada com aviso (verificado no browser nas duas direções). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
 
 ---
 

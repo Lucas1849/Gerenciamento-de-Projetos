@@ -6,7 +6,7 @@ Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequênc
 
 | Fase | Entrega | Status |
 |---|---|---|
-| 16 | Convenção **inclusiva** de dias úteis (dia de início conta como dia 1) + campo de **data final** na edição de etapa | ⏳ Planejada (ADR-018) |
+| 16 | Convenção **inclusiva** de dias úteis (dia de início conta como dia 1) + campo de **data final** na edição de etapa | ✅ Entregue (09/07/2026, ADR-018) |
 | 17 | **Termo Aditivo** por etapa: registro formal de dias adicionais, com efeito na data final e histórico para dashboards | ⏳ Planejada (ADR-019) |
 | 18 | Abas na tela da gestão: **Projetos** (Kanban atual) / **Documentos importantes** / **Dashboards** | ⏳ Planejada (ADR-020) — **18c gated na definição de KPIs com a diretoria** |
 
