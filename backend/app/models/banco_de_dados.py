@@ -240,3 +240,16 @@ class TermoAditivo(Base):
     documento_url = Column(String, nullable=True)
 
     etapa = relationship("Etapa", back_populates="termos_aditivos")
+
+
+# 11. Documento — link nomeado para o Drive na aba "Documentos importantes" da
+# galeria de gestões (Fase 18, ADR-020, revisada em 09/07/2026). Documentos são
+# da ÁREA: sem FK de gestão nem de projeto (replica a página do Notion, que
+# mistura links gerais e de gestões específicas). Tabela puramente aditiva.
+class Documento(Base):
+    __tablename__ = "documentos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    criado_em = Column(DateTime, nullable=False, default=datetime.now)

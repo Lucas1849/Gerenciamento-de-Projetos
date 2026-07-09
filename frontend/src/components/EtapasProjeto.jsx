@@ -5,6 +5,7 @@ import TabelaEtapas from './TabelaEtapas';
 import CronogramaEtapas from './CronogramaEtapas';
 import CalendarioEtapas from './CalendarioEtapas';
 import ModalEditarEtapa from './ModalEditarEtapa';
+import ModalTermoAditivo from './ModalTermoAditivo';
 import { mesDeISO, hojeISO } from './datasUtils';
 import {
   listarEtapasDoProjeto,
@@ -36,6 +37,8 @@ export default function EtapasProjeto({ projetoId, toast }) {
   // Ids da etapa/bloco em edição no modal (Fase 12); os membros são derivados
   // de `etapas` a cada render para o modal não segurar snapshot desatualizado.
   const [edicaoIds, setEdicaoIds] = useState(null);
+  // Ids da etapa/bloco com o modal de termo aditivo aberto (Fase 17, ADR-019).
+  const [termoIds, setTermoIds] = useState(null);
 
   const recarregar = useCallback(() => {
     return listarEtapasDoProjeto(projetoId)
@@ -87,6 +90,9 @@ export default function EtapasProjeto({ projetoId, toast }) {
   // Abre o modal de edição para a etapa avulsa ou para todo o bloco (Fase 12).
   const abrirEdicao = (membros) => setEdicaoIds(membros.map(m => m.id));
 
+  // Abre o modal de termo aditivo (Fase 17): etapa avulsa ou bloco inteiro.
+  const abrirTermo = (membros) => setTermoIds(membros.map(m => m.id));
+
   // Fase 13: arrastar/redimensionar barra no cronograma → PATCH da etapa
   // (bloco propaga aos membros). data_fim se re-deriva no backend (ADR-008).
   const aplicarDatasEtapa = (etapaId, dados) =>
@@ -107,6 +113,9 @@ export default function EtapasProjeto({ projetoId, toast }) {
 
   const membrosEdicao = edicaoIds
     ? etapas.filter(e => edicaoIds.includes(e.id))
+    : [];
+  const membrosTermo = termoIds
+    ? etapas.filter(e => termoIds.includes(e.id))
     : [];
 
   return (
@@ -143,6 +152,7 @@ export default function EtapasProjeto({ projetoId, toast }) {
           aoAdicionar={adicionarConsultor}
           aoRemover={removerConsultor}
           aoEditar={abrirEdicao}
+          aoTermo={abrirTermo}
           recarregar={recarregar}
         />
       )}
@@ -166,6 +176,15 @@ export default function EtapasProjeto({ projetoId, toast }) {
       )}
       {visao === 'calendario' && (
         <CalendarioEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />
+      )}
+
+      {termoIds && membrosTermo.length > 0 && (
+        <ModalTermoAditivo
+          membros={membrosTermo}
+          toast={toast}
+          aoFechar={() => setTermoIds(null)}
+          aoSalvo={() => recarregar()}
+        />
       )}
 
       {edicaoIds && membrosEdicao.length > 0 && (

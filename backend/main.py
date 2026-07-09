@@ -11,6 +11,7 @@ from app.routes import (
     calendario,
     catalogo,
     colaboradores,
+    documentos,
     etapas,
     gestoes,
     professores,
@@ -45,3 +46,4 @@ app.include_router(catalogo.router)
 app.include_router(projetos.router)
 app.include_router(etapas.router)
 app.include_router(calendario.router)
+app.include_router(documentos.router)

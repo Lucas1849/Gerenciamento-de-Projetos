@@ -5,6 +5,7 @@ import {
   ChevronRight, Menu, Flame, Trash2,
 } from 'lucide-react';
 import './App.css';
+import DocumentosImportantes from './components/DocumentosImportantes';
 import FormularioColaborador from './components/FormularioColaborador';
 import FormularioProjeto from './components/FormularioProjetos';
 import FormularioGestao from './components/FormularioGestao';
@@ -168,8 +169,11 @@ function CardMembro({ nome, cargo, detalhe }) {
 }
 
 // ─── Tela: Galeria de Gestões (entrada de "Projetos") ──────────────────────────
+// Fase 18 (ADR-020, revisada): abas Gestões / Documentos importantes no nível
+// da área. Estado local, não persistido (ADR-010).
 function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAbrirGestao, onRecarregar, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('gestoes');
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
   if (carregando) return <Skeleton />;
@@ -198,41 +202,58 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
           </h1>
           <p className="page-subtitle">Acompanhe o andamento dos projetos da Apoio</p>
         </div>
-        <button
-          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
-          onClick={() => setMostrarForm(v => !v)}
-        >
-          {mostrarForm ? '✕ Cancelar' : '+ Nova Gestão'}
-        </button>
+        {abaAtiva === 'gestoes' && (
+          <button
+            className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
+            onClick={() => setMostrarForm(v => !v)}
+          >
+            {mostrarForm ? '✕ Cancelar' : '+ Nova Gestão'}
+          </button>
+        )}
       </div>
 
-      {mostrarForm && (
-        <div className="form-container">
-          <FormularioGestao
-            toast={toast}
-            aoCriar={() => { setMostrarForm(false); onRecarregar(); }}
-          />
+      <div className="tabs-container">
+        <div className={`tab ${abaAtiva === 'gestoes' ? 'active' : ''}`} onClick={() => setAbaAtiva('gestoes')}>
+          Gestões
         </div>
-      )}
+        <div className={`tab ${abaAtiva === 'documentos' ? 'active' : ''}`} onClick={() => setAbaAtiva('documentos')}>
+          Documentos importantes
+        </div>
+      </div>
 
-      {gestoes.length === 0 ? (
-        <EstadoVazio
-          mensagem="Nenhuma gestão cadastrada."
-          acao={() => setMostrarForm(true)}
-          rotulo="Criar primeira gestão"
-        />
-      ) : (
-        <div className="card-grid">
-          {gestoes.map(g => (
-            <CardGestao
-              key={g.id}
-              gestao={g}
-              totalProjetos={projetos.filter(p => p.gestao_id === g.id).length}
-              aoAbrir={onAbrirGestao}
-              aoExcluir={excluirGestaoLocal}
+      {abaAtiva === 'documentos' && <DocumentosImportantes toast={toast} />}
+
+      {abaAtiva === 'gestoes' && (
+        <>
+          {mostrarForm && (
+            <div className="form-container">
+              <FormularioGestao
+                toast={toast}
+                aoCriar={() => { setMostrarForm(false); onRecarregar(); }}
+              />
+            </div>
+          )}
+
+          {gestoes.length === 0 ? (
+            <EstadoVazio
+              mensagem="Nenhuma gestão cadastrada."
+              acao={() => setMostrarForm(true)}
+              rotulo="Criar primeira gestão"
             />
-          ))}
-        </div>
+          ) : (
+            <div className="card-grid">
+              {gestoes.map(g => (
+                <CardGestao
+                  key={g.id}
+                  gestao={g}
+                  totalProjetos={projetos.filter(p => p.gestao_id === g.id).length}
+                  aoAbrir={onAbrirGestao}
+                  aoExcluir={excluirGestaoLocal}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

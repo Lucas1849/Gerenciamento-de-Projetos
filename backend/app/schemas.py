@@ -216,6 +216,33 @@ class CascataCriar(BaseModel):
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
 
 
+class DocumentoCriar(BaseModel):
+    """Link nomeado para o Drive na aba Documentos da galeria (Fase 18,
+    ADR-020): documentos são da área — sem vínculo com gestão ou projeto."""
+
+    nome: str
+    url: str
+
+    _valida_url = field_validator("url")(validar_url_http)
+
+    @field_validator("nome")
+    @classmethod
+    def nome_obrigatorio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("nome é obrigatório")
+        return v.strip()
+
+
+class DocumentoResposta(BaseModel):
+    id: int
+    nome: str
+    url: str
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class EtapaRef(BaseModel):
     """Referência leve a uma etapa (id + nome), para os chips/setas de
     dependência (Fase 13, ADR-015) — evita embutir a etapa inteira."""

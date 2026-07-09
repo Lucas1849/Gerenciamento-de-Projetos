@@ -88,7 +88,18 @@ export default function TabelaEtapas({ etapas, aoMover, aoEditar, aoCriarDepende
               </td>
               <td>{e.data_inicio ? formatarData(e.data_inicio) : '—'}</td>
               <td>{e.data_fim ? formatarData(e.data_fim) : '—'}</td>
-              <td>{e.dias_uteis_esperados != null ? `${e.dias_uteis_esperados} dia(s) útil(eis)` : '—'}</td>
+              <td>
+                {e.dias_uteis_esperados != null ? `${e.dias_uteis_esperados} dia(s) útil(eis)` : '—'}
+                {e.dias_aditivos > 0 && (
+                  <span
+                    className="chip chip-warning"
+                    style={{ marginLeft: 'var(--sp-8)' }}
+                    title={`Entrega efetiva com termo aditivo; compromisso original: ${e.data_fim_original ? formatarData(e.data_fim_original) : '—'}`}
+                  >
+                    +{e.dias_aditivos} · termo aditivo
+                  </span>
+                )}
+              </td>
 
               {/* Bloqueado por: quem bloqueia esta etapa (esta é a bloqueada). */}
               <CelulaDependencia

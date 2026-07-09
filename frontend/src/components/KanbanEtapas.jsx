@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Link2, Unlink, Pencil } from 'lucide-react';
+import { Link2, Unlink, Pencil, FilePlus } from 'lucide-react';
 import ModalBloco from './ModalBloco';
 import AvatarIniciais from './AvatarIniciais';
 import { IconePrazo, IconeData } from './Icones';
@@ -107,7 +107,33 @@ function BotaoEditar({ rotulo, onClick }) {
   );
 }
 
-function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover, aoEditar }) {
+// Botão de termo aditivo (Fase 17, ADR-019): formalização de dias adicionais —
+// distinta da edição/correção. Em blocos, só no card do bloco.
+function BotaoTermo({ rotulo, onClick }) {
+  return (
+    <button
+      type="button"
+      title={rotulo}
+      aria-label={rotulo}
+      style={{ background: 'none', border: 'none', padding: 'var(--sp-4)', cursor: 'pointer', color: 'var(--color-text-disabled)' }}
+      onClick={onClick}
+    >
+      <FilePlus size={15} />
+    </button>
+  );
+}
+
+// Badge "+N dia(s) · termo aditivo" (âmbar tonal) — só quando há termos.
+function BadgeTermo({ dias }) {
+  if (!dias) return null;
+  return (
+    <span className="chip chip-warning" style={{ marginBottom: 'var(--sp-8)', display: 'inline-flex' }}>
+      +{dias} dia(s) · termo aditivo
+    </span>
+  );
+}
+
+function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover, aoEditar, aoTermo }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `card-${etapa.id}` });
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } =
     useDraggable({ id: `link-${etapa.id}` });
@@ -126,6 +152,7 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
           {etapa.ordem}. {etapa.nome}
         </h4>
         <BotaoEditar rotulo="Editar etapa" onClick={() => aoEditar([etapa])} />
+        <BotaoTermo rotulo="Termo aditivo" onClick={() => aoTermo([etapa])} />
         <button
           type="button"
           ref={setDragRef}
@@ -149,6 +176,8 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
         </p>
       )}
 
+      <BadgeTermo dias={etapa.dias_aditivos} />
+
       {etapa.dias_uteis_esperados != null && (
         <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
           <IconePrazo /> Prazo: {etapa.dias_uteis_esperados} dia(s) útil(eis)
@@ -170,7 +199,7 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
 
 // Card único do bloco: fica na coluna da etapa menos avançada; progresso
 // "X/Y concluídas"; cada etapa interna mantém status e equipe próprios.
-function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRemover, aoDesfazer, aoRetirarMembro, aoEditar }) {
+function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRemover, aoDesfazer, aoRetirarMembro, aoEditar, aoTermo }) {
   const concluidas = membros.filter(e => e.status === 'concluida').length;
   const ref = membros[0]; // prazo/data compartilhados pelo bloco
   // Alvo de soltura do 🔗 de uma etapa avulsa: estende o bloco (Fase 8).
@@ -189,12 +218,16 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
         <span className="chip" style={{ backgroundColor: 'var(--color-border-subtle)', color: 'var(--color-text-primary)', fontSize: '10px', marginBottom: 'var(--sp-8)', display: 'inline-flex' }}>
           📦 Entrega em bloco · {rotulo}
         </span>
-        <BotaoEditar rotulo="Editar bloco" onClick={() => aoEditar(membros)} />
+        <span style={{ display: 'inline-flex' }}>
+          <BotaoEditar rotulo="Editar bloco" onClick={() => aoEditar(membros)} />
+          <BotaoTermo rotulo="Termo aditivo do bloco" onClick={() => aoTermo(membros)} />
+        </span>
       </div>
 
       <h4 style={{ fontSize: 'var(--text-h4)', fontWeight: 600 }}>
         Bloco de {membros.length} etapas
       </h4>
+      <BadgeTermo dias={ref.dias_aditivos} />
       <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, margin: 'var(--sp-4) 0 var(--sp-8)' }}>
         {concluidas}/{membros.length} concluídas
       </p>
@@ -247,7 +280,7 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
 // Visão "Por status": Kanban de 3 colunas controlado por props (dados e
 // handlers vêm do container EtapasProjeto). O DndContext e o gesto 🔗 de
 // formar blocos permanecem encapsulados aqui.
-export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, aoMover, aoAdicionar, aoRemover, aoEditar, recarregar }) {
+export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, aoMover, aoAdicionar, aoRemover, aoEditar, aoTermo, recarregar }) {
   // Par de etapas aguardando confirmação de ligação no modal.
   const [parBloco, setParBloco] = useState(null);
   // Extensão de bloco aguardando confirmação: { etapa, chave, membros }.
@@ -311,7 +344,15 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
   };
 
   const desfazerBlocoLocal = (chave) => {
-    if (!window.confirm('Desfazer este bloco de entrega? As etapas voltam a ser avulsas, mantendo prazo e datas.')) return;
+    // Edge da Fase 17 (ADR-019): termos aditivos ficam na etapa em que foram
+    // gravados e passam a estender só ela — avisar antes de desfazer.
+    const temTermo = etapas.some(
+      e => e.bloco_entrega === chave && e.termos_aditivos.length > 0
+    );
+    const aviso = temTermo
+      ? 'Desfazer este bloco de entrega? As etapas voltam a ser avulsas. Atenção: há termo aditivo lançado — ele permanece na etapa em que foi gravado e passa a estender só ela.'
+      : 'Desfazer este bloco de entrega? As etapas voltam a ser avulsas, mantendo prazo e datas.';
+    if (!window.confirm(aviso)) return;
     desfazerBloco(projetoId, chave)
       .then(() => {
         toast.success('Bloco desfeito.');
@@ -353,6 +394,7 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
                       aoAdicionar={aoAdicionar}
                       aoRemover={aoRemover}
                       aoEditar={aoEditar}
+                      aoTermo={aoTermo}
                     />
                   ) : (
                     <CardBloco
@@ -366,6 +408,7 @@ export default function KanbanEtapas({ projetoId, etapas, colaboradores, toast, 
                       aoDesfazer={desfazerBlocoLocal}
                       aoRetirarMembro={retirarMembro}
                       aoEditar={aoEditar}
+                      aoTermo={aoTermo}
                     />
                   )
                 )}
