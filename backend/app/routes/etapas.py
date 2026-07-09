@@ -11,6 +11,7 @@ from app.models.banco_de_dados import (
     EtapaConsultor,
     EtapaDependencia,
     Projeto,
+    TermoAditivo,
     Trabalhador,
 )
 from app.utils.calendario import calcular_data_fim
@@ -24,8 +25,25 @@ def consultores_ativos(etapa: Etapa) -> list[Trabalhador]:
     return [ec.trabalhador for ec in etapa.consultores if ec.data_saida is None]
 
 
+def dias_aditivos_da_etapa(etapa: Etapa) -> int:
+    """Σ de dias adicionais formalizados (Fase 17, ADR-019). Em bloco, soma os
+    termos de TODOS os membros (robusto a termos residuais em outros membros
+    após desfazer/refazer blocos); etapa avulsa soma só os próprios."""
+    if etapa.bloco_entrega is not None:
+        membros = [
+            e for e in etapa.projeto.etapas if e.bloco_entrega == etapa.bloco_entrega
+        ]
+    else:
+        membros = [etapa]
+    return sum(t.dias_adicionais for m in membros for t in m.termos_aditivos)
+
+
 def serializar_etapa(etapa: Etapa) -> schemas.EtapaResposta:
     """Monta a resposta da etapa embutindo a equipe ativa."""
+    dias_aditivos = dias_aditivos_da_etapa(etapa)
+    tem_datas = (
+        etapa.data_inicio is not None and etapa.dias_uteis_esperados is not None
+    )
     return schemas.EtapaResposta(
         id=etapa.id,
         projeto_id=etapa.projeto_id,
@@ -35,12 +53,25 @@ def serializar_etapa(etapa: Etapa) -> schemas.EtapaResposta:
         descricao=etapa.descricao,
         dias_uteis_esperados=etapa.dias_uteis_esperados,
         data_inicio=etapa.data_inicio,
-        # Derivada, nunca armazenada (ADR-008).
+        # Derivadas, nunca armazenadas (ADR-008). data_fim é a data EFETIVA
+        # (compromisso + Σ termos aditivos); data_fim_original é o compromisso.
         data_fim=(
-            calcular_data_fim(etapa.data_inicio, etapa.dias_uteis_esperados)
-            if etapa.data_inicio is not None and etapa.dias_uteis_esperados is not None
+            calcular_data_fim(
+                etapa.data_inicio, etapa.dias_uteis_esperados + dias_aditivos
+            )
+            if tem_datas
             else None
         ),
+        data_fim_original=(
+            calcular_data_fim(etapa.data_inicio, etapa.dias_uteis_esperados)
+            if tem_datas
+            else None
+        ),
+        dias_aditivos=dias_aditivos,
+        termos_aditivos=[
+            schemas.TermoAditivoResposta.model_validate(t)
+            for t in etapa.termos_aditivos
+        ],
         bloco_entrega=etapa.bloco_entrega,
         status=etapa.status,
         consultores=[
@@ -184,6 +215,75 @@ def remover_consultor(
     db.commit()
     db.refresh(vinculo)
     return vinculo
+
+
+@router.post("/{etapa_id}/termos-aditivos", response_model=schemas.EtapaResposta)
+def criar_termo_aditivo(
+    etapa_id: int, dados: schemas.TermoAditivoCriar, db: Session = Depends(get_db)
+):
+    """Formaliza dias adicionais na etapa (Fase 17, ADR-019). O compromisso
+    original (dias_uteis_esperados) fica intacto; a data efetiva passa a
+    considerar o Σ de termos. Em bloco, o frontend grava na etapa de
+    referência (membros[0]) — a derivação soma o bloco inteiro."""
+    etapa = db.get(Etapa, etapa_id)
+    if etapa is None:
+        raise HTTPException(status_code=404, detail="Etapa não encontrada")
+    db.add(
+        TermoAditivo(
+            etapa_id=etapa_id,
+            dias_adicionais=dados.dias_adicionais,
+            motivo=dados.motivo,
+            documento_url=dados.documento_url,
+        )
+    )
+    db.commit()
+    db.refresh(etapa)
+    return serializar_etapa(etapa)
+
+
+@router.put(
+    "/{etapa_id}/termos-aditivos/{termo_id}/documento",
+    response_model=schemas.EtapaResposta,
+)
+def anexar_documento_termo(
+    etapa_id: int,
+    termo_id: int,
+    dados: schemas.TermoAditivoDocumento,
+    db: Session = Depends(get_db),
+):
+    """Anexa/atualiza o link do documento formal do termo — a partir daí o
+    registro trava (DELETE → 409)."""
+    termo = db.get(TermoAditivo, termo_id)
+    if termo is None or termo.etapa_id != etapa_id:
+        raise HTTPException(status_code=404, detail="Termo aditivo não encontrado")
+    termo.documento_url = dados.documento_url
+    db.commit()
+    etapa = db.get(Etapa, etapa_id)
+    db.refresh(etapa)
+    return serializar_etapa(etapa)
+
+
+@router.delete(
+    "/{etapa_id}/termos-aditivos/{termo_id}", response_model=schemas.EtapaResposta
+)
+def excluir_termo_aditivo(
+    etapa_id: int, termo_id: int, db: Session = Depends(get_db)
+):
+    """Exclui um termo em rascunho (Fase 17). Termo com documento anexado está
+    formalizado com o cliente e é intocável — 409."""
+    termo = db.get(TermoAditivo, termo_id)
+    if termo is None or termo.etapa_id != etapa_id:
+        raise HTTPException(status_code=404, detail="Termo aditivo não encontrado")
+    if termo.documento_url is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Termo formalizado (documento anexado) não pode ser excluído",
+        )
+    db.delete(termo)
+    db.commit()
+    etapa = db.get(Etapa, etapa_id)
+    db.refresh(etapa)
+    return serializar_etapa(etapa)
 
 
 @router.post("/{etapa_id}/dependencias", response_model=schemas.EtapaResposta)
