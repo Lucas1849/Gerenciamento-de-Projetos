@@ -10,16 +10,27 @@ from tests.test_smoke import _setup_base
 
 # ─── Calendário ──────────────────────────────────────────────────────────────
 
+def test_calcular_data_fim_convencao_inclusiva():
+    # Fase 16 (ADR-018): o dia de início conta como dia 1. Exemplo real do
+    # responsável: segunda 23/02/2026 + 5 dias úteis → sexta 27/02/2026.
+    assert calcular_data_fim(date(2026, 2, 23), 5) == date(2026, 2, 27)
+
+
 def test_calcular_data_fim_pula_fim_de_semana():
-    # Sexta 04/09/2026 + 1 dia útil = segunda 07/09? Não: 07/09 é feriado.
-    # Caso simples sem feriado: quinta 10/09/2026 + 2 dias úteis = segunda 14/09.
-    assert calcular_data_fim(date(2026, 9, 10), 2) == date(2026, 9, 14)
+    # Quinta 10/09/2026 + 2 dias úteis (inclusivo): qui=1, sex=2 → sexta 11/09.
+    assert calcular_data_fim(date(2026, 9, 10), 2) == date(2026, 9, 11)
 
 
 def test_calcular_data_fim_pula_feriado_nacional():
-    # Sexta 04/09/2026 + 3 dias úteis: pula sáb/dom e o feriado de 07/09
-    # (Independência) → quinta 10/09.
-    assert calcular_data_fim(date(2026, 9, 4), 3) == date(2026, 9, 10)
+    # Sexta 04/09/2026 + 3 dias úteis (inclusivo): sex=1, pula sáb/dom e o
+    # feriado de 07/09 (Independência), ter=2, qua=3 → quarta 09/09.
+    assert calcular_data_fim(date(2026, 9, 4), 3) == date(2026, 9, 9)
+
+
+def test_calcular_data_fim_inicio_em_fim_de_semana():
+    # Início no sábado 05/09/2026: o dia 1 é o primeiro dia útil seguinte
+    # (terça 08/09, pois 07/09 é feriado) → 2 dias úteis termina quarta 09/09.
+    assert calcular_data_fim(date(2026, 9, 5), 2) == date(2026, 9, 9)
 
 
 def test_endpoint_data_fim(client):
@@ -28,7 +39,7 @@ def test_endpoint_data_fim(client):
         params={"data_inicio": "2026-09-04", "dias_uteis": 3},
     )
     assert resp.status_code == 200, resp.text
-    assert resp.json()["data_fim"] == "2026-09-10"
+    assert resp.json()["data_fim"] == "2026-09-09"
 
 
 # ─── Blocos no caminho padrão (templates com ordem repetida) ────────────────
@@ -106,8 +117,9 @@ def test_criacao_customizada_reordenada_editada_e_manual(client, db_session):
     # Consultores iniciais atribuídos também às etapas customizadas.
     detalhe = client.get(f"/projetos/{resp.json()['id']}").json()
     assert all(len(e["consultores"]) == 1 for e in detalhe["etapas"])
-    # data_fim derivada na resposta (04/09 + 5 dias úteis, pulando 07/09).
-    assert detalhe["etapas"][0]["data_fim"] == "2026-09-14"
+    # data_fim derivada na resposta (04/09 + 5 dias úteis inclusivos, pulando
+    # sáb/dom e o feriado 07/09: 04, 08, 09, 10, 11).
+    assert detalhe["etapas"][0]["data_fim"] == "2026-09-11"
 
 
 def test_criacao_customizada_com_bloco_grupo(client, db_session):

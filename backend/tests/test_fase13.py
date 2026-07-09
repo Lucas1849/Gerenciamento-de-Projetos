@@ -117,6 +117,10 @@ def test_dias_uteis_e_inverso_exato_de_data_fim(client, db_session):
         assert resp.status_code == 200, resp.text
         assert resp.json()["dias_uteis"] == n
 
-    # data_fim <= data_inicio → 0.
+    # Convenção inclusiva (Fase 16): mesmo dia útil conta como 1.
     resp = client.get(f"/calendario/dias-uteis?data_inicio={inicio}&data_fim={inicio}")
+    assert resp.json()["dias_uteis"] == 1
+
+    # data_fim < data_inicio → 0.
+    resp = client.get(f"/calendario/dias-uteis?data_inicio={inicio}&data_fim=2026-07-03")
     assert resp.json()["dias_uteis"] == 0

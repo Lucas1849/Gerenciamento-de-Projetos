@@ -12,29 +12,48 @@ from workalendar.america import Brazil
 _calendario = Brazil()
 
 
+def _primeiro_dia_util(data: date) -> date:
+    """Primeiro dia útil >= data (a própria data, se já for útil)."""
+    if _calendario.is_working_day(data):
+        return data
+    return _calendario.add_working_days(data, 1)
+
+
 def calcular_data_fim(data_inicio: date, dias_uteis: int) -> date:
-    """Data final = data_inicio + N dias úteis (fins de semana e feriados
-    nacionais pulados). A data de início não conta como dia útil gasto."""
-    return _calendario.add_working_days(data_inicio, dias_uteis)
+    """Data final na convenção INCLUSIVA (Fase 16, ADR-018): o dia de início
+    conta como dia útil 1 — seg 23/02 + 5 dias úteis ⇒ sex 27/02. Se o início
+    cai em fim de semana/feriado, o dia 1 é o primeiro dia útil seguinte.
+    dias_uteis <= 0 devolve o próprio início normalizado."""
+    inicio = _primeiro_dia_util(data_inicio)
+    if dias_uteis <= 0:
+        return inicio
+    return _calendario.add_working_days(inicio, dias_uteis - 1)
 
 
 def contar_dias_uteis(data_inicio: date, data_fim: date) -> int:
-    """Inverso exato de calcular_data_fim (Fase 13, ADR-015): menor N tal que
-    calcular_data_fim(data_inicio, N) >= data_fim. Para data_fim caindo num dia
-    útil devolve o N exato; se cair em fim de semana/feriado, arredonda para
-    cima (o próximo dia útil que cobre a data). data_fim <= data_inicio → 0.
+    """Inverso exato de calcular_data_fim na convenção inclusiva (Fase 16):
+    menor N tal que calcular_data_fim(data_inicio, N) >= data_fim — contagem
+    inclusiva nas duas pontas (contar(d, d) = 1 para d dia útil). data_fim em
+    fim de semana/feriado arredonda para o dia útil que cobre;
+    data_fim < data_inicio → 0.
 
     Itera add_working_days em vez de usar um delta pronto para garantir a
-    ida-e-volta exata com a mesma convenção (início exclusivo, mesmos feriados
-    nacionais) — risco registrado no plano da Fase 13."""
-    if data_fim <= data_inicio:
+    ida-e-volta exata com a mesma convenção (mesmos feriados nacionais) —
+    mesmo rigor do risco registrado na Fase 13."""
+    if data_fim < data_inicio:
         return 0
-    dias = 0
-    corrente = data_inicio
+    dias = 1
+    corrente = _primeiro_dia_util(data_inicio)
     while corrente < data_fim:
         corrente = _calendario.add_working_days(corrente, 1)
         dias += 1
     return dias
+
+
+def proximo_dia_util(data: date) -> date:
+    """Primeiro dia útil estritamente após `data` (Fase 16): usado pela
+    cascata — a próxima etapa começa no dia útil seguinte à entrega."""
+    return _calendario.add_working_days(data, 1)
 
 
 def janela_datas_plausiveis() -> tuple[date, date]:
