@@ -244,3 +244,49 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** tratar tudo como camada de renderização/CSS sobre o modelo existente entrega os três ajustes sem risco de regressão de dados ou de lógica; no cronograma, reusar a propagação de bloco da Fase 12 evita qualquer mudança de backend para exibir os membros individualmente; no card, escopar o `white-space` evita efeito colateral nos chips de outras telas.
 
 **Status:** implementado (09/07/2026) — Fase 15 executada sob comando direto do responsável, na ordem 15a → 15c → 15b. Nota de implementação: os ícones vivem em `frontend/src/components/Icones.jsx` (`IconePrazo`, `IconeData`, `IconeHexagono`, `IconeCadeado`); no cronograma, a montagem de `items` emite um item por etapa-membro (`grupoBloco` marca o grupo) e uma linha-indicadora `.crono-grupo` é inserida após o último membro; a propagação ao arrastar qualquer membro foi verificada no browser (as barras-irmãs e o indicador acompanham). Ver [../features/plano-fase-15.md](../features/plano-fase-15.md).
+
+---
+
+### ADR-018 — Convenção inclusiva de dias úteis (o dia de início conta) + data final editável via reverse-calendar (Fase 16)
+
+**Contexto:** o responsável reportou que a data final derivada sai errada para a operação real: início 23/02/2026 + 5 dias úteis deveria entregar em 27/02 (23, 24, 25, 26, 27), mas o sistema devolve 02/03 porque `calcular_data_fim` (Fase 5/ADR-008) usa `add_working_days`, que **não conta o dia de início**. Além disso, o gerente precisa poder ajustar a **data final** diretamente na edição da etapa — o calendário só cobre feriados nacionais, e um feriado municipal (ex.: Uberlândia) torna o prazo derivado irreal.
+
+**Decisão:**
+- **Convenção inclusiva única em todo o sistema:** o dia de início conta como dia útil 1 (se cair em fds/feriado, o dia 1 é o primeiro dia útil seguinte). `calcular_data_fim` e `contar_dias_uteis` mudam **juntos**, mantendo a inversão exata (ida-e-volta testada, mesmo rigor do ADR-015). A cascata passa a encadear com `próximo início = primeiro dia útil após a data final` — os inícios encadeados **resultam idênticos aos atuais**; só a data final exibida encurta um dia útil. **Não é ajuste de saída ("−1 dia"):** a definição de *quais dias contam* muda na fonte única, e cada dia útil passa a pertencer a exatamente **uma** etapa na cascata (hoje o dia de entrega de uma etapa coincide com o dia "de início não contado" da seguinte) — consistência exigida pelo responsável para os relatórios.
+- **Sem migração:** `data_fim` nunca é persistida (sempre derivada) — os `dias_uteis_esperados` armazenados continuam válidos e o fluxo destrutivo do `.db` (ADR-001) não é acionado.
+- **Data final editável como açúcar de UI, preservando o ADR-008:** o campo novo no `ModalEditarEtapa` converte a data desejada em `dias_uteis_esperados` via `GET /calendario/dias-uteis` e envia **só os dias** no `PATCH` existente (em bloco, a propagação ADR-009 segue automática). A data final continua derivada e o backend não ganha rota nem campo novo. Editar a data final é **correção de planejamento** — distinta da formalização de atraso (Termo Aditivo, ADR-019).
+
+**Justificativa:** alinhar a convenção à contagem real da empresa corrige todas as superfícies de uma vez (a matemática é exclusiva do backend, ADR-008); converter data→dias no reverse-calendar já existente dá a válvula de escape para feriados municipais sem quebrar a fonte única de verdade nem persistir datas derivadas.
+
+**Status:** planejado — convenção inclusiva **confirmada pelo responsável em 09/07/2026** ("contar 23/02 como 1º dia da demanda é justamente a proposta"); Fase 16 não iniciada (fases só começam sob comando direto do responsável). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
+
+---
+
+### ADR-019 — Termo Aditivo como registro formal imutável por etapa, alimentando dashboards de atraso (Fase 17)
+
+**Contexto:** o responsável precisa formalizar quando uma etapa vai precisar de **mais dias do que o esperado** (mudando a entrega final) e quer que essa formalização alimente dashboards de atraso da área. Editar os dias da etapa diretamente destruiria o histórico (o "esperado" original se perderia) — não haveria dado de atraso para medir.
+
+**Decisão:**
+- **Nova tabela `TermoAditivo`** (`etapa_id`, `dias_adicionais > 0`, `motivo` obrigatório, `criado_em`, `documento_url` opcional), **puramente aditiva** — `create_all` materializa sem dropar o `.db` (mesmo fluxo brando do ADR-015). Cascata ORM com a etapa (padrão ADR-012).
+- **O compromisso original fica intacto:** `dias_uteis_esperados` não muda ao lançar termo. A derivação passa a ser `data_fim = calcular_data_fim(data_inicio, dias_esperados + Σ dias_adicionais)`; `EtapaResposta` expõe `data_fim` (efetiva), `data_fim_original` (sem termos) e `termos_aditivos[]` — a diferença é a métrica de atraso dos dashboards.
+- **Trava pela formalização (decidido pelo responsável em 09/07/2026):** dias e motivo nunca se editam. Enquanto o termo **não tem documento anexado**, pode ser excluído (rascunho/erro de lançamento); ao anexar o **link do documento formal do termo** (`documento_url` — o doc gerado para o cliente), o registro **trava**: DELETE passa a devolver 409. Formalização via formulário mínimo (dias + motivo + documento opcional) com prévia do efeito na entrega.
+- **Bloco de entrega (decidido pelo responsável em 09/07/2026): o termo é do bloco, não de um membro.** Atraso de etapa interna se resolve realocando dias úteis entre as etapas do bloco (Fase 12/ADR-018); o termo só existe quando o bloco inteiro atrasa. Botão no card/modal do bloco (membros sem termo individual); gravação na etapa de referência (`membros[0]`) com a data efetiva derivada do **Σ de termos de todos os membros** (robustez); desfazer o bloco mantém o termo na etapa em que foi gravado (edge aceito no piloto, com aviso no confirm).
+
+**Justificativa:** separar compromisso (dias esperados) de extensão formalizada (termo) é o que torna o atraso mensurável; reusar a derivação única de datas (ADR-008/018) faz Kanban, tabela, Gantt e calendário refletirem a data efetiva sem código novo de exibição.
+
+**Status:** planejado — Fase 17 não iniciada (fases só começam sob comando direto do responsável). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
+
+---
+
+### ADR-020 — Abas na tela da gestão (Projetos / Documentos / Dashboards), documentos como links e dashboard derivado sem lib nova (Fase 18)
+
+**Contexto:** o responsável pediu um menu horizontal na tela da gestão, no padrão das abas já existentes na página do projeto, com três abas: Projetos (o Kanban atual), Documentos importantes e Dashboards — este último consumindo os dados de atraso formalizados pelo Termo Aditivo (ADR-019).
+
+**Decisão:**
+- **Shell de abas** em `TelaGestao` reusando `.tabs-container`/`.tab` (visual da `PaginaProjeto`), estado local não persistido (coerente com ADR-010). O Kanban de fases permanece intocado como aba default.
+- **Documentos = links nomeados para o Drive (formato confirmado pelo responsável em 09/07/2026, replicando a página de documentos que a gestão mantém no Notion):** nova tabela aditiva `Documento` (`gestao_id`, `nome`, `url`, `criado_em`) com CRUD leve, **sem vínculo com projeto** (evolução futura se pedida). O piloto não tem storage de arquivos e a informação continua concentrada no Drive; upload real fica no roadmap (integração Hub).
+- **Dashboards gated na diretoria (09/07/2026):** os KPIs **ainda não foram levantados** — a aba entra como placeholder no shell (18a) e a execução do dashboard (18c) espera a definição com a diretoria. Proposta-base registrada como pauta: rota agregadora `GET /gestoes/{id}/dashboard` (projetos por fase, etapas por status, termos/dias aditivos por projeto e serviço), com o "atraso" **formalizado** (termos) — o modelo não tem data real de conclusão; se a diretoria quiser atraso observado, é schema novo registrado como evolução. **Sem biblioteca de gráficos** — barras/KPIs em CSS/SVG com os tokens existentes.
+
+**Justificativa:** o padrão de abas já resolvido evita navegação nova (sem router, ADR do frontend); links cobrem a necessidade real de "documentos importantes" sem infra de arquivos; a rota agregadora evita N chamadas e o dashboard nasce do único dado de atraso confiável que o modelo tem (termos aditivos), sem prometer métricas que os dados não sustentam.
+
+**Status:** planejado — Fase 18 não iniciada (fases só começam sob comando direto do responsável; ordem 16 → 17 → 18). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
