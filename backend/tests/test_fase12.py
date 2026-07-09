@@ -32,8 +32,9 @@ def test_editar_etapa_avulsa(client, db_session):
     assert corpo["descricao"] == "Nova descrição"
     assert corpo["dias_uteis_esperados"] == 7
     assert corpo["data_inicio"] == "2026-07-06"
-    # data_fim continua derivada (ADR-008).
-    assert corpo["data_fim"] == "2026-07-15"
+    # data_fim continua derivada (ADR-008), na convenção inclusiva (Fase 16):
+    # 06/07 (seg) conta como dia 1 → 7 dias úteis terminam em 14/07.
+    assert corpo["data_fim"] == "2026-07-14"
 
 
 def test_editar_dias_data_de_membro_propaga_ao_bloco(client, db_session):

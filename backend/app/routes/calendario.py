@@ -6,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from app import schemas
-from app.utils.calendario import calcular_data_fim, contar_dias_uteis
+from app.utils.calendario import calcular_data_fim, contar_dias_uteis, proximo_dia_util
 
 router = APIRouter(prefix="/calendario", tags=["Calendário"])
 
@@ -43,11 +43,14 @@ def dias_uteis(
 def cascata(dados: schemas.CascataCriar):
     """Encadeia datas de início por dias úteis (Fase 12, ADR-014).
 
-    inicios[0] = data_inicio; inicios[k] = data final da etapa anterior
-    (calcular_data_fim já devolve o início da próxima na convenção ADR-008).
+    Convenção inclusiva (Fase 16, ADR-018): o início da próxima etapa é o
+    primeiro dia útil APÓS a data final da anterior — cada dia útil pertence a
+    exatamente uma etapa. Os inícios encadeados resultam idênticos aos da
+    convenção antiga; só a data final exibida encurta um dia útil.
     Um único round-trip resolve a cascata inteira do editor de criação.
     """
     inicios = [dados.data_inicio]
     for dias in dados.dias[:-1]:
-        inicios.append(calcular_data_fim(inicios[-1], dias))
+        fim = calcular_data_fim(inicios[-1], dias)
+        inicios.append(proximo_dia_util(fim))
     return {"inicios": inicios}

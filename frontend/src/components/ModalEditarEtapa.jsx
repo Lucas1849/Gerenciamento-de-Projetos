@@ -5,16 +5,55 @@
 // ADR-009), nome individual por membro e reordenação dos membros. A equipe
 // continua sendo editada nos cards do Kanban (rotas próprias).
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Pencil, ArrowUp, ArrowDown } from 'lucide-react';
-import { atualizarEtapa, reordenarEtapas } from '../services/api';
+import { atualizarEtapa, reordenarEtapas, calcularDataFim, contarDiasUteis } from '../services/api';
 import { janelaDatas, dataPlausivel, formatarData } from './datasUtils';
-import { DataFimPreview } from './EtapasEditor';
 
 export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, aoFechar, aoSalvo }) {
   const ehBloco = membros.length > 1;
   const [dias, setDias] = useState(membros[0].dias_uteis_esperados ?? '');
   const [dataInicio, setDataInicio] = useState(membros[0].data_inicio ?? '');
+  // Fase 16b (ADR-018): data final editável — açúcar de UI sobre o reverse-
+  // calendar. A data final continua derivada (ADR-008): no salvar viaja só
+  // dias_uteis_esperados. Guarda de sequência contra respostas fora de ordem
+  // (mesmo padrão da cascata da Fase 12).
+  const [dataFim, setDataFim] = useState(membros[0].data_fim ?? '');
+  const [avisoFim, setAvisoFim] = useState('');
+  const seqRef = useRef(0);
+
+  const recalcularFim = async (d, di) => {
+    setAvisoFim('');
+    if (d === '' || d == null || !di) { setDataFim(''); return; }
+    const seq = ++seqRef.current;
+    try {
+      const r = await calcularDataFim(di, Number(d));
+      if (seq === seqRef.current) setDataFim(r.data_fim);
+    } catch { /* preview; erro real aparece no salvar */ }
+  };
+
+  const aoMudarDias = (v) => { setDias(v); recalcularFim(v, dataInicio); };
+  const aoMudarInicio = (v) => { setDataInicio(v); recalcularFim(dias, v); };
+
+  // Editar a data final converte em dias úteis (contagem inclusiva) e, se ela
+  // cair em fim de semana/feriado nacional, ajusta para o dia útil que cobre.
+  const aoMudarFim = async (v) => {
+    setDataFim(v);
+    setAvisoFim('');
+    if (!v || !dataInicio || v < dataInicio) return;
+    const seq = ++seqRef.current;
+    try {
+      const { dias_uteis } = await contarDiasUteis(dataInicio, v);
+      if (seq !== seqRef.current) return;
+      setDias(String(dias_uteis));
+      const r = await calcularDataFim(dataInicio, dias_uteis);
+      if (seq !== seqRef.current) return;
+      if (r.data_fim !== v) {
+        setDataFim(r.data_fim);
+        setAvisoFim(`A data caiu em fim de semana/feriado — ajustada para ${formatarData(r.data_fim)}.`);
+      }
+    } catch { /* erro real aparece no salvar */ }
+  };
   const [nomes, setNomes] = useState(
     Object.fromEntries(membros.map(m => [m.id, m.nome]))
   );
@@ -24,6 +63,7 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
 
   // Fase 10: pré-validação de UX; a regra vive no backend (422).
   const dataImplausivel = dataInicio !== '' && !dataPlausivel(dataInicio);
+  const fimInvalido = dataFim !== '' && dataInicio !== '' && dataFim < dataInicio;
 
   const moverMembro = (indice, delta) =>
     setOrdemIds(prev => {
@@ -152,16 +192,39 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
           <label style={labelEstilo}>
             {ehBloco ? 'Dias úteis do bloco' : 'Dias úteis'}
             <input className="input-field" type="number" min="0" value={dias}
-              onChange={e => setDias(e.target.value)} style={{ width: '120px' }} />
+              onChange={e => aoMudarDias(e.target.value)} style={{ width: '120px' }} />
           </label>
           <label style={labelEstilo}>
             Data de início
             <input className="input-field" type="date" value={dataInicio}
               min={janelaDatas().min} max={janelaDatas().max}
-              onChange={e => setDataInicio(e.target.value)} />
+              onChange={e => aoMudarInicio(e.target.value)} />
           </label>
-          <DataFimPreview dias={dias} dataInicio={dataInicio} />
+          <label style={labelEstilo}>
+            Data final
+            <input className="input-field" type="date" value={dataFim}
+              min={dataInicio || janelaDatas().min} max={janelaDatas().max}
+              disabled={!dataInicio}
+              title={dataInicio ? undefined : 'Defina a data de início primeiro'}
+              onChange={e => aoMudarFim(e.target.value)} />
+          </label>
         </div>
+
+        <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-disabled)', marginTop: 'calc(var(--sp-12) * -1)', marginBottom: 'var(--sp-16)' }}>
+          Os três campos ficam sincronizados: editar a data final recalcula os dias úteis (correção de planejamento — termo aditivo é outro fluxo).
+        </p>
+
+        {avisoFim && (
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-warning)', marginBottom: 'var(--sp-12)' }}>
+            {avisoFim}
+          </p>
+        )}
+
+        {fimInvalido && (
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-error)', marginBottom: 'var(--sp-12)' }}>
+            A data final não pode ser anterior à data de início.
+          </p>
+        )}
 
         {ehBloco && (
           <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', marginBottom: 'var(--sp-16)' }}>
@@ -182,7 +245,7 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
           <button
             type="button"
             className="btn btn-primary"
-            disabled={salvando || dataImplausivel || Object.values(nomes).some(n => !n.trim())}
+            disabled={salvando || dataImplausivel || fimInvalido || Object.values(nomes).some(n => !n.trim())}
             onClick={salvar}
           >
             {salvando ? 'Salvando...' : 'Salvar'}
