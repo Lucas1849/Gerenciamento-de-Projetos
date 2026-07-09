@@ -228,3 +228,19 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** como os tokens já estão alinhados, tratar o redesign como camada visual aditiva entrega a identidade aprovada sem risco de regressão de dados ou de lógica; concentrar o botão na classe global e reusar os handlers existentes garante consistência sem duplicar comportamento.
 
 **Status:** implementado (08/07/2026) — Fase 14 executada sob comando direto do responsável. Nota de implementação: o `mono-light.png` foi ingerido em `frontend/public/` e as marcas d'água são aplicadas por `background-position` com offset negativo (recorte natural na borda, **sem** `overflow:hidden`, que cortaria o handle 🔗 arrastável dos cards); a linha "HOJE" é uma borda-gradiente na célula do dia atual, sem overlay medido. Ver [../features/plano-fase-14.md](../features/plano-fase-14.md).
+
+---
+
+### ADR-017 — Refinos de design pós-Fase 14: ícones de prazo/data, bloco em barras individuais no cronograma e correção de estrutura do card de projeto (Fase 15)
+
+**Contexto:** após a Fase 14, o responsável avaliou mockups ("Claude Design") e aprovou três ajustes (09/07/2026): (1) trocar os emoji `⏳`/`📅` de prazo e data por ícones SVG da marca; (2) no cronograma, deixar de colapsar um bloco de entrega numa barra única e mostrar **cada etapa-membro como barra individual**, com um **indicador de "entrega conjunta"** abaixo; (3) **corrigir a estrutura de espaçamento** do card de projeto, que hoje fica espremido — mantendo o card atual, **sem redesenhá-lo**.
+
+**Decisão:**
+- **Refino visual/CSS + renderização no frontend, sem impacto de comportamento.** Não toca backend, schema, modelo nem dados persistidos; o fluxo destrutivo do `.db` (ADR-001) **não é acionado**.
+- **Ícones (15a):** dois SVG inline no traço da marca (cronômetro = prazo/duração; calendário-período = intervalo de datas), com `stroke="currentColor"` para herdar a cor da linha (prazo `--color-brand-glow`, data `--color-text-secondary`). Substituem `⏳`/`📅` em `KanbanEtapas.jsx` (card de etapa e de bloco) e `ModalBloco.jsx`. Opção aprovada: A + A.
+- **Cronograma (15b):** o bloco deixa de ser 1 barra e vira **N barras-membro** (uma por etapa) + um **indicador de grupo** (colchete tracejado roxo + chip "Bloco N · entrega conjunta" com hexágono/cadeado SVG) posicionado pelo intervalo compartilhado. É **puramente de renderização** — o bloco no backend continua a **chave compartilhada com datas redundantes (ADR-009)** e a **propagação do `PATCH` (Fase 12)** mantém as barras-irmãs alinhadas ao arrastar/redimensionar qualquer membro. Como membros compartilham data, as barras ocupam o **mesmo intervalo** — a leitura vem do rótulo + indicador. O guard de setas passa a suprimir dependências **internas ao mesmo bloco** por `grupoBloco` (antes era `deKey === paraKey`).
+- **Card de projeto (15c):** **não é redesign.** Mantém todos os elementos de hoje (faixa, título, chip de serviço, bloco do gerente, consultores, TAP, Excluir, setas ← →) e conserta a **estrutura de espaçamento**: ritmo vertical consistente (substituindo os `marginBottom` inline ad-hoc), `white-space: nowrap` **escopado** nos chips do card (o `.chip` global não muda) para o serviço e o TAP não quebrarem em 2 linhas, footer TAP+Excluir sem se espremer, e chip de serviço na própria linha sob o título.
+
+**Justificativa:** tratar tudo como camada de renderização/CSS sobre o modelo existente entrega os três ajustes sem risco de regressão de dados ou de lógica; no cronograma, reusar a propagação de bloco da Fase 12 evita qualquer mudança de backend para exibir os membros individualmente; no card, escopar o `white-space` evita efeito colateral nos chips de outras telas.
+
+**Status:** planejado — Fase 15 **não iniciada** (as fases só começam sob comando direto do responsável). Ver [../features/plano-fase-15.md](../features/plano-fase-15.md).
