@@ -30,6 +30,25 @@ export function IconePrazo({ tamanho = 16 }) {
   );
 }
 
+// Hexágono: marca do bloco de entrega no cronograma (Fase 15b).
+export function IconeHexagono({ tamanho = 12 }) {
+  return (
+    <svg {...base(tamanho)}>
+      <path d="M12 2.5l8 4.6v9.8l-8 4.6-8-4.6V7.1z" />
+    </svg>
+  );
+}
+
+// Cadeado: datas compartilhadas do bloco (substitui o 🔒 no cronograma).
+export function IconeCadeado({ tamanho = 11 }) {
+  return (
+    <svg {...base(tamanho)}>
+      <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+      <path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+    </svg>
+  );
+}
+
 // Calendário-período: data de início → fim.
 export function IconeData({ tamanho = 16 }) {
   return (

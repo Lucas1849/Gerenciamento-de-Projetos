@@ -1422,12 +1422,6 @@ body {
   color: #fff;
   box-shadow: 0 4px 16px rgba(34,197,94,0.25);
 }
-/* Barra de bloco: listrada + borda tracejada roxa (hexágono no rótulo). */
-.crono-barra--bloco {
-  background: repeating-linear-gradient(90deg, rgba(167,139,250,0.35) 0 10px, rgba(167,139,250,0.15) 10px 20px);
-  border: 1px dashed rgba(167,139,250,0.4);
-  color: #C9BEF5;
-}
 .crono-barra--ativo { opacity: 0.75; cursor: grabbing; z-index: 3; }
 .crono-barra--alvo { outline: 2px solid var(--color-brand); outline-offset: 1px; }
 .crono-cel--alvo { background: color-mix(in srgb, var(--color-brand) 12%, transparent); }
@@ -1464,17 +1458,39 @@ body {
   text-overflow: ellipsis;
 }
 .crono-barra-conteudo .avatar-iniciais { box-shadow: 0 0 0 2px rgba(0,0,0,0.25); }
-/* Progresso do bloco (X/Y concluídas) no rodapé da barra. */
-.crono-barra-progresso {
-  position: absolute;
-  left: 6px;
-  bottom: 3px;
-  height: 3px;
-  border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.55);
-  pointer-events: none;
-  max-width: calc(100% - 12px);
+
+/* Fase 15b (ADR-017): indicador de entrega em bloco — colchete tracejado sob
+   as barras-membro (que agora são individuais) + chip "Bloco N · entrega
+   conjunta". Puramente visual; o bloco continua ADR-009 no backend. */
+.crono-linha--grupo { min-height: 36px; align-items: start; }
+.crono-grupo {
+  height: 14px;
+  margin: 0 1px;
+  border: 1px dashed rgba(167,139,250,0.45);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  position: relative;
+  display: flex;
+  justify-content: center;
 }
+.crono-grupo-chip {
+  position: absolute;
+  top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: #1B1B27;
+  border: 1px solid rgba(167,139,250,0.4);
+  border-radius: var(--radius-full);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #C9BEF5;
+  white-space: nowrap;
+  cursor: help;
+}
+.crono-grupo-chip svg:first-child { color: #A78BFA; }
+.crono-grupo-chip svg:last-child { color: var(--color-brand-glow); }
 
 /* Conector 🔗 (cria dependência) e handle de redimensionamento das barras. */
 .crono-conector,
