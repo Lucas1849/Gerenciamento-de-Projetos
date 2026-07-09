@@ -274,7 +274,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** separar compromisso (dias esperados) de extensão formalizada (termo) é o que torna o atraso mensurável; reusar a derivação única de datas (ADR-008/018) faz Kanban, tabela, Gantt e calendário refletirem a data efetiva sem código novo de exibição.
 
-**Status:** planejado — Fase 17 não iniciada (fases só começam sob comando direto do responsável). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
+**Status:** implementado (09/07/2026) — Fase 17 executada sob comando direto do responsável. Nota de implementação: `dias_aditivos_da_etapa()` em `routes/etapas.py` soma os termos do bloco inteiro para todos os membros; rotas `POST`/`PUT .../documento`/`DELETE /etapas/{id}/termos-aditivos` (409 na exclusão com documento); `ModalTermoAditivo.jsx` concentra formalização + histórico (anexar documento trava; lixeira só em rascunho), botões `FilePlus` no card avulso e no card do bloco, badge âmbar "+N dia(s) · termo aditivo" no Kanban e na tabela, e o confirm de desfazer bloco avisa quando há termo lançado (edge do piloto). 5 testes novos em `test_fase17.py`. Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
 
 ---
 
@@ -289,4 +289,4 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** o padrão de abas já resolvido evita navegação nova (sem router); documentos da área no nível da galeria correspondem ao uso real (o print de referência é um índice único da área, não um por gestão); tirar os dashboards da fase evita construir visualização sem KPI validado — mesmo princípio do catálogo (ADR-005): conteúdo que depende da diretoria não se assume.
 
-**Status:** planejado — Fase 18 não iniciada, **revisada em 09/07/2026 por decisão do diretor** (fases só começam sob comando direto do responsável; ordem recomendada 16 → 17 → 18). Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
+**Status:** implementado (09/07/2026) — Fase 18 executada sob comando direto do responsável, já na forma revisada (abas na galeria; sem Dashboards). Nota de implementação: tabela `Documento` + router `documentos.py` (validação de URL http/https compartilhada com o termo aditivo em `schemas.validar_url_http`); abas em `TelaGaleriaGestoes` com a galeria intocada como default e `DocumentosImportantes.jsx` (grid de cards de link + formulário inline + lixeira). Testes em `test_fase18.py`; CRUD verificado no browser. Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
