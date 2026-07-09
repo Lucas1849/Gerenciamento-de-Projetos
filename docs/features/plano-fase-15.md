@@ -2,13 +2,13 @@
 
 Registro do planejamento dos refinos visuais pedidos após a entrega da Fase 14 ([plano-fase-14.md](plano-fase-14.md)). Origem: sessão de design em que o responsável avaliou mockups ("Claude Design") de três ajustes e aprovou a direção de cada um em **09/07/2026**.
 
-> Instrução explícita do responsável: **as fases só começam mediante comando direto**. Este documento é **só a orientação** para as mudanças — **nada foi implementado**. O ADR-017 já está pré-registrado em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) com status "planejado"; na execução, virar para "implementado".
+> **Fase executada em 09/07/2026 sob comando direto do responsável**, na ordem sugerida 15a → 15c → 15b. O ADR-017 em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) está "implementado". Notas: ícones em `Icones.jsx` (prazo/data + hexágono/cadeado do indicador); no cronograma cada membro do bloco vira item próprio (`grupoBloco`) e a linha `.crono-grupo` ("Bloco N · entrega conjunta") entra após o último membro; verificado no browser que arrastar **um** membro move as barras-irmãs e o indicador (propagação ADR-009/Fase 12) e que setas internas ao bloco seguem suprimidas; `lint`/`build` limpos.
 
 | Sub-fase | Entrega | Status |
 |---|---|---|
-| 15a | Ícones SVG de prazo (cronômetro) e data (calendário-período) no lugar dos emoji `⏳`/`📅` | ⏳ Planejada |
-| 15b | Cronograma: bloco em **barras individuais** + indicador de "entrega conjunta" embaixo | ⏳ Planejada |
-| 15c | Correção de **estrutura/espaçamento** do card de projeto (mantendo o card de hoje, sem redesign) | ⏳ Planejada |
+| 15a | Ícones SVG de prazo (cronômetro) e data (calendário-período) no lugar dos emoji `⏳`/`📅` | ✅ Entregue (09/07/2026) |
+| 15b | Cronograma: bloco em **barras individuais** + indicador de "entrega conjunta" embaixo | ✅ Entregue (09/07/2026) |
+| 15c | Correção de **estrutura/espaçamento** do card de projeto (mantendo o card de hoje, sem redesign) | ✅ Entregue (09/07/2026) |
 
 **Sem dependência rígida entre as três.** Ordem sugerida (risco crescente): **15a → 15c → 15b**. A 15b é a de maior peso (mexe na montagem das barras e no mapa de setas do cronograma).
 
