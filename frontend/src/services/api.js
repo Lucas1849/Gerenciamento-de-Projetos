@@ -221,6 +221,23 @@ export function contarDiasUteis(dataInicio, dataFim) {
   return request(`/calendario/dias-uteis?data_inicio=${dataInicio}&data_fim=${dataFim}`);
 }
 
+// ─── Documentos importantes da área (Fase 18, ADR-020) ──────────────────────
+
+export function listarDocumentos() {
+  return request('/documentos/');
+}
+
+export function criarDocumento(dados) {
+  return request('/documentos/', {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function excluirDocumento(documentoId) {
+  return request(`/documentos/${documentoId}`, { method: 'DELETE' });
+}
+
 // ─── Etapas ─────────────────────────────────────────────────────────────────
 
 /** Edita campos da etapa pós-criação (Fase 12): aplica só os campos enviados;
@@ -252,6 +269,30 @@ export function criarDependencia(etapaId, bloqueadaPorId) {
 /** Remove uma dependência informativa (Fase 13). */
 export function removerDependencia(etapaId, bloqueadaPorId) {
   return request(`/etapas/${etapaId}/dependencias/${bloqueadaPorId}`, {
+    method: 'DELETE',
+  });
+}
+
+/** Formaliza dias adicionais na etapa/bloco (Fase 17, ADR-019): o compromisso
+ *  original fica intacto; a data efetiva passa a considerar o Σ de termos. */
+export function criarTermoAditivo(etapaId, dados) {
+  return request(`/etapas/${etapaId}/termos-aditivos`, {
+    method: 'POST',
+    body: JSON.stringify(dados),
+  });
+}
+
+/** Anexa o link do documento formal do termo — a partir daí o registro trava. */
+export function anexarDocumentoTermo(etapaId, termoId, documentoUrl) {
+  return request(`/etapas/${etapaId}/termos-aditivos/${termoId}/documento`, {
+    method: 'PUT',
+    body: JSON.stringify({ documento_url: documentoUrl }),
+  });
+}
+
+/** Exclui um termo em rascunho (com documento anexado o backend devolve 409). */
+export function excluirTermoAditivo(etapaId, termoId) {
+  return request(`/etapas/${etapaId}/termos-aditivos/${termoId}`, {
     method: 'DELETE',
   });
 }

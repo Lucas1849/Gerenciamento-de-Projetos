@@ -4,8 +4,10 @@
 # Sem Alembic (ADR-001): mudanças de schema aplicam-se apagando
 # piloto_projetos.db e deixando Base.metadata.create_all() recriar no boot.
 
+from datetime import datetime
+
 from sqlalchemy import (
-    Column, Integer, String, Boolean, Date, ForeignKey, UniqueConstraint,
+    Column, DateTime, Integer, String, Boolean, Date, ForeignKey, UniqueConstraint,
 )
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -148,6 +150,13 @@ class Etapa(Base):
     consultores = relationship(
         "EtapaConsultor", back_populates="etapa", cascade="all, delete-orphan"
     )
+    # Termos aditivos (Fase 17, ADR-019): registros formais de dias adicionais.
+    termos_aditivos = relationship(
+        "TermoAditivo",
+        back_populates="etapa",
+        order_by="TermoAditivo.criado_em",
+        cascade="all, delete-orphan",
+    )
 
     # Dependências informativas (Fase 13, ADR-015), em dois sentidos:
     # - dependencias_bloqueada: linhas em que ESTA etapa é a bloqueada
@@ -211,3 +220,36 @@ class EtapaDependencia(Base):
         foreign_keys=[bloqueada_por_id],
         back_populates="dependencias_bloqueando",
     )
+
+
+# 10. TermoAditivo — registro formal de dias adicionais por etapa (Fase 17,
+# ADR-019). O compromisso original (dias_uteis_esperados) fica intacto: a data
+# final efetiva é derivada de dias esperados + Σ dias_adicionais. Dias e motivo
+# nunca se editam; termo com documento_url anexado está formalizado com o
+# cliente e não pode ser excluído (DELETE → 409). Tabela puramente aditiva:
+# create_all a materializa no próximo boot sem dropar o .db (como ADR-015).
+class TermoAditivo(Base):
+    __tablename__ = "termos_aditivos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    etapa_id = Column(Integer, ForeignKey("etapas.id"), nullable=False)
+    dias_adicionais = Column(Integer, nullable=False)
+    motivo = Column(String, nullable=False)
+    criado_em = Column(DateTime, nullable=False, default=datetime.now)
+    # NULL = documento formal ainda não anexado (termo excluível).
+    documento_url = Column(String, nullable=True)
+
+    etapa = relationship("Etapa", back_populates="termos_aditivos")
+
+
+# 11. Documento — link nomeado para o Drive na aba "Documentos importantes" da
+# galeria de gestões (Fase 18, ADR-020, revisada em 09/07/2026). Documentos são
+# da ÁREA: sem FK de gestão nem de projeto (replica a página do Notion, que
+# mistura links gerais e de gestões específicas). Tabela puramente aditiva.
+class Documento(Base):
+    __tablename__ = "documentos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    criado_em = Column(DateTime, nullable=False, default=datetime.now)

@@ -1,9 +1,20 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from app.utils.calendario import validar_data_plausivel
+
+
+def validar_url_http(url: Optional[str]) -> Optional[str]:
+    """Validação leve de URL (Fase 17/18): esquema http/https obrigatório.
+    None passa (campo opcional). Reusada no documento do termo aditivo e nos
+    documentos importantes da área."""
+    if url is None:
+        return None
+    if not url.startswith(("http://", "https://")):
+        raise ValueError("URL inválida: deve começar com http:// ou https://")
+    return url
 
 # Valores permitidos nos campos de ciclo de vida (ADR-003 / ADR-007).
 Fase = Literal["kickoff", "andamento", "finalizacao", "ajustes", "concluido"]
@@ -205,6 +216,33 @@ class CascataCriar(BaseModel):
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
 
 
+class DocumentoCriar(BaseModel):
+    """Link nomeado para o Drive na aba Documentos da galeria (Fase 18,
+    ADR-020): documentos são da área — sem vínculo com gestão ou projeto."""
+
+    nome: str
+    url: str
+
+    _valida_url = field_validator("url")(validar_url_http)
+
+    @field_validator("nome")
+    @classmethod
+    def nome_obrigatorio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("nome é obrigatório")
+        return v.strip()
+
+
+class DocumentoResposta(BaseModel):
+    id: int
+    nome: str
+    url: str
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class EtapaRef(BaseModel):
     """Referência leve a uma etapa (id + nome), para os chips/setas de
     dependência (Fase 13, ADR-015) — evita embutir a etapa inteira."""
@@ -223,6 +261,46 @@ class DependenciaCriar(BaseModel):
     bloqueada_por_id: int
 
 
+class TermoAditivoCriar(BaseModel):
+    """Formaliza dias adicionais numa etapa/bloco (Fase 17, ADR-019).
+    Dias e motivo nunca se editam depois — para corrigir, exclui (enquanto
+    sem documento anexado) e relança."""
+
+    dias_adicionais: int = Field(gt=0)
+    motivo: str
+    documento_url: Optional[str] = None
+
+    _valida_url = field_validator("documento_url")(validar_url_http)
+
+    @field_validator("motivo")
+    @classmethod
+    def motivo_obrigatorio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("motivo é obrigatório — sem motivo não há formalização")
+        return v.strip()
+
+
+class TermoAditivoDocumento(BaseModel):
+    """Anexa/atualiza o link do documento formal do termo — a partir daí o
+    registro trava (DELETE → 409)."""
+
+    documento_url: str
+
+    _valida_url = field_validator("documento_url")(validar_url_http)
+
+
+class TermoAditivoResposta(BaseModel):
+    id: int
+    etapa_id: int
+    dias_adicionais: int
+    motivo: str
+    criado_em: datetime
+    documento_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class EtapaResposta(BaseModel):
     id: int
     projeto_id: int
@@ -232,8 +310,14 @@ class EtapaResposta(BaseModel):
     descricao: Optional[str] = None
     dias_uteis_esperados: Optional[int] = None
     data_inicio: Optional[date] = None
-    # Derivada: data_inicio + dias úteis (nunca armazenada).
+    # Derivada: data_inicio + dias úteis + Σ termos aditivos — a data EFETIVA
+    # de entrega (Fase 17, ADR-019); nunca armazenada.
     data_fim: Optional[date] = None
+    # Derivada SEM termos aditivos — o compromisso original (ADR-019).
+    data_fim_original: Optional[date] = None
+    # Σ de dias adicionais formalizados (do bloco inteiro, se em bloco).
+    dias_aditivos: int = 0
+    termos_aditivos: List[TermoAditivoResposta] = []
     bloco_entrega: Optional[str] = None
     status: StatusEtapa
     # Equipe embutida: consultores ativos da etapa (data_saida IS NULL).

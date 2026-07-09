@@ -7,8 +7,8 @@ Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequênc
 | Fase | Entrega | Status |
 |---|---|---|
 | 16 | Convenção **inclusiva** de dias úteis (dia de início conta como dia 1) + campo de **data final** na edição de etapa | ✅ Entregue (09/07/2026, ADR-018) |
-| 17 | **Termo Aditivo** por etapa: registro formal de dias adicionais, com efeito na data final e histórico para dashboards | ⏳ Planejada (ADR-019) |
-| 18 | Abas na **galeria de gestões**: **Gestões** (galeria atual) / **Documentos importantes** (links da área) — *Dashboards retirado da fase, movido ao roadmap* | ⏳ Planejada (ADR-020, **revisada em 09/07/2026 por decisão do diretor**) |
+| 17 | **Termo Aditivo** por etapa: registro formal de dias adicionais, com efeito na data final e histórico para dashboards | ✅ Entregue (09/07/2026, ADR-019) |
+| 18 | Abas na **galeria de gestões**: **Gestões** (galeria atual) / **Documentos importantes** (links da área) — *Dashboards retirado da fase, movido ao roadmap* | ✅ Entregue (09/07/2026, ADR-020, na forma revisada) |
 
 **Ordem recomendada: 16 → 17 → 18.** A 16 corrige a base de cálculo de datas sobre a qual tudo se apoia (inclusive o efeito do termo aditivo). Com a revisão de 09/07/2026 (dashboards fora da fase), a 18 **não depende mais da 17** — a ordem segue como recomendação, não como bloqueio.
 
