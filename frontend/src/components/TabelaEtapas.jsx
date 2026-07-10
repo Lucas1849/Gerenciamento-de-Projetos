@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Paperclip } from 'lucide-react';
 import { formatarData } from './datasUtils';
 import { numerosDosBlocos, STATUS_LABEL } from './etapasUtils';
 
@@ -64,6 +64,7 @@ export default function TabelaEtapas({ etapas, aoMover, aoEditar, aoCriarDepende
             <th>Início</th>
             <th>Término</th>
             <th>Prazo</th>
+            <th>Links</th>
             <th>Bloqueado por</th>
             <th>Bloqueando</th>
             <th>Equipe</th>
@@ -97,6 +98,16 @@ export default function TabelaEtapas({ etapas, aoMover, aoEditar, aoCriarDepende
                     title={`Entrega efetiva com termo aditivo; compromisso original: ${e.data_fim_original ? formatarData(e.data_fim_original) : '—'}`}
                   >
                     +{e.dias_aditivos} · termo aditivo
+                  </span>
+                )}
+              </td>
+
+              {/* Links de entregas/demandas (Fase 19): contagem compacta —
+                  o ✏️ abre o modal, onde vive a seção de links. */}
+              <td>
+                {(e.links?.length ?? 0) === 0 ? '—' : (
+                  <span className="chip chip-links-contagem" style={{ cursor: 'default' }}>
+                    <Paperclip size={11} /> {e.links.length}
                   </span>
                 )}
               </td>

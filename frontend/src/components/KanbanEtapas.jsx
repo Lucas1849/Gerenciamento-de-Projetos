@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Link2, Unlink, Pencil, FilePlus } from 'lucide-react';
+import { Link2, Unlink, Pencil, FilePlus, Paperclip } from 'lucide-react';
 import ModalBloco from './ModalBloco';
 import AvatarIniciais from './AvatarIniciais';
 import { IconePrazo, IconeData } from './Icones';
@@ -123,6 +123,24 @@ function BotaoTermo({ rotulo, onClick }) {
   );
 }
 
+// Chip de contagem de links (Fase 19, ADR-021): o menor elemento possível —
+// só a contagem; clicar abre o modal de edição (onde vive a seção de links).
+function ChipLinks({ etapas, aoAbrir }) {
+  const total = etapas.reduce((n, e) => n + (e.links?.length ?? 0), 0);
+  if (!total) return null;
+  return (
+    <button
+      type="button"
+      className="chip chip-links-contagem"
+      style={{ marginBottom: 'var(--sp-8)' }}
+      title="Ver entregas e demandas"
+      onClick={aoAbrir}
+    >
+      <Paperclip size={11} /> {total} link(s)
+    </button>
+  );
+}
+
 // Badge "+N dia(s) · termo aditivo" (âmbar tonal) — só quando há termos.
 function BadgeTermo({ dias }) {
   if (!dias) return null;
@@ -177,6 +195,7 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
       )}
 
       <BadgeTermo dias={etapa.dias_aditivos} />
+      <ChipLinks etapas={[etapa]} aoAbrir={() => aoEditar([etapa])} />
 
       {etapa.dias_uteis_esperados != null && (
         <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600, marginBottom: 'var(--sp-8)' }}>
@@ -228,6 +247,7 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
         Bloco de {membros.length} etapas
       </h4>
       <BadgeTermo dias={ref.dias_aditivos} />
+      <ChipLinks etapas={membros} aoAbrir={() => aoEditar(membros)} />
       <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, margin: 'var(--sp-4) 0 var(--sp-8)' }}>
         {concluidas}/{membros.length} concluídas
       </p>

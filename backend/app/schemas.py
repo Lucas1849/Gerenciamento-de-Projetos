@@ -46,12 +46,33 @@ class TrabalhadorResposta(BaseModel):
 class ProfessorCriar(BaseModel):
     nome: str
     email: Optional[str] = None
+    # Perfil estendido (Fase 20, ADR-022) — serviço de interesse em texto
+    # livre (não é FK ao catálogo, decisão do responsável em 09/07/2026).
+    servico_interesse: Optional[str] = None
+    contato: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class ProfessorAtualizar(BaseModel):
+    """Atualização parcial do professor (Fase 20, ADR-022): contato e
+    observações evoluem com o tempo — exceção justificada ao padrão
+    exclui-e-recria dos Documentos (professor vinculado a projeto não pode
+    ser excluído)."""
+
+    nome: Optional[str] = None
+    email: Optional[str] = None
+    servico_interesse: Optional[str] = None
+    contato: Optional[str] = None
+    observacoes: Optional[str] = None
 
 
 class ProfessorResposta(BaseModel):
     id: int
     nome: str
     email: Optional[str] = None
+    servico_interesse: Optional[str] = None
+    contato: Optional[str] = None
+    observacoes: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -243,6 +264,39 @@ class DocumentoResposta(BaseModel):
         from_attributes = True
 
 
+TipoEtapaLink = Literal["entrega", "demanda"]
+
+
+class EtapaLinkCriar(BaseModel):
+    """Link nomeado de entrega ou demanda anexado à etapa (Fase 19, ADR-021).
+    Utilitário do dia a dia — exclusão livre, sem trava (contraste deliberado
+    com o 409 do termo aditivo). Sem edição: para corrigir, exclui e recria."""
+
+    tipo: TipoEtapaLink
+    nome: str
+    url: str
+
+    _valida_url = field_validator("url")(validar_url_http)
+
+    @field_validator("nome")
+    @classmethod
+    def nome_obrigatorio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("nome é obrigatório")
+        return v.strip()
+
+
+class EtapaLinkResposta(BaseModel):
+    id: int
+    tipo: TipoEtapaLink
+    nome: str
+    url: str
+    criado_em: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class EtapaRef(BaseModel):
     """Referência leve a uma etapa (id + nome), para os chips/setas de
     dependência (Fase 13, ADR-015) — evita embutir a etapa inteira."""
@@ -318,6 +372,9 @@ class EtapaResposta(BaseModel):
     # Σ de dias adicionais formalizados (do bloco inteiro, se em bloco).
     dias_aditivos: int = 0
     termos_aditivos: List[TermoAditivoResposta] = []
+    # Links de entregas/demandas (Fase 19, ADR-021) — sempre individuais por
+    # etapa, mesmo em bloco.
+    links: List[EtapaLinkResposta] = []
     bloco_entrega: Optional[str] = None
     status: StatusEtapa
     # Equipe embutida: consultores ativos da etapa (data_saida IS NULL).

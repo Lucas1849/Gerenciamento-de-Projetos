@@ -10,6 +10,7 @@ from app.models.banco_de_dados import (
     Etapa,
     EtapaConsultor,
     EtapaDependencia,
+    EtapaLink,
     Projeto,
     TermoAditivo,
     Trabalhador,
@@ -71,6 +72,11 @@ def serializar_etapa(etapa: Etapa) -> schemas.EtapaResposta:
         termos_aditivos=[
             schemas.TermoAditivoResposta.model_validate(t)
             for t in etapa.termos_aditivos
+        ],
+        # Links de entregas/demandas (Fase 19, ADR-021) — individuais por
+        # etapa, mesmo em bloco.
+        links=[
+            schemas.EtapaLinkResposta.model_validate(l) for l in etapa.links
         ],
         bloco_entrega=etapa.bloco_entrega,
         status=etapa.status,
@@ -280,6 +286,39 @@ def excluir_termo_aditivo(
             detail="Termo formalizado (documento anexado) não pode ser excluído",
         )
     db.delete(termo)
+    db.commit()
+    etapa = db.get(Etapa, etapa_id)
+    db.refresh(etapa)
+    return serializar_etapa(etapa)
+
+
+@router.post("/{etapa_id}/links", response_model=schemas.EtapaResposta)
+def criar_etapa_link(
+    etapa_id: int, dados: schemas.EtapaLinkCriar, db: Session = Depends(get_db)
+):
+    """Anexa um link de entrega ou demanda à etapa (Fase 19, ADR-021).
+    Sempre da etapa individual — em bloco, cada membro tem os seus."""
+    etapa = db.get(Etapa, etapa_id)
+    if etapa is None:
+        raise HTTPException(status_code=404, detail="Etapa não encontrada")
+    db.add(
+        EtapaLink(
+            etapa_id=etapa_id, tipo=dados.tipo, nome=dados.nome, url=dados.url
+        )
+    )
+    db.commit()
+    db.refresh(etapa)
+    return serializar_etapa(etapa)
+
+
+@router.delete("/{etapa_id}/links/{link_id}", response_model=schemas.EtapaResposta)
+def excluir_etapa_link(etapa_id: int, link_id: int, db: Session = Depends(get_db)):
+    """Remove um link da etapa (Fase 19). Exclusão livre, sem trava — link é
+    utilitário, não formalização (contraste deliberado com o 409 do termo)."""
+    link = db.get(EtapaLink, link_id)
+    if link is None or link.etapa_id != etapa_id:
+        raise HTTPException(status_code=404, detail="Link não encontrado")
+    db.delete(link)
     db.commit()
     etapa = db.get(Etapa, etapa_id)
     db.refresh(etapa)

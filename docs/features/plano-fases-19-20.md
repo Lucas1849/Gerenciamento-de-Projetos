@@ -2,12 +2,12 @@
 
 Registro do planejamento pedido pelo responsável em **09/07/2026**, na sequência das Fases 16–18 ([plano-fases-16-18.md](plano-fases-16-18.md)). Origem: dois pedidos numa mesma sessão — (1) os **gerentes** poderem anexar os **links das entregas e demandas** dentro de cada etapa dos seus projetos; (2) uma aba de **Professores orientadores** na galeria de gestões, ao lado de "Documentos importantes" — basicamente uma tabela com nome, serviço mais apropriado/de interesse do professor, contato e observações.
 
-> Instrução explícita do responsável: **as fases só começam mediante comando direto**. Este documento é **apenas o planejamento** — nada foi implementado. Os ADRs 021 e 022 estão **pré-registrados** em [../arquitetura/decisoes.md](../arquitetura/decisoes.md) com status "planejado"; na execução de cada fase, virar para "implementado". As **perguntas do planejamento foram todas respondidas pelo responsável em 09/07/2026** — respostas registradas ao final. A Fase 11 (go-live/Hub) segue **gated no acesso externo**.
+> **Ambas as fases foram executadas em 09/07/2026, sob comando direto do responsável.** Os ADRs 021 e 022 estão com status "implementado" em [../arquitetura/decisoes.md](../arquitetura/decisoes.md). As **perguntas do planejamento foram todas respondidas pelo responsável em 09/07/2026** — respostas registradas ao final. A Fase 11 (go-live/Hub) segue **gated no acesso externo**. Atenção pós-merge: a Fase 20 aciona o **fluxo destrutivo ADR-001** — apagar `piloto_projetos.db`, reiniciar o backend e rodar `python -m app.seed_catalogo`.
 
 | Fase | Entrega | Status |
 |---|---|---|
-| 19 | **Links de entregas e demandas por etapa**: o gerente anexa links nomeados (Drive etc.) a cada etapa do projeto | 📋 Planejada |
-| 20 | Aba **Professores orientadores** na galeria de gestões (tabela: nome, serviço de interesse, contato, observações) | 📋 Planejada |
+| 19 | **Links de entregas e demandas por etapa**: o gerente anexa links nomeados (Drive etc.) a cada etapa do projeto | ✅ Executada (09/07/2026) |
+| 20 | Aba **Professores orientadores** na galeria de gestões (tabela: nome, serviço de interesse, contato, observações) | ✅ Executada (09/07/2026) |
 
 **As fases são independentes** — nenhuma depende da outra; podem ser executadas em qualquer ordem ou juntas. Atenção: a **20 mexe em colunas de tabela existente (`Professor`) ⇒ aciona o fluxo destrutivo do ADR-001** (apagar o `.db` + re-seed do catálogo), diferente das adições puras de tabela das Fases 13/17/18/19.
 

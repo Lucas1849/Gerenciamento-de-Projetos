@@ -195,6 +195,7 @@ export default function EtapasProjeto({ projetoId, toast }) {
           toast={toast}
           aoFechar={() => setEdicaoIds(null)}
           aoSalvo={() => { setEdicaoIds(null); recarregar(); }}
+          aoAtualizar={recarregar}
         />
       )}
     </div>

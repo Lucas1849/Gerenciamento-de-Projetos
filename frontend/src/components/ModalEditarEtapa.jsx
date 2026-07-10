@@ -6,11 +6,11 @@
 // continua sendo editada nos cards do Kanban (rotas próprias).
 
 import { useState, useRef } from 'react';
-import { Pencil, ArrowUp, ArrowDown } from 'lucide-react';
-import { atualizarEtapa, reordenarEtapas, calcularDataFim, contarDiasUteis } from '../services/api';
+import { Pencil, ArrowUp, ArrowDown, Paperclip, Plus, Trash2 } from 'lucide-react';
+import { atualizarEtapa, reordenarEtapas, calcularDataFim, contarDiasUteis, criarEtapaLink, excluirEtapaLink } from '../services/api';
 import { janelaDatas, dataPlausivel, formatarData } from './datasUtils';
 
-export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, aoFechar, aoSalvo }) {
+export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, aoFechar, aoSalvo, aoAtualizar }) {
   const ehBloco = membros.length > 1;
   const [dias, setDias] = useState(membros[0].dias_uteis_esperados ?? '');
   const [dataInicio, setDataInicio] = useState(membros[0].data_inicio ?? '');
@@ -60,6 +60,38 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
   const [descricao, setDescricao] = useState(membros[0].descricao ?? '');
   const [ordemIds, setOrdemIds] = useState(membros.map(m => m.id));
   const [salvando, setSalvando] = useState(false);
+
+  // Fase 19 (ADR-021): links de entregas/demandas — SEMPRE da etapa
+  // individual, mesmo em bloco (cada membro com os seus). Ações imediatas
+  // (fora do Salvar): o container recarrega e `membros` chega atualizado.
+  const [linkForm, setLinkForm] = useState(null); // { membroId, tipo, nome, url }
+  const [linkSalvando, setLinkSalvando] = useState(false);
+  const linkUrlInvalida = linkForm && linkForm.url !== '' && !/^https?:\/\//.test(linkForm.url);
+
+  const adicionarLink = async () => {
+    setLinkSalvando(true);
+    try {
+      await criarEtapaLink(linkForm.membroId, linkForm);
+      toast.success('Link anexado.');
+      setLinkForm(null);
+      aoAtualizar?.();
+    } catch (erro) {
+      toast.error(erro.message || 'Erro ao anexar o link.');
+    } finally {
+      setLinkSalvando(false);
+    }
+  };
+
+  const removerLink = async (membroId, link) => {
+    if (!window.confirm(`Excluir o link "${link.nome}"? O arquivo no Drive não é afetado.`)) return;
+    try {
+      await excluirEtapaLink(membroId, link.id);
+      toast.success('Link excluído.');
+      aoAtualizar?.();
+    } catch (erro) {
+      toast.error(erro.message || 'Erro ao excluir o link.');
+    }
+  };
 
   // Fase 10: pré-validação de UX; a regra vive no backend (422).
   const dataImplausivel = dataInicio !== '' && !dataPlausivel(dataInicio);
@@ -237,6 +269,79 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
             Data implausível: use uma data entre {formatarData(janelaDatas().min)} e {formatarData(janelaDatas().max)}.
           </p>
         )}
+
+        {/* Fase 19 (ADR-021): links de entregas/demandas — utilitários do dia
+            a dia, distintos do termo aditivo (formalização) e dos Documentos
+            da área. Em bloco, cada membro tem os seus. */}
+        <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: 'var(--sp-16)', marginBottom: 'var(--sp-16)' }}>
+          <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', marginBottom: 'var(--sp-8)' }}>
+            <Paperclip size={13} /> Entregas e demandas (links)
+          </span>
+          {membros.map(m => (
+            <div key={m.id} style={{ marginBottom: 'var(--sp-12)' }}>
+              {ehBloco && (
+                <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', display: 'block', marginBottom: 'var(--sp-4)' }}>
+                  {m.nome}
+                </span>
+              )}
+              {(m.links ?? []).length === 0 && linkForm?.membroId !== m.id && (
+                <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-disabled)' }}>
+                  Nenhum link anexado.
+                </span>
+              )}
+              {(m.links ?? []).map(link => (
+                <div key={link.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-8)', marginBottom: 'var(--sp-4)' }}>
+                  <span className={`chip chip-link-${link.tipo}`} style={{ display: 'inline-flex', flexShrink: 0 }}>
+                    {link.tipo === 'entrega' ? 'Entrega' : 'Demanda'}
+                  </span>
+                  <a href={link.url} target="_blank" rel="noreferrer"
+                    style={{ flex: 1, fontSize: 'var(--text-body2)', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {link.nome}
+                  </a>
+                  <button type="button" className="btn-ghost-danger" title="Excluir link"
+                    aria-label={`Excluir o link ${link.nome}`} onClick={() => removerLink(m.id, link)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              {linkForm?.membroId === m.id ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)', marginTop: 'var(--sp-8)' }}>
+                  <div style={{ display: 'flex', gap: 'var(--sp-8)', flexWrap: 'wrap' }}>
+                    <select className="input-field" value={linkForm.tipo} aria-label="Tipo do link"
+                      onChange={e => setLinkForm(f => ({ ...f, tipo: e.target.value }))} style={{ width: '110px' }}>
+                      <option value="entrega">Entrega</option>
+                      <option value="demanda">Demanda</option>
+                    </select>
+                    <input className="input-field" type="text" placeholder="Nome do link" value={linkForm.nome}
+                      onChange={e => setLinkForm(f => ({ ...f, nome: e.target.value }))} style={{ flex: '1 1 140px' }} />
+                  </div>
+                  <input className="input-field" type="url" placeholder="https://drive.google.com/..." value={linkForm.url}
+                    onChange={e => setLinkForm(f => ({ ...f, url: e.target.value }))} />
+                  {linkUrlInvalida && (
+                    <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-error)' }}>
+                      URL inválida: deve começar com http:// ou https://.
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
+                    <button type="button" className="btn btn-primary btn-sm"
+                      disabled={linkSalvando || !linkForm.nome.trim() || !linkForm.url || linkUrlInvalida}
+                      onClick={adicionarLink}>
+                      {linkSalvando ? 'Anexando...' : 'Anexar'}
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setLinkForm(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 'var(--sp-4)' }}
+                  onClick={() => setLinkForm({ membroId: m.id, tipo: 'entrega', nome: '', url: '' })}>
+                  <Plus size={13} /> Adicionar link
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
 
         <div style={{ display: 'flex', gap: 'var(--sp-8)', justifyContent: 'flex-end' }}>
           <button type="button" className="btn btn-secondary" onClick={aoFechar}>

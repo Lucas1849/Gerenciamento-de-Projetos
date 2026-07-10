@@ -6,10 +6,10 @@ import {
 } from 'lucide-react';
 import './App.css';
 import DocumentosImportantes from './components/DocumentosImportantes';
+import ProfessoresOrientadores from './components/ProfessoresOrientadores';
 import FormularioColaborador from './components/FormularioColaborador';
 import FormularioProjeto from './components/FormularioProjetos';
 import FormularioGestao from './components/FormularioGestao';
-import FormularioProfessor from './components/FormularioProfessor';
 import KanbanFases from './components/KanbanFases';
 import PaginaProjeto from './components/PaginaProjeto';
 import AvatarIniciais from './components/AvatarIniciais';
@@ -219,9 +219,19 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
         <div className={`tab ${abaAtiva === 'documentos' ? 'active' : ''}`} onClick={() => setAbaAtiva('documentos')}>
           Documentos importantes
         </div>
+        <div className={`tab ${abaAtiva === 'professores' ? 'active' : ''}`} onClick={() => setAbaAtiva('professores')}>
+          Professores orientadores
+        </div>
       </div>
 
       {abaAtiva === 'documentos' && <DocumentosImportantes toast={toast} />}
+
+      {/* Fase 20 (ADR-022): lugar canônico dos professores — o cadastro saiu
+          da tela Membros. aoAlterar atualiza o select de orientador do
+          formulário de projetos (professores vêm do useDados global). */}
+      {abaAtiva === 'professores' && (
+        <ProfessoresOrientadores toast={toast} aoAlterar={onRecarregar} />
+      )}
 
       {abaAtiva === 'gestoes' && (
         <>
@@ -312,11 +322,12 @@ function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProje
 }
 
 // ─── Tela: Membros (equipe ativa; cadastro provisório de testes) ────────────────
-function TelaMembros({ equipe, professores, carregando, erro, onRetry, onRecarregar, toast }) {
+// Fase 20 (ADR-022): o cadastro/grid de professores saiu daqui — a aba
+// "Professores orientadores" da galeria é o lugar canônico.
+function TelaMembros({ equipe, carregando, erro, onRetry, toast }) {
   // O cadastro abaixo é provisório: no Apoio Hub real os membros já existem;
   // remover quando o piloto tiver acesso às tabelas do Hub (roadmap).
-  const [mostrarForm,     setMostrarForm]     = useState(false);
-  const [mostrarFormProf, setMostrarFormProf] = useState(false);
+  const [mostrarForm, setMostrarForm] = useState(false);
 
   if (erro)       return <EstadoErro mensagem={erro} onRetry={onRetry} />;
   if (carregando) return <Skeleton />;
@@ -331,33 +342,17 @@ function TelaMembros({ equipe, professores, carregando, erro, onRetry, onRecarre
           </h1>
           <p className="page-subtitle">Equipe da Apoio Consultoria Júnior</p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => { setMostrarForm(v => !v); setMostrarFormProf(false); }}
-          >
-            {mostrarForm ? '✕ Cancelar' : '+ Cadastrar membro'}
-          </button>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => { setMostrarFormProf(v => !v); setMostrarForm(false); }}
-          >
-            {mostrarFormProf ? '✕ Cancelar' : '+ Cadastrar professor'}
-          </button>
-        </div>
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => setMostrarForm(v => !v)}
+        >
+          {mostrarForm ? '✕ Cancelar' : '+ Cadastrar membro'}
+        </button>
       </div>
 
       {mostrarForm && (
         <div className="form-container">
           <FormularioColaborador toast={toast} />
-        </div>
-      )}
-      {mostrarFormProf && (
-        <div className="form-container">
-          <FormularioProfessor
-            toast={toast}
-            aoCriar={() => { setMostrarFormProf(false); onRecarregar(); }}
-          />
         </div>
       )}
 
@@ -374,25 +369,6 @@ function TelaMembros({ equipe, professores, carregando, erro, onRetry, onRecarre
           ))}
         </div>
       )}
-
-      {professores.length > 0 && (
-        <>
-          <div className="page-header" style={{ marginTop: 'var(--sp-48)', marginBottom: 'var(--sp-24)' }}>
-            <div>
-              <h2 className="page-title" style={{ fontSize: 'var(--text-h2)' }}>
-                <span className="page-title-icone"><GraduationCap size={22} /></span>
-                Professores Orientadores
-              </h2>
-              <p className="page-subtitle">{professores.length} professor(es) cadastrado(s)</p>
-            </div>
-          </div>
-          <div className="membros-grid">
-            {professores.map(p => (
-              <CardMembro key={p.id} nome={p.nome} cargo="Professor Orientador" detalhe={p.email || 'Sem e-mail'} />
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
@@ -405,7 +381,7 @@ export default function App() {
   const [menuAberto,         setMenuAberto]         = useState(false);
 
   const {
-    projetos, equipe, gestoes, professores, servicos,
+    projetos, equipe, gestoes, servicos,
     carregando, erro, recarregar, atualizarProjetoLocal,
   } = useDados();
   const { toasts, remover, toast } = useToast();
@@ -469,11 +445,9 @@ export default function App() {
     return (
       <TelaMembros
         equipe={equipe}
-        professores={professores}
         carregando={carregando}
         erro={erro}
         onRetry={recarregar}
-        onRecarregar={recarregar}
         toast={toast}
       />
     );
