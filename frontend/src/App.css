@@ -481,6 +481,20 @@ body {
 .chip-warning { background-color: var(--color-warning-bg); color: #FBBF24; }
 .chip-error   { background-color: var(--color-error-bg); color: #F87171; }
 
+/* Links de entregas/demandas por etapa (Fase 19, ADR-021): tons distintos
+   para os dois tipos e chip de contagem discreto nos cards/tabela. */
+.chip-link-entrega { background-color: rgba(16, 185, 129, 0.15); color: #34D399; }
+.chip-link-demanda { background-color: rgba(108, 92, 231, 0.20); color: #A29BFE; }
+.chip-links-contagem {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--color-text-secondary);
+  gap: 4px;
+  border: none;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* Chip do serviço no card de projeto (estilo Hub: sem uppercase) */
 .chip-servico {
   background-color: rgba(255,255,255,0.07);

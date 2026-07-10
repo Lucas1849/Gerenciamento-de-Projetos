@@ -61,12 +61,31 @@ export function listarProfessores() {
   return request('/professores/');
 }
 
-/** Cadastra um novo professor orientador. */
-export function criarProfessor({ nome, email }) {
+/** Cadastra um novo professor orientador (perfil estendido — Fase 20). */
+export function criarProfessor({ nome, email, servico_interesse, contato, observacoes }) {
   return request('/professores/', {
     method: 'POST',
-    body: JSON.stringify({ nome, email: email || null }),
+    body: JSON.stringify({
+      nome,
+      email: email || null,
+      servico_interesse: servico_interesse || null,
+      contato: contato || null,
+      observacoes: observacoes || null,
+    }),
   });
+}
+
+/** Atualização parcial do professor (Fase 20): aplica só os campos enviados. */
+export function atualizarProfessor(professorId, dados) {
+  return request(`/professores/${professorId}`, {
+    method: 'PUT',
+    body: JSON.stringify(dados),
+  });
+}
+
+/** Exclui um professor (409 se ele orienta algum projeto — Fase 20). */
+export function excluirProfessor(professorId) {
+  return request(`/professores/${professorId}`, { method: 'DELETE' });
 }
 
 // ─── Gestões ────────────────────────────────────────────────────────────────
@@ -295,6 +314,20 @@ export function excluirTermoAditivo(etapaId, termoId) {
   return request(`/etapas/${etapaId}/termos-aditivos/${termoId}`, {
     method: 'DELETE',
   });
+}
+
+/** Anexa um link de entrega ou demanda à etapa (Fase 19, ADR-021) —
+ *  sempre da etapa individual, mesmo em bloco. */
+export function criarEtapaLink(etapaId, { tipo, nome, url }) {
+  return request(`/etapas/${etapaId}/links`, {
+    method: 'POST',
+    body: JSON.stringify({ tipo, nome, url }),
+  });
+}
+
+/** Remove um link da etapa (Fase 19): exclusão livre, sem trava. */
+export function excluirEtapaLink(etapaId, linkId) {
+  return request(`/etapas/${etapaId}/links/${linkId}`, { method: 'DELETE' });
 }
 
 /** Vincula um consultor a uma etapa. */

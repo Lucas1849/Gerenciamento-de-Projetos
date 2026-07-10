@@ -39,13 +39,16 @@ Molde de etapa por serviço — usado para gerar as `Etapa` reais de um projeto 
 
 ### Professor
 
-Professor(a) orientador(a) — pessoa externa à empresa júnior, não é um `Trabalhador`.
+Professor(a) orientador(a) — pessoa externa à empresa júnior, não é um `Trabalhador`. Perfil estendido na Fase 20 (ADR-022); a aba "Professores orientadores" da galeria é o lugar canônico de cadastro/consulta.
 
 | Campo | Tipo | Observação |
 |---|---|---|
 | id | int | PK |
 | nome | string | |
 | email | string | opcional |
+| servico_interesse | string | opcional; **texto livre** — não é FK ao catálogo (decisão do responsável em 09/07/2026) |
+| contato | string | opcional; telefone/WhatsApp/e-mail alternativo (o `email` permanece) |
+| observacoes | string | opcional |
 
 ### Projeto (reescrito)
 

@@ -27,13 +27,20 @@ class Trabalhador(Base):
     emailInstitucional = Column(String, nullable=False)
 
 
-# 2. Professor — orientador externo à empresa júnior (ADR-004).
+# 2. Professor — orientador externo à empresa júnior (ADR-004). Perfil
+# estendido na Fase 20 (ADR-022): serviço de interesse em TEXTO LIVRE (decisão
+# do responsável em 09/07/2026 — não é FK ao catálogo), contato livre além do
+# email, observações. Colunas novas em tabela existente ⇒ fluxo destrutivo
+# ADR-001 (apagar o .db + re-seed).
 class Professor(Base):
     __tablename__ = "professores"
 
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, nullable=False)
     email = Column(String, nullable=True)
+    servico_interesse = Column(String, nullable=True)
+    contato = Column(String, nullable=True)
+    observacoes = Column(String, nullable=True)
 
 
 # 3. Gestao — semestre/ciclo de gestão (ex. "2026.1"), agrupa projetos.
@@ -150,6 +157,14 @@ class Etapa(Base):
     consultores = relationship(
         "EtapaConsultor", back_populates="etapa", cascade="all, delete-orphan"
     )
+    # Links de entregas/demandas (Fase 19, ADR-021): sempre da etapa
+    # individual, mesmo em bloco — nada da lógica de bloco toca os links.
+    links = relationship(
+        "EtapaLink",
+        back_populates="etapa",
+        order_by="EtapaLink.criado_em",
+        cascade="all, delete-orphan",
+    )
     # Termos aditivos (Fase 17, ADR-019): registros formais de dias adicionais.
     termos_aditivos = relationship(
         "TermoAditivo",
@@ -246,6 +261,26 @@ class TermoAditivo(Base):
 # galeria de gestões (Fase 18, ADR-020, revisada em 09/07/2026). Documentos são
 # da ÁREA: sem FK de gestão nem de projeto (replica a página do Notion, que
 # mistura links gerais e de gestões específicas). Tabela puramente aditiva.
+# 12. EtapaLink — link nomeado de entrega ou demanda anexado a uma etapa
+# (Fase 19, ADR-021). Terceiro tipo de link do sistema: distinto do
+# documento_url do termo aditivo (formalização, com trava — ADR-019) e do
+# Documento da área (nível galeria — ADR-020). Exclusão livre, sem trava:
+# link é utilitário do dia a dia, não formalização. Tabela puramente aditiva:
+# create_all a materializa no próximo boot sem dropar o .db.
+class EtapaLink(Base):
+    __tablename__ = "etapa_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    etapa_id = Column(Integer, ForeignKey("etapas.id"), nullable=False)
+    # entrega | demanda — o gerente classifica ao anexar (decisão 09/07/2026).
+    tipo = Column(String, nullable=False)
+    nome = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    criado_em = Column(DateTime, nullable=False, default=datetime.now)
+
+    etapa = relationship("Etapa", back_populates="links")
+
+
 class Documento(Base):
     __tablename__ = "documentos"
 
