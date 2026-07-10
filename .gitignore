@@ -26,3 +26,9 @@ Thumbs.db
 
 # Dump de schema do banco do Apoio Hub (referência local, não versionar)
 docs/arquitetura/dados/apoio-hub-columns.csv
+
+# Dataset real dos professores orientadores (Fase 21, ADR-023) — dados
+# pessoais (nomes, e-mails, respostas de pesquisa) e o repo é público.
+# O formato está documentado em professores_seed.exemplo.json; o arquivo
+# real é distribuído fora do git (OneDrive da área).
+backend/app/dados/professores_seed.json

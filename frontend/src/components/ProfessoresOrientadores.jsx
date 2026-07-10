@@ -12,7 +12,24 @@ import {
   listarProfessores, criarProfessor, atualizarProfessor, excluirProfessor,
 } from '../services/api';
 
-const CAMPOS_VAZIOS = { nome: '', email: '', servico_interesse: '', contato: '', observacoes: '' };
+const CAMPOS_VAZIOS = { nome: '', email: '', servico_interesse: '', interesse_orientar: '', contato: '', observacoes: '' };
+
+// interesse_orientar (Fase 21, ADR-023) tri-estado: true/false/null no
+// backend ↔ 'sim'/'nao'/'' nos selects.
+const interesseParaSelect = (valor) => (valor === true ? 'sim' : valor === false ? 'nao' : '');
+const interesseParaApi = (valor) => (valor === 'sim' ? true : valor === 'nao' ? false : null);
+
+function ChipInteresse({ valor }) {
+  if (valor === true) return <span className="chip chip-success">Sim</span>;
+  if (valor === false) return <span className="chip chip-warning">Não</span>;
+  return '—';
+}
+
+const OPCOES_INTERESSE = [
+  ['', 'Sem resposta'],
+  ['sim', 'Sim'],
+  ['nao', 'Não'],
+];
 
 export default function ProfessoresOrientadores({ toast, aoAlterar }) {
   const [professores, setProfessores] = useState([]);
@@ -34,7 +51,7 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
   const adicionar = async () => {
     setSalvando(true);
     try {
-      await criarProfessor(novo);
+      await criarProfessor({ ...novo, interesse_orientar: interesseParaApi(novo.interesse_orientar) });
       toast.success('Professor cadastrado.');
       setNovo(null);
       aposMutacao();
@@ -53,6 +70,7 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
         nome: campos.nome,
         email: campos.email || null,
         servico_interesse: campos.servico_interesse || null,
+        interesse_orientar: interesseParaApi(campos.interesse_orientar),
         contato: campos.contato || null,
         observacoes: campos.observacoes || null,
       });
@@ -105,14 +123,24 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
             {[
               ['nome', 'Nome *', 'Ex.: Prof. João Silva'],
               ['servico_interesse', 'Serviço de interesse', 'Ex.: Pesquisa de Mercado'],
+              ['interesse_orientar', 'Interesse em orientar', ''],
               ['email', 'E-mail', 'joao@universidade.br'],
               ['contato', 'Contato', 'Telefone/WhatsApp'],
               ['observacoes', 'Observações', ''],
             ].map(([campo, rotulo, placeholder]) => (
               <label key={campo} style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)', flex: '1 1 160px' }}>
                 {rotulo}
-                <input className="input-field" type="text" value={novo[campo]} placeholder={placeholder}
-                  onChange={e => setNovo(prev => ({ ...prev, [campo]: e.target.value }))} />
+                {campo === 'interesse_orientar' ? (
+                  <select className="input-field" value={novo[campo]}
+                    onChange={e => setNovo(prev => ({ ...prev, [campo]: e.target.value }))}>
+                    {OPCOES_INTERESSE.map(([valor, texto]) => (
+                      <option key={valor} value={valor}>{texto}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input className="input-field" type="text" value={novo[campo]} placeholder={placeholder}
+                    onChange={e => setNovo(prev => ({ ...prev, [campo]: e.target.value }))} />
+                )}
               </label>
             ))}
             <div style={{ display: 'flex', gap: 'var(--sp-8)' }}>
@@ -142,6 +170,7 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
               <tr>
                 <th>Nome</th>
                 <th>Serviço de interesse</th>
+                <th>Interesse em orientar</th>
                 <th>E-mail</th>
                 <th>Contato</th>
                 <th>Observações</th>
@@ -154,6 +183,18 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
                   <tr key={p.id}>
                     {celulaEdicao('nome', 'Nome')}
                     {celulaEdicao('servico_interesse', 'Serviço de interesse')}
+                    <td>
+                      <select
+                        className="input-field tabela-status"
+                        value={edicao.interesse_orientar}
+                        aria-label="Interesse em orientar"
+                        onChange={e => setEdicao(prev => ({ ...prev, interesse_orientar: e.target.value }))}
+                      >
+                        {OPCOES_INTERESSE.map(([valor, texto]) => (
+                          <option key={valor} value={valor}>{texto}</option>
+                        ))}
+                      </select>
+                    </td>
                     {celulaEdicao('email', 'E-mail')}
                     {celulaEdicao('contato', 'Contato')}
                     {celulaEdicao('observacoes', 'Observações')}
@@ -172,6 +213,7 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
                   <tr key={p.id}>
                     <td className="tabela-nome">{p.nome}</td>
                     <td>{p.servico_interesse || '—'}</td>
+                    <td><ChipInteresse valor={p.interesse_orientar} /></td>
                     <td>{p.email || '—'}</td>
                     <td>{p.contato || '—'}</td>
                     <td>{p.observacoes || '—'}</td>
@@ -188,6 +230,7 @@ export default function ProfessoresOrientadores({ toast, aoAlterar }) {
                             nome: p.nome,
                             email: p.email ?? '',
                             servico_interesse: p.servico_interesse ?? '',
+                            interesse_orientar: interesseParaSelect(p.interesse_orientar),
                             contato: p.contato ?? '',
                             observacoes: p.observacoes ?? '',
                           });

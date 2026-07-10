@@ -14,6 +14,8 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Gatilho para reconsiderar:** entrada de dado real em produção, ou entrada de um segundo desenvolvedor no projeto.
 
+**Nota (Fase 21, 10/07/2026):** o fluxo destrutivo agora envolve **dois seeds**: apagar `piloto_projetos.db` → subir o backend (`create_all`) → `python -m app.seed_catalogo` → `python -m app.seed_professores` (este exige o dataset gitignorado `app/dados/professores_seed.json` — ver ADR-023).
+
 ---
 
 ### ADR-002 — Equipe flexível por etapa, não por projeto
@@ -339,7 +341,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** mesmo princípio do catálogo (ADR-005) — conteúdo validado pela área entra por transcrição idempotente, não por digitação manual nem importador self-service; resolver o de-para uma vez elimina a principal fonte de erro (homônimos/grafias) de forma auditável; repo público torna o arquivo gitignorado a única opção compatível com dados pessoais; a coluna estruturada de interesse evita que a recusa de um professor se perca em texto livre.
 
-**Status:** planejado (09/07/2026) — pré-registrado; **perguntas respondidas pelo responsável em 09/07/2026** (seedar os 72; pesquisa prevalece; interesse em orientar explícito, forma delegada → coluna `interesse_orientar`; privacidade resolvida por verificação do repo público). A fase só começa mediante comando direto. Ver [../features/plano-fases-21-22.md](../features/plano-fases-21-22.md). Na execução, atualizar também a seção Professor de [../features/modelo-dados.md](../features/modelo-dados.md).
+**Status:** implementado (10/07/2026) — Fase 21 executada sob comando direto do responsável. Nota de implementação: dataset real gerado das duas planilhas (72 professores; 33 com pesquisa — 25 `interesse_orientar = true`, 8 `false`; 37 com `servico_interesse`) em `backend/app/dados/professores_seed.json` **gitignorado**, com crosswalk de 8 grafias divergentes resolvido no próprio dataset e `professores_seed.exemplo.json` fictício commitado; `seed_professores.py` idempotente por nome com erro claro se o dataset real faltar; coluna `interesse_orientar` em `Professor` + schemas + chip Sim/Não/— e select tri-estado em `ProfessoresOrientadores.jsx`. O fluxo destrutivo ADR-001 foi executado em 10/07/2026 (wipe único cobrindo também a pendência da Fase 20) → boot → `seed_catalogo` → `seed_professores` (2ª rodada: 0 criados, 72 pulados). Testes em `test_fase21.py` (67 no total). Seção Professor de [../features/modelo-dados.md](../features/modelo-dados.md) atualizada. Ver [../features/plano-fases-21-22.md](../features/plano-fases-21-22.md).
 
 ---
 

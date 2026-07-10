@@ -41,6 +41,9 @@ class Professor(Base):
     servico_interesse = Column(String, nullable=True)
     contato = Column(String, nullable=True)
     observacoes = Column(String, nullable=True)
+    # Fase 21 (ADR-023): interesse em orientar vindo da Pesquisa IES —
+    # True/False conforme a resposta, NULL para quem não respondeu à pesquisa.
+    interesse_orientar = Column(Boolean, nullable=True)
 
 
 # 3. Gestao — semestre/ciclo de gestão (ex. "2026.1"), agrupa projetos.

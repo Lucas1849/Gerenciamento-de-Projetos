@@ -39,7 +39,7 @@ Molde de etapa por serviço — usado para gerar as `Etapa` reais de um projeto 
 
 ### Professor
 
-Professor(a) orientador(a) — pessoa externa à empresa júnior, não é um `Trabalhador`. Perfil estendido na Fase 20 (ADR-022); a aba "Professores orientadores" da galeria é o lugar canônico de cadastro/consulta.
+Professor(a) orientador(a) — pessoa externa à empresa júnior, não é um `Trabalhador`. Perfil estendido na Fase 20 (ADR-022); a aba "Professores orientadores" da galeria é o lugar canônico de cadastro/consulta. Desde a Fase 21 (ADR-023) a tabela nasce populada com os 72 professores da FAGEN via `python -m app.seed_professores` (dataset gitignorado em `app/dados/professores_seed.json` — dados pessoais, repo público; formato no `.exemplo` commitado).
 
 | Campo | Tipo | Observação |
 |---|---|---|
@@ -49,6 +49,7 @@ Professor(a) orientador(a) — pessoa externa à empresa júnior, não é um `Tr
 | servico_interesse | string | opcional; **texto livre** — não é FK ao catálogo (decisão do responsável em 09/07/2026) |
 | contato | string | opcional; telefone/WhatsApp/e-mail alternativo (o `email` permanece) |
 | observacoes | string | opcional |
+| interesse_orientar | boolean | opcional (Fase 21, ADR-023); `true`/`false` da Pesquisa IES, `NULL` = sem resposta |
 
 ### Projeto (reescrito)
 

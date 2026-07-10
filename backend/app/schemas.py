@@ -51,6 +51,8 @@ class ProfessorCriar(BaseModel):
     servico_interesse: Optional[str] = None
     contato: Optional[str] = None
     observacoes: Optional[str] = None
+    # Fase 21 (ADR-023): True/False conforme a Pesquisa IES; None = sem resposta.
+    interesse_orientar: Optional[bool] = None
 
 
 class ProfessorAtualizar(BaseModel):
@@ -64,6 +66,7 @@ class ProfessorAtualizar(BaseModel):
     servico_interesse: Optional[str] = None
     contato: Optional[str] = None
     observacoes: Optional[str] = None
+    interesse_orientar: Optional[bool] = None
 
 
 class ProfessorResposta(BaseModel):
@@ -73,6 +76,7 @@ class ProfessorResposta(BaseModel):
     servico_interesse: Optional[str] = None
     contato: Optional[str] = None
     observacoes: Optional[str] = None
+    interesse_orientar: Optional[bool] = None
 
     class Config:
         from_attributes = True
