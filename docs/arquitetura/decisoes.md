@@ -322,3 +322,38 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** estender a entidade existente (em vez de criar tabela paralela de "perfil") mantém o FK de orientador dos projetos como fonte única; o nível galeria corresponde ao uso real (professores servem à área, não a uma gestão); o 409 protege a integridade referencial no mesmo padrão já aprendido pelo usuário na exclusão de gestões.
 
 **Status:** implementado (09/07/2026) — Fase 20 executada sob comando direto do responsável. Nota de implementação: colunas novas em `Professor` (fluxo destrutivo ADR-001 — apagar `piloto_projetos.db` + `python -m app.seed_catalogo` na próxima subida do backend); `PUT`/`DELETE /professores/{id}` (o 409 nomeia os projetos orientados); terceira aba em `TelaGaleriaGestoes` com `ProfessoresOrientadores.jsx` (tabela com edição em linha + formulário inline); `FormularioProfessor.jsx` e o grid de professores removidos da tela Membros. Seção Professor de [../features/modelo-dados.md](../features/modelo-dados.md) atualizada. Testes em `test_fase20.py`. Ver [../features/plano-fases-19-20.md](../features/plano-fases-19-20.md).
+
+---
+
+### ADR-023 — Seed de professores orientadores a partir das planilhas da área (Fase 21)
+
+**Contexto:** o responsável pediu (09/07/2026) que a aba Professores orientadores (ADR-022) nasça **já alimentada**, como a tabela de serviços, a partir de duas planilhas da área: `Controle Aplicação.xlsx` (72 professores da FAGEN com nome + e-mail institucional + "Alinhamento com projeto" em 27 deles) e `Pesquisa Projeto IES (respostas).xlsx` (33 respostas), cruzando a primeira com a coluna **"Com base nos seus interesses pessoais, quais tipos de projetos você teria interesse de participar em conjunto ?"** da segunda (25 com interesses; 8 sem interesse em orientar).
+
+**Decisão:**
+- **Novo `backend/app/seed_professores.py` no padrão do `seed_catalogo.py`** (ADR-005: a planilha é a fonte, o script transcreve; idempotente por nome; `python -m app.seed_professores`). Escopo: **todos os 72 professores** (✅ responsável, 09/07/2026). Preenche: `nome`/`email` da Controle, `servico_interesse` da pesquisa — **que prevalece sobre o alinhamento da Controle em conflito** (✅ 09/07/2026) — com typos normalizados e texto livre mantido (ADR-022), `observacoes` com fatos operacionais compactos (disponibilidade, treinamentos), `contato` vazio (não há telefone nas fontes).
+- **`Professor` ganha a coluna `interesse_orientar`** (Boolean, nullable — `true`/`false` da pergunta "Você tem interesse em orientar projetos da Apoio ?"; `NULL` = sem resposta, 39 dos 72). Pedida pelo responsável em 09/07/2026 com a forma delegada ("criando uma nova coluna ou sei lá") — coluna estruturada + chip Sim/Não/— na tabela, em vez de texto em observações. **Coluna nova em tabela existente ⇒ fluxo destrutivo ADR-001** — o mesmo wipe ainda pendente da Fase 20 cobre as duas fases, se executadas juntas.
+- **Dataset em arquivo local gitignorado** (`backend/app/dados/professores_seed.json`) com um `.exemplo` fictício commitado documentando o formato — **o repositório é público** (verificado em 09/07/2026) e o dataset tem dados pessoais (nomes, e-mails, recusas); o repo versiona só o script (padrão `.env`/`.env.example`; precedente do `apoio-hub-columns.csv`). Distribuição do arquivo real fora do git (OneDrive da área).
+- **Crosswalk resolvido manualmente uma única vez** e transcrito no dataset (~9 nomes com grafia divergente entre as planilhas) — sem fuzzy matching em runtime.
+- **Opiniões livres da pesquisa não entram** (dado sensível sem função operacional).
+- **Ordem no fluxo ADR-001:** wipe do `.db` (pendente desde a Fase 20) → boot (materializa também a coluna nova) → `seed_catalogo` → `seed_professores`.
+
+**Justificativa:** mesmo princípio do catálogo (ADR-005) — conteúdo validado pela área entra por transcrição idempotente, não por digitação manual nem importador self-service; resolver o de-para uma vez elimina a principal fonte de erro (homônimos/grafias) de forma auditável; repo público torna o arquivo gitignorado a única opção compatível com dados pessoais; a coluna estruturada de interesse evita que a recusa de um professor se perca em texto livre.
+
+**Status:** planejado (09/07/2026) — pré-registrado; **perguntas respondidas pelo responsável em 09/07/2026** (seedar os 72; pesquisa prevalece; interesse em orientar explícito, forma delegada → coluna `interesse_orientar`; privacidade resolvida por verificação do repo público). A fase só começa mediante comando direto. Ver [../features/plano-fases-21-22.md](../features/plano-fases-21-22.md). Na execução, atualizar também a seção Professor de [../features/modelo-dados.md](../features/modelo-dados.md).
+
+---
+
+### ADR-024 — Galeria de cards substitui o Kanban de fases de projetos; fase muda na Visão Geral (Fase 22)
+
+**Contexto:** o responsável avaliou (09/07/2026) que o Kanban de 5 colunas de fase dentro da gestão dificulta a navegação conforme os projetos crescem (~12 projetos espremem as colunas e forçam scroll horizontal) e pediu a troca por uma **galeria de cards** maiores, mantendo a fase no modelo: exibida como **badge no canto superior direito do card** e alterada internamente na **aba Visão Geral** do projeto.
+
+**Decisão:**
+- **Mudança 100% frontend** — `Projeto.fase`, enums e `PUT /projetos/{id}` intocados; muda apenas onde a fase é exibida e de onde a mutação é chamada.
+- **`GaleriaProjetos.jsx` substitui `KanbanFases.jsx`** em `TelaGestao`: grid próprio com **3 cards por linha no desktop** (✅ responsável, 09/07/2026 — cards maiores; 2 colunas em viewport média, 1 no mobile), card preservando a identidade das Fases 14/15 (gradiente, watermark, gerente, consultores, TAP, excluir) + **badge de fase** (dot + label de `fases.js`); somem os botões ←/→.
+- **Select de fase na aba Visão Geral** (`PaginaProjeto.jsx`, card "Iniciação"), com a mesma chamada `atualizarProjeto(id, { fase })` + toast que o Kanban usava.
+- **Proposta anexa (a confirmar): chips de filtro por fase com contagem** acima do grid — preserva a leitura agregada "quantos em cada fase" que as colunas davam.
+- **O Kanban de etapas (`KanbanEtapas`) não muda** — as classes `.kanban-*` compartilhadas ficam; a limpeza remove só consumo exclusivo do board de fases.
+
+**Justificativa:** o Kanban de fases pagava o custo de 5 colunas permanentes para uma informação que muda raramente (fase é transição deliberada, não fluxo diário como o status de etapa); a galeria escala verticalmente com o número de projetos e devolve espaço ao card, enquanto badge + filtro mantêm a fase visível e agregável sem acoplar o layout a ela.
+
+**Status:** planejado (09/07/2026) — pré-registrado; tamanho respondido pelo responsável em 09/07/2026 (**3 cards por linha** no desktop; o handoff da Fase 14 era a inspiração, sem precisar do pacote). **Seguem abertas, com default proposto:** chips de filtro por fase (default: incluir) e faixa lateral de cor junto do badge (default: manter). A fase só começa mediante comando direto. Ver [../features/plano-fases-21-22.md](../features/plano-fases-21-22.md).
