@@ -290,3 +290,35 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** o padrão de abas já resolvido evita navegação nova (sem router); documentos da área no nível da galeria correspondem ao uso real (o print de referência é um índice único da área, não um por gestão); tirar os dashboards da fase evita construir visualização sem KPI validado — mesmo princípio do catálogo (ADR-005): conteúdo que depende da diretoria não se assume.
 
 **Status:** implementado (09/07/2026) — Fase 18 executada sob comando direto do responsável, já na forma revisada (abas na galeria; sem Dashboards). Nota de implementação: tabela `Documento` + router `documentos.py` (validação de URL http/https compartilhada com o termo aditivo em `schemas.validar_url_http`); abas em `TelaGaleriaGestoes` com a galeria intocada como default e `DocumentosImportantes.jsx` (grid de cards de link + formulário inline + lixeira). Testes em `test_fase18.py`; CRUD verificado no browser. Ver [../features/plano-fases-16-18.md](../features/plano-fases-16-18.md).
+
+---
+
+### ADR-021 — Links de entregas e demandas por etapa, sem trava de exclusão (Fase 19)
+
+**Contexto:** o responsável pediu (09/07/2026) que os gerentes possam anexar os **links das entregas e demandas** dentro de cada etapa dos seus projetos. O sistema já tem dois conceitos de link — o `documento_url` do termo aditivo (formalização com trava, ADR-019) e os Documentos importantes da área (nível galeria, ADR-020) — mas nenhum anexo utilitário do dia a dia no nível da etapa.
+
+**Decisão:**
+- **Nova tabela `EtapaLink`** (`etapa_links`: `etapa_id` FK, `tipo` `entrega`|`demanda`, `nome`, `url`, `criado_em`), **puramente aditiva** — `create_all` materializa sem dropar o `.db` (fluxo brando dos ADRs 015/019/020). Cascade ORM com a etapa (padrão ADR-012); URL validada por `schemas.validar_url_http` (reuso da Fase 18).
+- **Exclusão livre, sem trava** — contraste deliberado com o 409 do termo aditivo: link de entrega/demanda é utilitário, não formalização com o cliente. Sem edição (exclui e recria, padrão dos Documentos).
+- **Links são da etapa individual, mesmo em bloco de entrega** (cada membro tem suas demandas e sua entrega própria) — nada da lógica de bloco (chave compartilhada, propagação, etapa de referência) toca os links.
+- **`EtapaResposta` ganha `links[]`**; rotas `POST /etapas/{id}/links` e `DELETE /etapas/{id}/links/{link_id}`. UI: seção "Entregas e demandas" no `ModalEditarEtapa` (separada dos termos), chip de contagem no card do Kanban e coluna na tabela.
+- **Sem permissão por papel:** a regra pretendida é **gerentes e o diretor** anexarem (registrada pelo responsável em 09/07/2026), mas sem autenticação não é impositível — qualquer usuário do piloto anexa; gating real por `nivel_acesso` fica para a integração Hub (roadmap).
+
+**Justificativa:** repetir o padrão consolidado das tabelas aditivas + `EtapaResposta` aninhada entrega a feature sem migração nem rota nova de leitura; distinguir explicitamente os três tipos de link (utilitário × formalização × área) evita que a trava do termo contamine um anexo corriqueiro.
+
+**Status:** planejado (09/07/2026) — pré-registrado; perguntas respondidas pelo responsável em 09/07/2026 (classificação `entrega`|`demanda` confirmada; links por etapa individual mesmo em bloco; regra pretendida de quem anexa: gerentes e o diretor). A fase só começa mediante comando direto. Ver [../features/plano-fases-19-20.md](../features/plano-fases-19-20.md).
+
+---
+
+### ADR-022 — Aba Professores orientadores na galeria: tabela da área com perfil estendido de Professor (Fase 20)
+
+**Contexto:** o responsável pediu (09/07/2026) uma aba dedicada a **professores orientadores** na galeria de gestões, ao lado de "Documentos importantes" — basicamente uma tabela com nome, serviço mais apropriado/de interesse, contato e observações. Hoje `Professor` é mínimo (`nome`, `email` — ADR-004), sem rotas de edição/exclusão, e o cadastro vive como scaffolding temporário na tela Membros.
+
+**Decisão:**
+- **`Professor` ganha colunas:** `servico_interesse` (**texto livre**, nullable — decisão do responsável em 09/07/2026: não é FK ao catálogo, o interesse do professor pode não mapear para a cartela), `contato` (texto livre, mantendo `email`) e `observacoes`. **Coluna nova em tabela existente ⇒ fluxo destrutivo ADR-001** (apagar o `.db` + re-seed) — primeira fase desde a 10 a exigi-lo; combinar o momento com o responsável.
+- **Rotas novas:** `PUT /professores/{id}` (contato/observações evoluem — exceção justificada ao padrão exclui-e-recria, pois professor vinculado não pode ser excluído) e `DELETE /professores/{id}` com **409 quando vinculado a projeto** via `professor_orientador_id` (mesmo padrão do 409 de gestão, ADR-012).
+- **Terceira aba na galeria** (`TelaGaleriaGestoes`): Gestões / Documentos importantes / **Professores orientadores** — professores são recurso **da área**, como os documentos (ADR-020); componente `ProfessoresOrientadores.jsx` com a tabela e formulário inline. A aba vira o **lugar canônico**: o formulário/grid de professores sai da tela Membros (scaffolding); o select de orientador do `FormularioProjetos` segue lendo `GET /professores`, inalterado.
+
+**Justificativa:** estender a entidade existente (em vez de criar tabela paralela de "perfil") mantém o FK de orientador dos projetos como fonte única; o nível galeria corresponde ao uso real (professores servem à área, não a uma gestão); o 409 protege a integridade referencial no mesmo padrão já aprendido pelo usuário na exclusão de gestões.
+
+**Status:** planejado (09/07/2026) — pré-registrado; perguntas respondidas pelo responsável em 09/07/2026 (serviço de interesse como **texto livre**, recusando o FK; `email` mantido + `contato` livre; remoção do cadastro em Membros confirmada; professor editável via PUT). A fase só começa mediante comando direto. Ver [../features/plano-fases-19-20.md](../features/plano-fases-19-20.md). Na execução, atualizar também a seção Professor de [../features/modelo-dados.md](../features/modelo-dados.md).
