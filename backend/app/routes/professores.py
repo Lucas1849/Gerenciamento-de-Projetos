@@ -19,6 +19,7 @@ def criar_professor(professor: schemas.ProfessorCriar, db: Session = Depends(get
         servico_interesse=professor.servico_interesse,
         contato=professor.contato,
         observacoes=professor.observacoes,
+        interesse_orientar=professor.interesse_orientar,
     )
     db.add(novo)
     db.commit()

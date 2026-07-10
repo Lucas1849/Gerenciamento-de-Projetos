@@ -1,0 +1,32 @@
+{
+  "_fonte": "Documenta o formato de professores_seed.json (Fase 21, ADR-023). O arquivo real cruza Controle Aplicação.xlsx (nome/e-mail canônicos + alinhamento) com a Pesquisa Projeto IES (interesses, interesse em orientar, observações) e NÃO é versionado — contém dados pessoais e o repositório é público. Distribuição fora do git (OneDrive da área). As entradas abaixo são fictícias.",
+  "_crosswalk": {
+    "Fulana S.": "Fulana de Souza Exemplo"
+  },
+  "professores": [
+    {
+      "nome": "Fulana de Souza Exemplo",
+      "email": "fulana@ufu.br",
+      "servico_interesse": "Pesquisa de Mercado, Plano de Marketing",
+      "interesse_orientar": true,
+      "contato": null,
+      "observacoes": "Pesquisa IES 06/2026 — depto Marketing · já orientou projetos da Apoio · 2h/semana · topa treinamento: pesquisa de mercado"
+    },
+    {
+      "nome": "Beltrano Fictício da Silva",
+      "email": "beltrano@ufu.br",
+      "servico_interesse": "Plano Financeiro",
+      "interesse_orientar": null,
+      "contato": null,
+      "observacoes": null
+    },
+    {
+      "nome": "Sicrana Ilustrativa Pereira",
+      "email": "sicrana@ufu.br",
+      "servico_interesse": null,
+      "interesse_orientar": false,
+      "contato": null,
+      "observacoes": "Pesquisa IES 06/2026 — depto Finanças"
+    }
+  ]
+}
