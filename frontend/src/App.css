@@ -1162,6 +1162,81 @@ body {
   background: var(--color-accent-light);
 }
 
+/* ─── Fase 22 (ADR-024): galeria de projetos no lugar do Kanban de fases ──── */
+/* 3 cards por linha no desktop (pedido do responsável), 2 na viewport média,
+   1 no mobile. O card reusa .kanban-card/.card-projeto-kanban (Fases 14/15). */
+.galeria-projetos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-24);
+  align-items: start;
+}
+@media (max-width: 1279px) {
+  .galeria-projetos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .galeria-projetos { grid-template-columns: 1fr; }
+}
+.galeria-projetos .kanban-card { margin-bottom: 0; }
+/* Respiro à direita do título para não passar por baixo do badge absoluto. */
+.galeria-card-titulo { padding-right: 110px; }
+
+/* Badge de fase no canto superior direito do card (dot + label). */
+.badge-fase {
+  position: absolute;
+  top: var(--sp-12);
+  right: var(--sp-12);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6, 6px);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  padding: 3px var(--sp-12);
+  white-space: nowrap;
+}
+
+/* Chips de filtro por fase acima do grid (leitura agregada do antigo Kanban) */
+.galeria-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+  margin-bottom: var(--sp-20);
+}
+.filtro-fase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-background-alt);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  padding: var(--sp-8) var(--sp-12);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.filtro-fase:hover {
+  border-color: var(--color-brand);
+  color: var(--color-text-primary);
+}
+.filtro-fase.ativo {
+  border-color: var(--color-brand);
+  color: var(--color-text-primary);
+  background: var(--color-accent-light);
+}
+/* Ghost "+ Novo projeto" como card do grid, com a altura dos vizinhos. */
+.galeria-ghost {
+  min-height: 180px;
+  justify-content: center;
+  border-color: var(--color-border-subtle);
+}
+
 /* ─── Responsive ─── */
 
 /* Tablet: sidebar vira rail só-ícones */

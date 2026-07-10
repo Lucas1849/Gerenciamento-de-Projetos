@@ -10,7 +10,7 @@ import ProfessoresOrientadores from './components/ProfessoresOrientadores';
 import FormularioColaborador from './components/FormularioColaborador';
 import FormularioProjeto from './components/FormularioProjetos';
 import FormularioGestao from './components/FormularioGestao';
-import KanbanFases from './components/KanbanFases';
+import GaleriaProjetos from './components/GaleriaProjetos';
 import PaginaProjeto from './components/PaginaProjeto';
 import AvatarIniciais from './components/AvatarIniciais';
 import { useToast, ToastContainer } from './components/Toast';
@@ -84,8 +84,6 @@ function useDados() {
     projetos, equipe, gestoes, professores, servicos,
     carregando, erro,
     recarregar: carregar,
-    atualizarProjetoLocal: (projetoAtualizado) =>
-      setProjetos(prev => prev.map(p => (p.id === projetoAtualizado.id ? { ...p, ...projetoAtualizado } : p))),
   };
 }
 
@@ -269,8 +267,8 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
   );
 }
 
-// ─── Tela: Kanban de fases de uma Gestão ────────────────────────────────────────
-function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProjeto, onAtualizarProjeto, onRecarregar, toast }) {
+// ─── Tela: galeria de projetos de uma Gestão (Fase 22, ADR-024) ─────────────────
+function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProjeto, onRecarregar, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
 
   const projetosDaGestao = projetos.filter(p => p.gestao_id === gestao.id);
@@ -307,12 +305,11 @@ function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProje
         </div>
       )}
 
-      <KanbanFases
+      <GaleriaProjetos
         projetos={projetosDaGestao}
         servicos={servicos}
         equipe={equipe}
         aoAbrirProjeto={onAbrirProjeto}
-        aoAtualizarProjeto={onAtualizarProjeto}
         aoNovoProjeto={() => setMostrarForm(true)}
         aoRecarregar={onRecarregar}
         toast={toast}
@@ -382,7 +379,7 @@ export default function App() {
 
   const {
     projetos, equipe, gestoes, servicos,
-    carregando, erro, recarregar, atualizarProjetoLocal,
+    carregando, erro, recarregar,
   } = useDados();
   const { toasts, remover, toast } = useToast();
 
@@ -410,7 +407,7 @@ export default function App() {
     }
 
     if (telaAtual === TELAS.PROJETOS) {
-      // Nível 2: kanban de fases da gestão selecionada
+      // Nível 2: galeria de projetos da gestão selecionada (Fase 22)
       if (gestaoAtual) {
         return (
           <TelaGestao
@@ -420,7 +417,6 @@ export default function App() {
             equipe={equipe}
             aoVoltar={() => setGestaoSelecionada(null)}
             onAbrirProjeto={setProjetoSelecionado}
-            onAtualizarProjeto={atualizarProjetoLocal}
             onRecarregar={recarregar}
             toast={toast}
           />
