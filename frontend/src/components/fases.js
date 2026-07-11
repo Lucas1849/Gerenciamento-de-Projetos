@@ -1,5 +1,6 @@
 // ─── Fases do ciclo de vida do projeto (ADR-003) ────────────────────────────
-// Compartilhado entre KanbanFases (colunas) e PaginaProjeto (chip da fase).
+// Compartilhado entre GaleriaProjetos (badge e chips de filtro, Fase 22) e
+// PaginaProjeto (chip + select de fase).
 // Títulos e cores dos dots seguem as colunas do Kanban do Apoio Hub.
 
 export const FASES = [
