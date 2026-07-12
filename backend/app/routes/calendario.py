@@ -3,10 +3,16 @@ e cascata de datas de início encadeadas (Fase 12)."""
 
 from datetime import date
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app import schemas
-from app.utils.calendario import calcular_data_fim, contar_dias_uteis, proximo_dia_util
+from app.utils.calendario import (
+    MAX_DIAS_UTEIS,
+    calcular_data_fim,
+    contar_dias_uteis,
+    proximo_dia_util,
+    validar_data_plausivel,
+)
 
 router = APIRouter(prefix="/calendario", tags=["Calendário"])
 
@@ -14,7 +20,9 @@ router = APIRouter(prefix="/calendario", tags=["Calendário"])
 @router.get("/data-fim")
 def data_fim(
     data_inicio: date = Query(...),
-    dias_uteis: int = Query(..., ge=0),
+    # le=MAX_DIAS_UTEIS: teto anti-DoS (ver MAX_DIAS_UTEIS) — sem ele um valor
+    # enorme itera milhões de dias e trava o worker (API sem auth/rate limit).
+    dias_uteis: int = Query(..., ge=0, le=MAX_DIAS_UTEIS),
 ):
     """Prévia da data final (data_inicio + dias úteis, feriados nacionais)."""
     return {
@@ -32,10 +40,19 @@ def dias_uteis(
     """Reverse-calendar (Fase 13): dias úteis entre data_inicio e data_fim,
     inverso exato de /data-fim. Usado pelo redimensionamento do cronograma
     para converter a nova data final arrastada em dias_uteis_esperados."""
+    # Plausibilidade nas duas pontas (guarda anti-DoS): sem isso, uma data_fim
+    # em ano distante faz o reverse-calendar iterar dia a dia por milhões de
+    # dias. A janela (Fase 10) já é o limite natural do domínio.
+    try:
+        validar_data_plausivel(data_inicio)
+        validar_data_plausivel(data_fim)
+        dias = contar_dias_uteis(data_inicio, data_fim)
+    except ValueError as erro:
+        raise HTTPException(status_code=422, detail=str(erro))
     return {
         "data_inicio": data_inicio,
         "data_fim": data_fim,
-        "dias_uteis": contar_dias_uteis(data_inicio, data_fim),
+        "dias_uteis": dias,
     }
 
 

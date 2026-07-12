@@ -34,6 +34,16 @@ class Uberlandia(BrazilMinasGerais):
 
 _calendario = Uberlandia()
 
+# Teto de dias úteis por etapa (hardening de segurança, 12/07/2026): sem ele,
+# calcular_data_fim/contar_dias_uteis iteram add_working_days um dia por vez
+# (workalendar), então um valor absurdo (ex.: 2_000_000 ⇒ ~10s de CPU num
+# único request, medido) trava um worker — DoS trivial numa API sem auth nem
+# rate limit. 2000 dias úteis ≈ 8 anos, folgadamente além da janela de
+# plausibilidade de datas (~4 anos, Fase 10). Aplicado como le=... nos Query/
+# Field de entrada (422 limpo) e reforçado defensivamente aqui, protegendo o
+# caminho de leitura de qualquer dado fora da faixa. Ver docs de hardening.
+MAX_DIAS_UTEIS = 2000
+
 
 def _primeiro_dia_util(data: date) -> date:
     """Primeiro dia útil >= data (a própria data, se já for útil)."""
@@ -46,7 +56,12 @@ def calcular_data_fim(data_inicio: date, dias_uteis: int) -> date:
     """Data final na convenção INCLUSIVA (Fase 16, ADR-018): o dia de início
     conta como dia útil 1 — seg 23/02 + 5 dias úteis ⇒ sex 27/02. Se o início
     cai em fim de semana/feriado, o dia 1 é o primeiro dia útil seguinte.
-    dias_uteis <= 0 devolve o próprio início normalizado."""
+    dias_uteis <= 0 devolve o próprio início normalizado. dias_uteis acima de
+    MAX_DIAS_UTEIS é rejeitado (guarda anti-DoS — ver MAX_DIAS_UTEIS)."""
+    if dias_uteis > MAX_DIAS_UTEIS:
+        raise ValueError(
+            f"dias úteis fora do limite: máximo {MAX_DIAS_UTEIS}"
+        )
     inicio = _primeiro_dia_util(data_inicio)
     if dias_uteis <= 0:
         return inicio
@@ -70,6 +85,12 @@ def contar_dias_uteis(data_inicio: date, data_fim: date) -> int:
     while corrente < data_fim:
         corrente = _calendario.add_working_days(corrente, 1)
         dias += 1
+        if dias > MAX_DIAS_UTEIS:
+            # data_fim absurdamente distante: aborta o laço (guarda anti-DoS,
+            # ver MAX_DIAS_UTEIS) em vez de iterar milhões de dias.
+            raise ValueError(
+                f"intervalo fora do limite: máximo {MAX_DIAS_UTEIS} dias úteis"
+            )
     return dias
 
 
