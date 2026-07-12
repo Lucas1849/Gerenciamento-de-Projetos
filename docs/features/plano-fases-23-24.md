@@ -2,12 +2,12 @@
 
 Registro do planejamento pedido pelo responsável em **11/07/2026**, na sequência da galeria de projetos (Fase 22, [plano-fases-21-22.md](plano-fases-21-22.md)). Origem: dois pedidos na mesma mensagem, ambos vindos de um teste real do calendário — (1) o cálculo de dias úteis já considera **feriados nacionais** (o teste confirmou 07 de setembro), mas **não** os **feriados municipais de Uberlândia**, o que torna a data final derivada irreal na operação da empresa (que fica em Uberlândia/UFU); (2) nos formulários, os **gerentes precisam poder mudar a data final diretamente na criação do projeto** — hoje, no editor de etapas da criação (`EtapasEditor.jsx`), a data final é apenas exibida (derivada, read-only via `DataFimPreview`); a edição da data final só existe **pós-criação**, no `ModalEditarEtapa` (Fase 16, ADR-018).
 
-> **STATUS: PLANEJADAS, NÃO INICIADAS.** Este documento define e justifica as duas fases. **Nenhuma execução começa sem comando direto do responsável** — mesma regra de todas as fases do projeto. Os ADRs correspondentes ([../arquitetura/decisoes.md](../arquitetura/decisoes.md), ADR-025 e ADR-026) entram com status **"proposto — aguardando execução"**.
+> **STATUS: AMBAS EXECUTADAS EM 12/07/2026, por comando direto do responsável.** Os ADRs correspondentes ([../arquitetura/decisoes.md](../arquitetura/decisoes.md), ADR-025 e ADR-026) estão com status **"implementado"**. As perguntas do 23d foram resolvidas na execução: a lista oficial veio do **Decreto Municipal nº 22.174/2025** (calendário oficial da Prefeitura — Sexta-feira Santa, Corpus Christi, 15/08 e 31/08 como municipais); recesso da UFU ficou no roadmap; município fixo em Uberlândia (default aceito).
 
 | Fase | Entrega | Status |
 |---|---|---|
-| 23 | **Feriados municipais de Uberlândia** no cálculo de dias úteis (`app/utils/calendario.py`) — a data final derivada passa a pular os feriados do município | ⏳ Planejada (11/07/2026) |
-| 24 | **Data final editável na criação do projeto** — porta o padrão da Fase 16 (ADR-018) do `ModalEditarEtapa` para o `EtapasEditor.jsx` | ⏳ Planejada (11/07/2026) |
+| 23 | **Feriados municipais de Uberlândia** no cálculo de dias úteis (`app/utils/calendario.py`) — a data final derivada passa a pular os feriados do município | ✅ Executada (12/07/2026) — classe `Uberlandia`, `test_fase23.py` |
+| 24 | **Data final editável na criação do projeto** — porta o padrão da Fase 16 (ADR-018) do `ModalEditarEtapa` para o `EtapasEditor.jsx` | ✅ Executada (12/07/2026) — `CampoDataFim` no editor |
 
 **As duas fases são independentes** e podem ser executadas em qualquer ordem ou juntas, mas se complementam: a 23 melhora a **precisão automática** da data final e a 24 dá a **válvula de escape manual** para os casos que o calendário ainda não cobre (feriados pontuais, recessos da universidade, decisões de negócio). Nenhuma das duas mexe em schema — **não há fluxo destrutivo ADR-001** (a `data_fim` nunca é persistida, sempre derivada — mesmo princípio das Fases 16/18/ADR-018).
 

@@ -1,15 +1,38 @@
 """Cálculo de datas por dias úteis (Fase 5).
 
 Fonte única do cálculo: o frontend nunca calcula datas localmente — usa
-GET /calendario/data-fim. Considera feriados nacionais do Brasil
-(workalendar), municipais/estaduais fora do escopo (risco registrado).
+GET /calendario/data-fim. Desde a Fase 23 (ADR-025) considera, além dos
+feriados nacionais, os feriados municipais de Uberlândia/MG.
 """
 
 from datetime import date
 
-from workalendar.america import Brazil
+from workalendar.america import BrazilMinasGerais
 
-_calendario = Brazil()
+
+class Uberlandia(BrazilMinasGerais):
+    """Feriados municipais de Uberlândia/MG sobre a base estadual de MG.
+
+    Transcrito em 12/07/2026 do calendário oficial da Prefeitura de
+    Uberlândia (Decreto Municipal nº 22.174, de 06/10/2025 — Calendário
+    Oficial de Feriados de 2026): quatro feriados municipais — Sexta-feira
+    Santa e Corpus Christi (móveis, ativados via flags do workalendar, que
+    não os traz na base nacional) e os fixos 15/08 (Nossa Senhora da
+    Abadia, padroeira) e 31/08 (Aniversário de Uberlândia). Conteúdo
+    validado por fonte oficial, padrão ADR-005 — não editar de memória.
+    """
+
+    include_good_friday = True
+    good_friday_label = "Sexta-feira Santa"
+    include_corpus_christi = True
+
+    FIXED_HOLIDAYS = BrazilMinasGerais.FIXED_HOLIDAYS + (
+        (8, 15, "Nossa Senhora da Abadia (padroeira de Uberlândia)"),
+        (8, 31, "Aniversário de Uberlândia"),
+    )
+
+
+_calendario = Uberlandia()
 
 
 def _primeiro_dia_util(data: date) -> date:

@@ -374,7 +374,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** o risco já estava registrado e o ADR-018 só o mitigou manualmente; corrigir a fonte única de cálculo resolve a precisão da data final em todas as telas de uma vez, sem migração e sem persistir data derivada. Transcrever de fonte oficial evita a principal armadilha (datas erradas de memória) e mantém o dado auditável.
 
-**Status:** **proposto — aguardando execução** (planejado em 11/07/2026; não iniciado). Pendências de levantamento com o responsável: lista exata dos feriados municipais, se o recesso da UFU entra, e se o município é fixo ou configurável. Ver [../features/plano-fases-23-24.md](../features/plano-fases-23-24.md).
+**Status:** **implementado** (12/07/2026, por comando direto do responsável). Classe `Uberlandia(BrazilMinasGerais)` em `app/utils/calendario.py`, transcrita do calendário oficial da Prefeitura de Uberlândia (Decreto Municipal nº 22.174, de 06/10/2025): **quatro feriados municipais** — Sexta-feira Santa e Corpus Christi (móveis, ativados via flags `include_good_friday`/`include_corpus_christi` do workalendar, que não os traz na base nacional) e os fixos **15/08 (Nossa Senhora da Abadia)** e **31/08 (Aniversário de Uberlândia)**. Município fixo em Uberlândia (default aceito); recesso da UFU segue no roadmap. Testes em `test_fase23.py` (municipais, ida-e-volta cruzando feriado municipal, regressão dos nacionais). Ver [../features/plano-fases-23-24.md](../features/plano-fases-23-24.md).
 
 ---
 
@@ -389,7 +389,7 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 
 **Justificativa:** o gerente pensa em "data de entrega", não em "dias úteis"; dar o campo já na criação (não só na edição) e a válvula de escape para feriados/recessos que o calendário ainda não modele completa a simetria com a Fase 16 sem quebrar a fonte única de verdade nem persistir data derivada.
 
-**Status:** **proposto — aguardando execução** (planejado em 11/07/2026; não iniciado). Complementa a Fase 23: a 23 melhora a precisão automática, a 24 dá a correção manual. Ver [../features/plano-fases-23-24.md](../features/plano-fases-23-24.md).
+**Status:** **implementado** (12/07/2026, por comando direto do responsável). `DataFimPreview` virou **`CampoDataFim`** no `EtapasEditor.jsx`: input `type="date"` editável, conversão reversa via `GET /calendario/dias-uteis`, guarda de sequência própria (`seqRef`), ajuste-com-aviso para fim de semana/feriado e `onDiasCalculados` atualizando os dias do card — o que dispara a cascata da Fase 12. Sobre o reuso (24b): a lógica foi **replicada localmente** com comentário apontando o ADR-018 (o estado do modal e a derivação por card do editor vivem em estruturas diferentes; a extração custaria mais que o ganho — opção prevista na decisão). Payload de criação inalterado (ADR-008 intacto). Ver [../features/plano-fases-23-24.md](../features/plano-fases-23-24.md).
 
 ---
 

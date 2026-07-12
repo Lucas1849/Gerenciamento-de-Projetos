@@ -11,15 +11,25 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ArrowUp, ArrowDown, Trash2, Plus, Link2, Unlink } from 'lucide-react';
-import { calcularDataFim, cascataDatas } from '../services/api';
+import { calcularDataFim, contarDiasUteis, cascataDatas } from '../services/api';
 import { novoUid, cascatearItens } from './etapasEditorUtils';
-import { janelaDatas } from './datasUtils';
+import { janelaDatas, formatarData } from './datasUtils';
 import ModalBloco from './ModalBloco';
 
-export function DataFimPreview({ dias, dataInicio }) {
+// Fase 24 (ADR-026): data final EDITÁVEL na criação — mesmo açúcar de UI do
+// ModalEditarEtapa (Fase 16/ADR-018, lógica replicada de propósito: o estado
+// lá é do modal, aqui é derivado por card): digitar a data final converte em
+// dias úteis (contagem inclusiva, reverse-calendar do backend) e devolve os
+// dias via onDiasCalculados — que dispara a cascata da Fase 12. A data final
+// nunca viaja no payload (ADR-008): exibição sempre derivada de dias+início.
+export function CampoDataFim({ dias, dataInicio, onDiasCalculados }) {
   // Guarda o resultado junto com a chave dos inputs: se os inputs mudarem,
   // o valor antigo deixa de ser exibido sem precisar de setState no effect.
   const [resultado, setResultado] = useState(null);
+  // Valor sendo digitado (override temporário até a derivação alcançá-lo).
+  const [edicao, setEdicao] = useState(null);
+  const [aviso, setAviso] = useState('');
+  const seqRef = useRef(0);
   const chave = `${dias}|${dataInicio}`;
   useEffect(() => {
     if (dias === '' || !dataInicio) return;
@@ -31,13 +41,49 @@ export function DataFimPreview({ dias, dataInicio }) {
   }, [dias, dataInicio, chave]);
 
   const dataFim = resultado?.chave === chave ? resultado.valor : null;
-  if (!dataFim) return null;
-  const formatada = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' })
-    .format(new Date(dataFim));
+  // A derivação alcançou a edição: volta a exibir o valor derivado.
+  if (edicao !== null && dataFim === edicao) setEdicao(null);
+
+  const aoMudarFim = async (v) => {
+    setEdicao(v);
+    setAviso('');
+    if (!v || !dataInicio || v < dataInicio) return;
+    const seq = ++seqRef.current;
+    try {
+      const { dias_uteis } = await contarDiasUteis(dataInicio, v);
+      if (seq !== seqRef.current) return;
+      const r = await calcularDataFim(dataInicio, dias_uteis);
+      if (seq !== seqRef.current) return;
+      if (r.data_fim !== v) {
+        setEdicao(r.data_fim);
+        setAviso(`A data caiu em fim de semana/feriado — ajustada para ${formatarData(r.data_fim)}.`);
+      }
+      onDiasCalculados(String(dias_uteis));
+    } catch { /* preview; erro real aparece no salvar */ }
+  };
+
   return (
-    <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-brand-glow)', fontWeight: 600 }}>
-      Data final: {formatada}
-    </span>
+    <>
+      <label style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 'var(--sp-4)' }}>
+        Data final
+        <input
+          className="input-field"
+          type="date"
+          value={edicao ?? dataFim ?? ''}
+          min={dataInicio || janelaDatas().min}
+          max={janelaDatas().max}
+          disabled={!dataInicio}
+          title={dataInicio ? undefined : 'Defina a data de início primeiro'}
+          onChange={e => aoMudarFim(e.target.value)}
+          style={{ padding: '6px 10px' }}
+        />
+      </label>
+      {aviso && (
+        <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-warning)', flexBasis: '100%' }}>
+          {aviso}
+        </span>
+      )}
+    </>
   );
 }
 
@@ -153,7 +199,11 @@ function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover,
               style={{ padding: '6px 10px' }}
             />
           </label>
-          <DataFimPreview dias={item.dias} dataInicio={item.dataInicio} />
+          <CampoDataFim
+            dias={item.dias}
+            dataInicio={item.dataInicio}
+            onDiasCalculados={dias => onEditar({ ...item, dias })}
+          />
         </div>
       </div>
 
