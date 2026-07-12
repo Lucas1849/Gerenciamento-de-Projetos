@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import date, datetime
 from typing import Literal
 
-from app.utils.calendario import validar_data_plausivel
+from app.utils.calendario import MAX_DIAS_UTEIS, validar_data_plausivel
 
 
 def validar_url_http(url: Optional[str]) -> Optional[str]:
@@ -107,7 +107,7 @@ class EtapaTemplateCriar(BaseModel):
     ordem: int
     nome: str
     descricao_padrao: Optional[str] = None
-    dias_uteis_esperados_padrao: Optional[int] = None
+    dias_uteis_esperados_padrao: Optional[int] = Field(default=None, ge=0, le=MAX_DIAS_UTEIS)
 
 
 class EtapaTemplateResposta(BaseModel):
@@ -172,7 +172,7 @@ class EtapaCriar(BaseModel):
     ordem: int
     nome: str
     descricao: Optional[str] = None
-    dias_uteis_esperados: Optional[int] = None
+    dias_uteis_esperados: Optional[int] = Field(default=None, ge=0, le=MAX_DIAS_UTEIS)
     data_inicio: Optional[date] = None
     bloco_entrega: Optional[str] = None
     etapa_template_id: Optional[int] = None
@@ -190,7 +190,7 @@ class EtapaProjetoCriar(BaseModel):
     """
 
     nome: str
-    dias_uteis_esperados: Optional[int] = None
+    dias_uteis_esperados: Optional[int] = Field(default=None, ge=0, le=MAX_DIAS_UTEIS)
     data_inicio: Optional[date] = None
     # Nulo = etapa adicionada manualmente (fora do template).
     etapa_template_id: Optional[int] = None
@@ -214,7 +214,7 @@ class EtapaEditar(BaseModel):
 
     nome: Optional[str] = None
     descricao: Optional[str] = None
-    dias_uteis_esperados: Optional[int] = None
+    dias_uteis_esperados: Optional[int] = Field(default=None, ge=0, le=MAX_DIAS_UTEIS)
     data_inicio: Optional[date] = None
 
     # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
@@ -236,9 +236,22 @@ class CascataCriar(BaseModel):
     """
 
     data_inicio: date
-    dias: List[int] = Field(min_length=1)
+    # Teto por item e na lista (anti-DoS, ver MAX_DIAS_UTEIS): a cascata chama
+    # calcular_data_fim por item, então limitamos tanto o valor quanto a
+    # quantidade de etapas encadeadas num único round-trip.
+    dias: List[int] = Field(min_length=1, max_length=200)
 
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
+
+    @field_validator("dias")
+    @classmethod
+    def _valida_dias(cls, valor: List[int]) -> List[int]:
+        for d in valor:
+            if d < 0 or d > MAX_DIAS_UTEIS:
+                raise ValueError(
+                    f"dias úteis fora do limite: cada valor deve estar entre 0 e {MAX_DIAS_UTEIS}"
+                )
+        return valor
 
 
 class DocumentoCriar(BaseModel):
@@ -324,7 +337,9 @@ class TermoAditivoCriar(BaseModel):
     Dias e motivo nunca se editam depois — para corrigir, exclui (enquanto
     sem documento anexado) e relança."""
 
-    dias_adicionais: int = Field(gt=0)
+    # le=MAX_DIAS_UTEIS: o termo soma dias à data_fim efetiva (via
+    # calcular_data_fim na leitura), então o teto anti-DoS também vale aqui.
+    dias_adicionais: int = Field(gt=0, le=MAX_DIAS_UTEIS)
     motivo: str
     documento_url: Optional[str] = None
 
@@ -424,7 +439,7 @@ class BlocoCriar(BaseModel):
     """
 
     etapa_ids: List[int] = Field(min_length=2)
-    dias_uteis_esperados: int
+    dias_uteis_esperados: int = Field(ge=0, le=MAX_DIAS_UTEIS)
     data_inicio: Optional[date] = None
 
     # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
