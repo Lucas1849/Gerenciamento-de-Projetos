@@ -359,3 +359,49 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** o Kanban de fases pagava o custo de 5 colunas permanentes para uma informação que muda raramente (fase é transição deliberada, não fluxo diário como o status de etapa); a galeria escala verticalmente com o número de projetos e devolve espaço ao card, enquanto badge + filtro mantêm a fase visível e agregável sem acoplar o layout a ela.
 
 **Status:** implementado (10/07/2026) — Fase 22 executada sob comando direto do responsável. Nota de implementação: `GaleriaProjetos.jsx` substitui `KanbanFases.jsx` (removido) em `TelaGestao`; grid `.galeria-projetos` com 3 colunas no desktop, 2 até 1279px e 1 até 640px; badge `.badge-fase` (dot + título) no canto superior direito do card, faixa de cor da Fase 14 **mantida** (default aceito); **chips de filtro por fase incluídos** (default aceito — "Todas · N" + um por fase com contagem, toggle); ordenação funil → nome; ghost "+ Novo projeto" no grid e empty-state quando a gestão não tem projetos; select "Mover para a fase" no card Iniciação da Visão Geral (`PaginaProjeto.jsx`, `mudarFase` via `atualizarProjeto`); `atualizarProjetoLocal`/`onAtualizarProjeto` removidos (o `aoVoltar` da página do projeto já recarrega a lista); classes `.kanban-*` compartilhadas com o `KanbanEtapas` intocadas. Ver [../features/plano-fases-21-22.md](../features/plano-fases-21-22.md).
+
+---
+
+### ADR-025 — Feriados municipais de Uberlândia no cálculo de dias úteis (Fase 23)
+
+**Contexto:** o responsável testou o calendário (11/07/2026) e confirmou que o cálculo de dias úteis considera os **feriados nacionais** (o 07 de setembro foi contado corretamente), mas **não** os **feriados municipais de Uberlândia** — onde a empresa (Apoio Consultoria / FAGEN-UFU) opera. A data final derivada de cada etapa sai otimista (curta demais) sempre que um feriado municipal cai no intervalo. O ADR-018 (Fase 16) já havia registrado essa lacuna como motivação do paliativo "data final editável" e o docstring de `app/utils/calendario.py` já a marcava como risco conhecido.
+
+**Decisão:**
+- **Trocar o calendário base único** em `app/utils/calendario.py` de `Brazil()` por um calendário **`Uberlandia`** definido no projeto, subclassando `BrazilMinasGerais` (workalendar **não tem `BrazilUberlandiaCity`** — verificado em 11/07/2026) e acrescentando os feriados **municipais** de Uberlândia. Como `calcular_data_fim`, `contar_dias_uteis`, `proximo_dia_util` e `_primeiro_dia_util` derivam todas do mesmo `_calendario`, a troca **propaga para todas as superfícies** (Kanban, tabela, cronograma, calendário, editor de criação, modal de edição) sem tocar em nenhuma — o frontend nunca calcula datas (ADR-008).
+- **Sem migração, sem fluxo destrutivo ADR-001:** a `data_fim` nunca é persistida (sempre derivada — ADR-008/016/018); os `dias_uteis_esperados`/`data_inicio` armazenados continuam válidos e os projetos existentes passam a exibir a data final correta (mais longa quando há feriado municipal no intervalo) automaticamente. A ida-e-volta `data↔dias` continua exata porque o reverse-calendar usa o mesmo `_calendario`.
+- **Lista de feriados transcrita de fonte oficial** (Lei Municipal / calendário da Prefeitura de Uberlândia), **não inferida** — mesmo princípio do catálogo (ADR-005) e do seed de professores (ADR-023). Candidatos a confirmar: **15/08 (Nossa Senhora da Abadia, padroeira)** e **31/08 (aniversário da cidade)**, além de checar Corpus Christi. **Feriado municipal é informação pública ⇒ pode ser commitado** (ao contrário do dataset de professores, gitignorado por conter dados pessoais).
+- **Escopo:** município **fixo em Uberlândia** (default proposto — é onde a empresa opera); recesso da UFU e multi-município ficam para levantamento/roadmap.
+
+**Justificativa:** o risco já estava registrado e o ADR-018 só o mitigou manualmente; corrigir a fonte única de cálculo resolve a precisão da data final em todas as telas de uma vez, sem migração e sem persistir data derivada. Transcrever de fonte oficial evita a principal armadilha (datas erradas de memória) e mantém o dado auditável.
+
+**Status:** **proposto — aguardando execução** (planejado em 11/07/2026; não iniciado). Pendências de levantamento com o responsável: lista exata dos feriados municipais, se o recesso da UFU entra, e se o município é fixo ou configurável. Ver [../features/plano-fases-23-24.md](../features/plano-fases-23-24.md).
+
+---
+
+### ADR-026 — Data final editável na criação do projeto (Fase 24)
+
+**Contexto:** o responsável pediu (11/07/2026) que os gerentes possam **mudar a data final diretamente na criação** do projeto. Hoje, no editor de etapas da criação (`EtapasEditor.jsx`), a data final é apenas **exibida** (derivada, read-only via `DataFimPreview`); a edição da data final só existe **pós-criação**, no `ModalEditarEtapa` (Fase 16, ADR-018). O gerente que já sabe a data de entrega acordada com o cliente precisa digitá-la sem calcular os dias úteis de cabeça.
+
+**Decisão:**
+- **Portar o padrão da Fase 16 (ADR-018)** — data final editável como **açúcar de UI** — do `ModalEditarEtapa` para o `EtapasEditor.jsx`: o `DataFimPreview` read-only vira um input `type="date"` sincronizado com dias úteis e início. Editar a data final converte em `dias_uteis_esperados` via `GET /calendario/dias-uteis` (contagem inclusiva), ajusta o campo de dias e **dispara a cascata** dos cards seguintes (Fase 12/ADR-014, que já reage à mudança de `dias`); data final em fds/feriado é ajustada **com aviso**, com **guarda de sequência** contra respostas fora de ordem.
+- **ADR-008 preservado:** `etapasParaPayload` continua enviando **`dias_uteis_esperados` + `data_inicio`**, nunca a data final. **Mudança 100% frontend** — nenhuma rota, schema (`EtapaProjetoCriar`) ou cálculo novo. A math de datas permanece exclusiva do backend.
+- **Reuso:** avaliar extrair o bloco de conversão data↔dias (com guarda de sequência e ajuste-com-aviso), idêntico ao do modal, para um helper compartilhado — evitando que as duas cópias driftem; se a extração custar mais que o ganho, replicar com comentário apontando o ADR-018.
+
+**Justificativa:** o gerente pensa em "data de entrega", não em "dias úteis"; dar o campo já na criação (não só na edição) e a válvula de escape para feriados/recessos que o calendário ainda não modele completa a simetria com a Fase 16 sem quebrar a fonte única de verdade nem persistir data derivada.
+
+**Status:** **proposto — aguardando execução** (planejado em 11/07/2026; não iniciado). Complementa a Fase 23: a 23 melhora a precisão automática, a 24 dá a correção manual. Ver [../features/plano-fases-23-24.md](../features/plano-fases-23-24.md).
+
+---
+
+### ADR-027 — Par de agentes de segurança (red team atacante + blue team corretor) para endurecimento pré-hospedagem
+
+**Contexto:** o responsável pediu (11/07/2026) o máximo de segurança viável para um sistema simples, estruturando um **agente atacante** que sonda o servidor onde a aplicação ficaria hospedada em busca de brechas e um **agente que se comunica com ele**, recebe cada problema e aplica as correções, num laço até não sobrar brecha de requisição. Introduz um contexto novo: hospedar publicamente uma API que é **deliberadamente sem auth** e projetada para **rodar local** (auth real é a Fase 11 / integração com o Hub, ver roadmap) muda o modelo de ameaça.
+
+**Decisão:**
+- **Estruturar (documentar) um par de agentes Claude Code de segurança** — `seguranca-red` (pentester grey-box que enumera/sonda e escreve achados estruturados), `seguranca-blue` (corretor que triagem e aplica fixes mínimos consistentes com os ADRs, rodando a suíte) — coordenados por um `seguranca-orquestrador` (ou pelo operador humano), comunicando-se por um **relatório de achados estruturado** (id, severidade, categoria OWASP, repro, evidência, status), com ciclo de vida `aberto → em_correcao → corrigido → verificado/reaberto/aceito`. Só o **red em re-teste** fecha um achado (separação de papéis).
+- **O blue endurece sem virar a Fase 11:** foco em controles de rede/borda, rate limiting, robustez de entrada (ex.: teto nos parâmetros dos laços de calendário), cabeçalhos de segurança/TLS, redução de superfície (`/docs`, `.db`, `.env`), CORS não-wildcard e higiene de segredos/dependências. **Auth/RBAC completo NÃO é papel desses agentes** — a ausência de auth é decisão de produto do piloto, mitigada por gate de rede e registrada como pendência da Fase 11.
+- **Regras de engajamento obrigatórias:** só contra alvo **autorizado do responsável** (idealmente staging/local, com OK do provedor de hospedagem); **não destrutivo** (sem DoS real, sem apagar/alterar dado sem aprovação humana); **segredos/dados pessoais nunca vazam** (evidência sensível em local gitignorado); colisão com ADR/produto vira **pergunta**, não mudança silenciosa. **Nada é executado — nem os agentes são criados — sem comando direto do responsável.**
+
+**Justificativa:** um par red/blue com contrato de achados e re-teste dá endurecimento iterativo auditável sem confundir "hardening do piloto" com "construir a Fase 11"; as regras de engajamento mantêm o exercício no enquadramento defensivo autorizado (red team do próprio sistema) e a separação de papéis evita "corrigi e declarei resolvido".
+
+**Status:** **proposto — estruturação documentada, nada executado** (11/07/2026). O desenho completo (arquitetura do laço, roster, protocolo de achados, superfície do piloto ancorada no código, ordem de execução, regras de engajamento) está em [agentes-seguranca.md](agentes-seguranca.md).

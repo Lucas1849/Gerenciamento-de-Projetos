@@ -7,7 +7,7 @@ Itens fora do escopo da "base sólida" (Fases 0–5 do plano de continuidade). C
 Gerar calendário mostrando os dias úteis de cada etapa, feriados e período de férias da universidade — usado para preparar slides de apresentação ao cliente.
 
 - **Depende de:** `Etapa.dias_uteis_esperados` e `Etapa.data_inicio` (existem; a Fase 5 adotou `workalendar` com feriados nacionais para o cálculo de data final — `app/utils/calendario.py`).
-- **Falta levantar:** feriados estaduais/municipais e calendário de férias da universidade (fora do escopo da Fase 5).
+- **Falta levantar:** ~~feriados estaduais/municipais~~ (endereçados pela **Fase 23**, ADR-025 — feriados municipais de Uberlândia no cálculo de dias úteis; ver [plano-fases-23-24.md](plano-fases-23-24.md)) e **calendário de férias/recesso da universidade** (ainda pendente — levantamento com a diretoria, mesma pauta da Fase 23).
 - **Falta decidir:** formato/estilo visual do calendário gerado (o cálculo de dias úteis já existe; o que falta é a geração visual).
 
 ## Exportação automática para SIEX (ficha de cadastro de projeto de extensão)
