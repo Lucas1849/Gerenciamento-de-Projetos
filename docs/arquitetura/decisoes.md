@@ -405,3 +405,56 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** um par red/blue com contrato de achados e re-teste dá endurecimento iterativo auditável sem confundir "hardening do piloto" com "construir a Fase 11"; as regras de engajamento mantêm o exercício no enquadramento defensivo autorizado (red team do próprio sistema) e a separação de papéis evita "corrigi e declarei resolvido".
 
 **Status:** **proposto — estruturação documentada, nada executado** (11/07/2026). O desenho completo (arquitetura do laço, roster, protocolo de achados, superfície do piloto ancorada no código, ordem de execução, regras de engajamento) está em [agentes-seguranca.md](agentes-seguranca.md).
+
+---
+
+### ADR-028 — Features que dependem de identidade nascem no Apoio Hub; o piloto recebe só o layout (Fases 25 e 27)
+
+**Contexto:** o responsável pediu (08/08/2026) uma alternância "Meus projetos / Todos os projetos" na galeria. A feature depende de saber **quem é o usuário atual** — e o piloto não tem isso: `USUARIO_DEMO` (`App.jsx`) é um card decorativo, como os itens `aria-disabled` da sidebar, e a autenticação real é a **Fase 11**, travada externamente no acesso ao banco do Hub. As saídas possíveis eram inventar uma identidade no piloto (seletor "visualizando como", membro fixo em config) ou não fazer a feature. Nesse meio-tempo o quadro mudou: o módulo de Projetos **já foi portado para a stack principal** (`ApoioHub` — PHP/MySQL + React/Tailwind), onde existe login de verdade (`AuthContext`, `nivel_acesso`, cargos por área).
+
+**Decisão:**
+- **Dividir a implementação entre as duas stacks:** o piloto (`empresa-projetos`) recebe **o botão, o lugar e os dois estados visuais**, com o filtro **inerte** e a regra documentada; a stack principal (`ApoioHub`) recebe a feature **funcionando**, entregue por **PR de teste**. A documentação continua nascendo aqui — o piloto segue sendo o ambiente de testes e a fonte dos ADRs.
+- **O piloto não ganha um conceito de usuário nesta entrega.** Rejeitados explicitamente: seletor de identidade simulada, membro fixo em `.env`/código e qualquer persistência de "quem sou eu". Identidade no piloto continua sendo assunto da Fase 11 — antecipá-la parcialmente criaria um segundo modelo de usuário para depois desmontar.
+- **Maquete é marcada como maquete:** controle inerte carrega dica visível ao usuário e comentário no código apontando o plano e este ADR — mesmo tratamento já dado a `USUARIO_DEMO` e à sidebar decorativa. Placeholder silencioso é indistinguível de bug.
+- **Regra geral, não exceção:** toda feature futura que dependa de identidade, sessão ou permissão real segue este caminho enquanto a Fase 11 não acontecer.
+
+**Justificativa:** o valor de "ver funcionando" está onde há usuário real; o valor do piloto, aqui, é aprovar interface e registrar intenção. Inventar identidade no piloto custaria código provisório em duas camadas, para ser removido na Fase 11, e ainda testaria a regra contra um usuário falso. A divisão mantém cada stack fazendo o que ela pode fazer com honestidade.
+
+**Custo aceito:** o piloto passa a representar menos fielmente a produção — risco já existente e agravado por esta decisão (ver [gaps-publicacao-hostgator.md](gaps-publicacao-hostgator.md)). O responsável levantou na própria aprovação a contrapartida: aproximar o ambiente de testes do tratamento real de cargos e permissões, registrada no [roadmap](../features/roadmap.md).
+
+**Status:** **em implementação** (08/08/2026, por comando direto do responsável). **Fase 25 (só o layout) executada no piloto** — o botão e os dois estados visuais existem, com o filtro inerte e marcado como maquete (ver ADR-029). A **Fase 27** (feature funcionando na stack principal, via PR de teste) segue proposta. Plano em [plano-fases-25-27.md](../features/plano-fases-25-27.md).
+
+---
+
+### ADR-029 — "Meus projetos" é união gerente/diretor/consultor ativo, e é filtro de conforto — não permissão (Fase 25)
+
+**Contexto:** o pedido de 08/08/2026 descreve dois comportamentos por cargo — quem **não** é da área de Projetos veria os projetos de que faz parte; quem é da área veria também os que gerencia. A tentação era ramificar a regra por cargo. Duas restrições pesam contra: no piloto, `Trabalhador.cargo` é **texto livre** (`Column(String)`, input aberto no formulário), sem enum nem área — normalizá-lo é mudança de schema (fluxo destrutivo ADR-001); e nas duas stacks a **leitura é deliberadamente liberada** (o comentário de `proj_auth_lib.php` diz "read-only para toda a empresa"), então nenhum filtro de tela seria controle de acesso de verdade.
+
+**Decisão:**
+- **Regra única, por união:** um projeto é "meu" se `gerente_id == eu` **ou** `diretor_id == eu` **ou** eu estou em `equipe[]` (consultores **ativos**, `data_saida IS NULL`). **Sem consultar cargo.** A união cobre os dois casos do pedido sem ramificação: quem não é da área só aparece como consultor; quem é aparece também como gerente/diretor.
+- **Os três insumos já viajam** nas respostas de listagem das duas stacks (`ProjetoListaResposta` no piloto; `proj_get_projetos.php` no Hub) ⇒ **filtro 100% frontend**, sem rota, query ou schema novo.
+- **"Todos" é livre para qualquer pessoa** e o padrão é "Meus". O botão existe para **tirar poluição visual**, como o responsável formulou — **não** é restrição de acesso, e não deve ser lido como tal em nenhuma revisão futura. Restrição real de leitura, se algum dia for desejada, é decisão de produto separada e depende de auth.
+- **Alcance:** só a galeria de projetos de uma gestão. Contagens dos cards de gestão continuam totais (decisão do responsável).
+- **Consequência aceita:** quem **saiu** de uma etapa (`data_saida` preenchida) deixa de ver aquele projeto em "Meus" — para reencontrá-lo, alterna para "Todos".
+
+**Justificativa:** a união é a regra mais simples que satisfaz o pedido, é a única que funciona sem tocar no modelo de cargos, e é idêntica nas duas stacks — o que torna o port da Fase 27 uma transcrição, não uma reinterpretação. Ramificar por cargo custaria migração destrutiva no piloto para produzir, na prática, o mesmo conjunto de projetos.
+
+**Status:** **parcialmente implementado** (08/08/2026, por comando direto do responsável). **Fase 25 executada no piloto**: o segmented control "Meus projetos / Todos" (`TelaGestao` em `frontend/src/App.jsx`, CSS `.segmented`/`.page-header-acoes` reaproveitando os tokens de `.filtro-fase`) renderiza os dois estados e alterna, mas **não filtra** — padrão "Meus", com dica textual visível + `title` e comentário no código apontando este ADR (maquete deliberada, como `USUARIO_DEMO`). A **regra de união** aqui especificada segue **não executada** — nasce funcional na Fase 27 (Hub). Ver [plano-fases-25-27.md](../features/plano-fases-25-27.md).
+
+---
+
+### ADR-030 — Seletor de fase volta ao card da galeria (revisão parcial do ADR-024) (Fases 26 e 27)
+
+**Contexto:** a Fase 22 (ADR-024) substituiu o Kanban de fases por uma galeria de cards e **moveu a mudança de fase para o `<select>` da aba Visão Geral** do projeto. O uso mostrou o custo: para mover um projeto de "Kick-off" para "Em andamento" é preciso abrir o projeto, trocar de aba e voltar. O responsável pediu (08/08/2026) *"um botão mais fácil de visualizar para alterar o estado de um projeto"*, sugerindo um **dropdown no próprio card**, mostrando a situação atual.
+
+**Decisão:**
+- **O badge de fase do card vira controle** (gatilho de um menu com as cinco fases, dot + título), mantendo a faixa de cor da Fase 14. A ação continua sendo a mesma rota já existente — `PUT /projetos/{id}` no piloto, `proj_editar_projeto.php` no Hub ⇒ **mudança 100% frontend nas duas stacks**.
+- **Um único componente `SeletorFase`** serve o card e a Visão Geral, substituindo o `<select>` de lá. Duas UIs para a mesma ação driftam; esta unificação é parte da decisão, não acabamento.
+- **Popover próprio** em vez de `<select>` nativo (que não renderiza os dots e ignora o design system das Fases 14/15), **com o custo assumido de reimplementar teclado e foco**: `Esc`/clique fora fecham, setas navegam, `role="menu"`, foco de volta ao gatilho. Fallback previsto: se na execução o popover se mostrar caro demais, cair para `<select>` nativo estilizado.
+- **Atualização otimista com rollback** e toast; no piloto, isso reintroduz em `useDados` o `atualizarProjetoLocal` que a Fase 22 havia removido — a galeria volta a mutar projeto, então a função volta com ela (recarregar tudo pisca a tela inteira por um campo).
+- **No Hub, o seletor só é interativo com `podeEditar`** (`isAdminGlobal(user) || pertenceAArea(user, 7)`), espelhando o `proj_exigir_editor()` do backend; para o resto da empresa o badge segue estático. Controle visível que devolve "sem permissão" é pior que controle ausente.
+- **O ADR-024 continua valendo no essencial:** o Kanban de fases **não volta**, e mudar fase por arrasto continua fora. O que se revisa é apenas o local do controle — o card volta a ser ponto de ação, não só de leitura.
+
+**Justificativa:** a fase é o dado que mais muda no dia a dia e era o mais caro de mudar. Devolver o controle ao card recupera a agilidade que o Kanban dava, sem devolver o Kanban — e sem tocar em backend, schema ou modelo.
+
+**Status:** **proposto** (08/08/2026) — Fase 26 (piloto) e 27b (Hub) do [plano-fases-25-27.md](../features/plano-fases-25-27.md).

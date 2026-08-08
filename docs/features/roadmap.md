@@ -43,6 +43,17 @@ Autenticação via login já existente no Apoio Hub, leitura da tabela de colabo
 - **Limpeza pendente ligada a este item:** o cadastro de colaborador/professor na tela **Membros** é scaffolding provisório de testes (decisão de 05/07/2026, Fase 3) — remover quando o piloto tiver acesso às tabelas do Hub. O user card decorativo da sidebar (`USUARIO_DEMO`) também passa a vir do login real. As rotas DELETE de gestão/projeto (Fase 9 planejada) passam a ser **exclusivas de diretores/cargos de edição** via `nivel_acesso`.
 - **Risco reduzido:** o stack de dados deixou de ser desconhecido (era o "maior risco do roadmap inteiro"); o esforço remanescente está no acesso, na autenticação e na migração SQLite → MySQL.
 
+## Paridade de cargos e permissões entre o piloto e a produção
+
+Fazer o ambiente de testes refletir o tratamento de **cargos e gerenciamento de permissões** que existe de verdade na produção. Pedido pelo responsável em **08/08/2026**, na aprovação das Fases 25–27, como contrapartida consciente ao ADR-028 (features que dependem de identidade nascem no Hub; o piloto recebe só o layout).
+
+**O problema:** hoje o piloto e a produção não se parecem nesse ponto. No piloto, `Trabalhador.cargo` é **texto livre** (`Column(String)`, input aberto em `FormularioColaborador.jsx`), não há área, não há usuário logado (`USUARIO_DEMO` é decorativo) e **toda rota é aberta**. Na produção (`ApoioHub`), há `nivel_acesso`, cargos por área (`plataforma_hub_funcionario_cargos`), uma fonte única de permissão no frontend (`src/utils/permissions.js`: `isAdminGlobal` / `pertenceAArea`) e o espelho dela no backend (`api/proj_auth_lib.php`, `proj_exigir_editor()` em todo endpoint de escrita, leitura liberada). A consequência prática é que **regras de permissão não podem ser testadas no piloto** — só validadas direto em produção, que é exatamente onde não se quer descobrir que estavam erradas.
+
+- **Depende de:** decidir o **alcance** — espelhar só o suficiente para testar (um usuário atual + `podeEditar` equivalente) ou modelar cargos/áreas de verdade no piloto. O primeiro é barato; o segundo mexe em `Trabalhador` ⇒ **fluxo destrutivo ADR-001** (apagar o `.db` + re-seed).
+- **Falta levantar:** quais permissões o módulo de Projetos realmente precisa distinguir além de "pode editar" (a produção hoje tem só esse corte para projetos, mais o admin global) e se o piloto deve replicar os `area_id` do Hub ou uma abstração própria.
+- **Falta decidir:** se isso vira fase própria antes da **Fase 11** (integração real, que traz auth de verdade e tornaria boa parte deste item obsoleto) ou se é absorvido por ela. Vale a pena pesar: espelhar permissões no piloto é trabalho que a Fase 11 pode tornar descartável — mas a Fase 11 está travada externamente há meses, e enquanto isso cada feature com permissão sai não-testável.
+- **Relacionado:** [../arquitetura/gaps-publicacao-hostgator.md](../arquitetura/gaps-publicacao-hostgator.md) (divergências já conhecidas entre piloto e publicado) e o risco 7 do [plano-fases-25-27.md](plano-fases-25-27.md).
+
 ## Métricas e dashboards de projetos
 
 Painéis com indicadores dos projetos para a diretoria e os gerentes acompanharem saúde, prazo e alocação — ex.: projetos por fase, etapas atrasadas (data final derivada vs. hoje), % de conclusão por projeto, carga por consultor (quantas etapas ativas cada um tem), tempo médio por etapa/serviço, aderência ao prazo planejado. Pedido pelo responsável em **06/07/2026**, para **depois** das Fases 12 e 13 ([plano-fases-12-13.md](plano-fases-12-13.md)).

@@ -270,6 +270,12 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
 // ─── Tela: galeria de projetos de uma Gestão (Fase 22, ADR-024) ─────────────────
 function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProjeto, onRecarregar, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
+  // Fase 25 (ADR-028/029, docs/features/plano-fases-25-27.md): maquete deliberada.
+  // O segmented control "Meus projetos / Todos" alterna de estado mas NÃO filtra —
+  // o piloto não tem usuário logado para alimentar a regra (união gerente/diretor/
+  // consultor ativo). O filtro real nasce no Apoio Hub (Fase 27). Não wire isto a
+  // localStorage nem a um usuário fixo: é layout inerte, como USUARIO_DEMO/ITENS_MENU_HUB.
+  const [visaoMeus, setVisaoMeus] = useState(true);
 
   const projetosDaGestao = projetos.filter(p => p.gestao_id === gestao.id);
 
@@ -287,13 +293,45 @@ function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProje
           </h1>
           <p className="page-subtitle">{projetosDaGestao.length} projeto(s) nesta gestão</p>
         </div>
-        <button
-          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
-          onClick={() => setMostrarForm(v => !v)}
-        >
-          {mostrarForm ? '✕ Cancelar' : '+ Novo Projeto'}
-        </button>
+        <div className="page-header-acoes">
+          <div
+            className="segmented"
+            role="group"
+            aria-label="Filtrar visualização de projetos"
+            title="No piloto o filtro não roda: depende do usuário logado do Apoio Hub."
+          >
+            <button
+              type="button"
+              className={`segmented-opcao${visaoMeus ? ' ativo' : ''}`}
+              aria-pressed={visaoMeus}
+              onClick={() => setVisaoMeus(true)}
+            >
+              <User size={14} /> Meus projetos
+            </button>
+            <button
+              type="button"
+              className={`segmented-opcao${!visaoMeus ? ' ativo' : ''}`}
+              aria-pressed={!visaoMeus}
+              onClick={() => setVisaoMeus(false)}
+            >
+              <Users size={14} /> Todos
+            </button>
+          </div>
+          <button
+            className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
+            onClick={() => setMostrarForm(v => !v)}
+          >
+            {mostrarForm ? '✕ Cancelar' : '+ Novo Projeto'}
+          </button>
+        </div>
       </div>
+
+      {visaoMeus && (
+        <p className="segmented-aviso">
+          No piloto o filtro não roda: depende do usuário logado do Apoio Hub. A regra
+          (união gerente/diretor/consultor ativo) entra em produção na Fase 27.
+        </p>
+      )}
 
       {mostrarForm && (
         <div className="form-container">
