@@ -1199,6 +1199,100 @@ body {
   white-space: nowrap;
 }
 
+/* ─── Seletor de fase (Fase 26, ADR-030) ─── */
+/* Slot no card: mesma posição do antigo .badge-fase (canto superior direito). */
+.badge-fase-slot {
+  position: absolute;
+  top: var(--sp-12);
+  right: var(--sp-12);
+  z-index: 2;
+}
+.seletor-fase { position: relative; display: inline-block; }
+.seletor-fase.campo { display: block; }
+
+.seletor-fase-gatilho {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6, 6px);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+/* Variante badge: reproduz a pílula do antigo .badge-fase. */
+.seletor-fase-gatilho.badge {
+  font-size: var(--text-caption);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  padding: 3px var(--sp-12);
+  white-space: nowrap;
+}
+.seletor-fase-gatilho.badge:hover:not(:disabled) {
+  border-color: var(--color-brand);
+  color: var(--color-text-primary);
+}
+/* Variante campo: parece um input, largura total. */
+.seletor-fase-gatilho.campo {
+  width: 100%;
+  justify-content: space-between;
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  background: var(--color-background-alt);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--sp-12) var(--sp-16);
+}
+.seletor-fase-gatilho.campo:hover:not(:disabled) { border-color: var(--color-brand); }
+.seletor-fase-gatilho:disabled { cursor: default; }
+.seletor-fase-chevron { opacity: 0.6; }
+
+.seletor-fase-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.seletor-fase.campo .seletor-fase-menu { left: 0; right: 0; }
+.seletor-fase-opcao {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--sp-8) var(--sp-12);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.seletor-fase-opcao:hover,
+.seletor-fase-opcao:focus-visible {
+  background: var(--color-background-alt);
+  color: var(--color-text-primary);
+  outline: none;
+}
+.seletor-fase-opcao.ativa {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  background: var(--color-accent-light);
+}
+
 /* Chips de filtro por fase acima do grid (leitura agregada do antigo Kanban) */
 .galeria-filtros {
   display: flex;

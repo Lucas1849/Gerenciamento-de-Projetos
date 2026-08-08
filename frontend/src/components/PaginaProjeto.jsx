@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import EtapasProjeto from './EtapasProjeto';
 import Checkbox from './Checkbox';
-import { FASES, FASE_LABEL } from './fases';
+import SeletorFase from './SeletorFase';
+import { FASE_LABEL } from './fases';
 import { obterProjeto, atualizarProjeto } from '../services/api';
 
 const FASE_CHIP = {
@@ -126,18 +127,10 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
                 Fase: {FASE_LABEL[projeto.fase] ?? projeto.fase}
               </span>
             </div>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)', marginTop: 'var(--sp-16)', fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)' }}>
-              Mover para a fase
-              <select
-                className="input-field"
-                value={projeto.fase}
-                onChange={e => mudarFase(e.target.value)}
-              >
-                {FASES.map(f => (
-                  <option key={f.valor} value={f.valor}>{f.titulo}</option>
-                ))}
-              </select>
-            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)', marginTop: 'var(--sp-16)' }}>
+              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)' }}>Mover para a fase</span>
+              <SeletorFase faseAtual={projeto.fase} variante="campo" onSelecionar={mudarFase} />
+            </div>
             <div style={{ marginTop: 'var(--sp-16)', padding: 'var(--sp-12) var(--sp-16)', background: 'var(--color-background-alt)', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-md)' }}>
               <Checkbox checked={projeto.tap_assinado} onChange={alternarTap}>
                 TAP assinado pelo cliente

@@ -7,18 +7,36 @@
 
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { excluirProjeto } from '../services/api';
-import { FASES } from './fases';
+import { excluirProjeto, atualizarProjeto } from '../services/api';
+import { FASES, FASE_LABEL } from './fases';
 import AvatarIniciais from './AvatarIniciais';
+import SeletorFase from './SeletorFase';
 
 const ORDEM_FASE = Object.fromEntries(FASES.map((f, i) => [f.valor, i]));
 const FASE_POR_VALOR = new Map(FASES.map(f => [f.valor, f]));
 
 export default function GaleriaProjetos({
   projetos, servicos = [], equipe = [],
-  aoAbrirProjeto, aoNovoProjeto, aoRecarregar, toast,
+  aoAbrirProjeto, aoNovoProjeto, aoRecarregar, aoProjetoAtualizado, toast,
 }) {
   const [filtroFase, setFiltroFase] = useState(null); // null = todas
+
+  // Fase 26 (ADR-030): muda a fase pelo card, otimista com rollback. Aplica a
+  // fase na hora (aoProjetoAtualizado), chama PUT /projetos/{id} e, em erro,
+  // volta ao projeto anterior. Sucesso substitui pelo projeto que a API devolve.
+  const mudarFase = (projeto, novaFase) => {
+    if (novaFase === projeto.fase || !aoProjetoAtualizado) return;
+    aoProjetoAtualizado({ ...projeto, fase: novaFase });
+    atualizarProjeto(projeto.id, { fase: novaFase })
+      .then(resp => {
+        aoProjetoAtualizado(resp);
+        toast.success(`Projeto movido para "${FASE_LABEL[resp.fase] ?? resp.fase}".`);
+      })
+      .catch(() => {
+        aoProjetoAtualizado(projeto); // rollback
+        toast.error('Erro ao mover o projeto de fase.');
+      });
+  };
 
   const servicoPorId     = new Map(servicos.map(s => [s.id, s]));
   const trabalhadorPorId = new Map(equipe.map(t => [t.id, t]));
@@ -83,10 +101,13 @@ export default function GaleriaProjetos({
               onClick={() => aoAbrirProjeto(p.id)}
             >
               <span className="kanban-card-faixa" style={{ background: fase?.cor }} aria-hidden="true" />
-              <span className="badge-fase">
-                <span className="kanban-dot" style={{ backgroundColor: fase?.cor }} />
-                {fase?.titulo ?? p.fase}
-              </span>
+              <div className="badge-fase-slot">
+                <SeletorFase
+                  faseAtual={p.fase}
+                  variante="badge"
+                  onSelecionar={novaFase => mudarFase(p, novaFase)}
+                />
+              </div>
               <h4 className="kanban-card-titulo galeria-card-titulo">{p.nome}</h4>
               {servico && <div><span className="chip chip-servico">{servico.nome}</span></div>}
 

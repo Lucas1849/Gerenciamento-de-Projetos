@@ -80,10 +80,19 @@ function useDados() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
+  // Fase 26 (ADR-030): reintroduzido — a Fase 22 o removera porque a galeria
+  // deixara de mutar projetos; agora o seletor de fase no card volta a mutar,
+  // então a mutação local volta (recarregar tudo piscaria a tela por um campo).
+  // Recebe o projeto já no formato da listagem (o que PUT /projetos/{id} devolve).
+  const atualizarProjetoLocal = useCallback((projetoAtualizado) => {
+    setProjetos(atual => atual.map(p => (p.id === projetoAtualizado.id ? projetoAtualizado : p)));
+  }, []);
+
   return {
     projetos, equipe, gestoes, professores, servicos,
     carregando, erro,
     recarregar: carregar,
+    atualizarProjetoLocal,
   };
 }
 
@@ -268,7 +277,7 @@ function TelaGaleriaGestoes({ gestoes, projetos, carregando, erro, onRetry, onAb
 }
 
 // ─── Tela: galeria de projetos de uma Gestão (Fase 22, ADR-024) ─────────────────
-function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProjeto, onRecarregar, toast }) {
+function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProjeto, onRecarregar, onProjetoAtualizado, toast }) {
   const [mostrarForm, setMostrarForm] = useState(false);
   // Fase 25 (ADR-028/029, docs/features/plano-fases-25-27.md): maquete deliberada.
   // O segmented control "Meus projetos / Todos" alterna de estado mas NÃO filtra —
@@ -352,6 +361,7 @@ function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProje
         aoAbrirProjeto={onAbrirProjeto}
         aoNovoProjeto={() => setMostrarForm(true)}
         aoRecarregar={onRecarregar}
+        aoProjetoAtualizado={onProjetoAtualizado}
         toast={toast}
       />
     </div>
@@ -419,7 +429,7 @@ export default function App() {
 
   const {
     projetos, equipe, gestoes, servicos,
-    carregando, erro, recarregar,
+    carregando, erro, recarregar, atualizarProjetoLocal,
   } = useDados();
   const { toasts, remover, toast } = useToast();
 
@@ -458,6 +468,7 @@ export default function App() {
             aoVoltar={() => setGestaoSelecionada(null)}
             onAbrirProjeto={setProjetoSelecionado}
             onRecarregar={recarregar}
+            onProjetoAtualizado={atualizarProjetoLocal}
             toast={toast}
           />
         );
