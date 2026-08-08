@@ -293,45 +293,47 @@ function TelaGestao({ gestao, projetos, servicos, equipe, aoVoltar, onAbrirProje
           </h1>
           <p className="page-subtitle">{projetosDaGestao.length} projeto(s) nesta gestão</p>
         </div>
-        <div className="page-header-acoes">
-          <div
-            className="segmented"
-            role="group"
-            aria-label="Filtrar visualização de projetos"
-            title="No piloto o filtro não roda: depende do usuário logado do Apoio Hub."
-          >
-            <button
-              type="button"
-              className={`segmented-opcao${visaoMeus ? ' ativo' : ''}`}
-              aria-pressed={visaoMeus}
-              onClick={() => setVisaoMeus(true)}
-            >
-              <User size={14} /> Meus projetos
-            </button>
-            <button
-              type="button"
-              className={`segmented-opcao${!visaoMeus ? ' ativo' : ''}`}
-              aria-pressed={!visaoMeus}
-              onClick={() => setVisaoMeus(false)}
-            >
-              <Users size={14} /> Todos
-            </button>
-          </div>
-          <button
-            className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
-            onClick={() => setMostrarForm(v => !v)}
-          >
-            {mostrarForm ? '✕ Cancelar' : '+ Novo Projeto'}
-          </button>
-        </div>
+        <button
+          className={mostrarForm ? 'btn btn-secondary' : 'btn btn-primary'}
+          onClick={() => setMostrarForm(v => !v)}
+        >
+          {mostrarForm ? '✕ Cancelar' : '+ Novo Projeto'}
+        </button>
       </div>
 
-      {visaoMeus && (
-        <p className="segmented-aviso">
-          No piloto o filtro não roda: depende do usuário logado do Apoio Hub. A regra
-          (união gerente/diretor/consultor ativo) entra em produção na Fase 27.
-        </p>
-      )}
+      {/* Retângulo dividido ao meio, alinhado à direita (mesmo eixo do "Novo Projeto"),
+          afastado da faixa de chips de fase da galeria. */}
+      <div className="segmented-barra">
+        <div
+          className="segmented"
+          role="group"
+          aria-label="Filtrar visualização de projetos"
+          title="No piloto o filtro não roda: depende do usuário logado do Apoio Hub."
+        >
+          <button
+            type="button"
+            className={`segmented-opcao${visaoMeus ? ' ativo' : ''}`}
+            aria-pressed={visaoMeus}
+            onClick={() => setVisaoMeus(true)}
+          >
+            <User size={16} /> Meus projetos
+          </button>
+          <button
+            type="button"
+            className={`segmented-opcao${!visaoMeus ? ' ativo' : ''}`}
+            aria-pressed={!visaoMeus}
+            onClick={() => setVisaoMeus(false)}
+          >
+            <Users size={16} /> Geral
+          </button>
+        </div>
+        {visaoMeus && (
+          <p className="segmented-aviso">
+            No piloto o filtro não roda: depende do usuário logado do Apoio Hub. A regra
+            (união gerente/diretor/consultor ativo) entra em produção na Fase 27.
+          </p>
+        )}
+      </div>
 
       {mostrarForm && (
         <div className="form-container">
