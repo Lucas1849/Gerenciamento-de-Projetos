@@ -158,7 +158,7 @@ Fonte: os dois PDFs do kick-off da **Midiática** enviados pelo responsável (1 
 
 O SVG recebido (`Logo Apoio Consultoria Vetorizada.svg`) é utilizável, com três ressalvas registradas:
 
-- **Procedência:** os metadados C2PA embutidos declaram que o arquivo foi **composto no editor da Recraft AI** — ou seja, é uma **vetorização assistida por IA** da marca, não necessariamente o arquivo oficial do kit de identidade. O traçado confere com o logo real, mas se existir o vetor original da marca, ele é preferível. **Vale perguntar a quem cuida do design.**
+- **Procedência — resolvido em 21/08/2026:** os metadados C2PA declaram que o arquivo foi composto no editor da **Recraft AI**, e o responsável confirmou o motivo: **não existe vetor oficial da marca**; ele mesmo vetorizou porque não havia nenhum. Portanto **este arquivo é a versão vetorial canônica disponível**, e não um substituto provisório — o gerador usa ele sem ressalva. Se a diretoria um dia produzir um vetor oficial, trocar é substituir um arquivo em `frontend/public/`.
 - **Não vinha transparente:** trazia um retângulo branco cobrindo os 1920 × 1080 inteiros, e o desenho ocupava só 72% dessa moldura. Já foi removido, com o `viewBox` recalculado para a caixa real do desenho — proporção final **2,043 : 1**, arquivo de 32,4 KB → **19,9 KB** (46 paths preservados, metadados C2PA descartados).
 - **Tem 11 formas brancas internas** (vazados do símbolo). Sobre o fundo branco do calendário elas funcionam como devem; sobre qualquer fundo colorido apareceriam como manchas brancas. **Só usar este arquivo sobre fundo claro** — o que é o caso aqui.
 
@@ -259,7 +259,7 @@ O pedido menciona "aba calendário" (interação/estilização) e "aba formulár
 2. ~~**Reunir os insumos do template**~~ — **RESOLVIDO em 21/08/2026**: logo em SVG + dois PDFs reais entregues; geometria, tipografia e paleta transcritas em [Valores extraídos do template](#valores-extraídos-do-template-transcritos-em-21082026).
 3. **Substituição do Klein Text** (fonte comercial usada em cabeçalho, números e legenda) — recomendação: **Inter**, mantendo **Questrial** no mês/ano. Alternativa: licenciar Klein Text para web. **Decisão da diretoria.**
 4. **Azul do cabeçalho:** manter o `#004AAD` do template (recomendado, fidelidade ao material atual) ou unificar com o marinho da marca `#03345F`. **Decisão de identidade.**
-5. Confirmar se existe **vetor oficial do logo** no kit de identidade — o recebido é vetorização feita por IA (Recraft), fiel mas não canônica.
+5. ~~Confirmar se existe **vetor oficial do logo**~~ — **RESOLVIDO em 21/08/2026: não existe.** O responsável vetorizou a marca justamente por não haver nenhuma versão vetorial oficial; o arquivo entregue passa a ser a referência vetorial da marca para esta feature.
 6. Representação do **bloco de entrega** na legenda (uma entrada vs. uma por membro).
 7. Pintura de **dias com etapas sobrepostas** (faixa dividida vs. prioridade + aviso).
 8. **Persistência da estilização** (tabela aditiva recomendada vs. localStorage vs. nenhuma).
