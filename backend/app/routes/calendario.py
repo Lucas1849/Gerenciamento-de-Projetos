@@ -10,6 +10,8 @@ from app.utils.calendario import (
     MAX_DIAS_UTEIS,
     calcular_data_fim,
     contar_dias_uteis,
+    feriados_do_ano,
+    janela_datas_plausiveis,
     proximo_dia_util,
     validar_data_plausivel,
 )
@@ -54,6 +56,32 @@ def dias_uteis(
         "data_fim": data_fim,
         "dias_uteis": dias,
     }
+
+
+@router.get("/feriados")
+def feriados(ano: int = Query(...)):
+    """Feriados do ano para o calendário de kick-off (Fase 28, ADR-031).
+
+    Fonte única: o calendário Uberlandia (ADR-025). Devolve nomes já em PT-BR
+    e deduplicados por data (ver feriados_do_ano). É a única adição de servidor
+    da feature — não fere o ADR-008: o frontend usa a lista só para decidir
+    QUAIS células pintar (dia de semana + não-feriado); datas de início/fim
+    continuam vindo do backend, nenhuma math de dias úteis é replicada.
+
+    O ano é restrito à janela de plausibilidade (Fase 10) — guarda anti-abuso
+    barata (espírito do hardening de 12/07/2026): rota de leitura, mas sem
+    parâmetro aberto que force `holidays()` a computar anos absurdos.
+    """
+    minimo, maximo = janela_datas_plausiveis()
+    if not minimo.year <= ano <= maximo.year:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "ano implausível: deve estar entre "
+                f"{minimo.year} e {maximo.year}"
+            ),
+        )
+    return {"ano": ano, "feriados": feriados_do_ano(ano)}
 
 
 @router.post("/cascata")

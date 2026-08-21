@@ -240,6 +240,27 @@ export function contarDiasUteis(dataInicio, dataFim) {
   return request(`/calendario/dias-uteis?data_inicio=${dataInicio}&data_fim=${dataFim}`);
 }
 
+/** Feriados do ano (Fase 28, ADR-031): nomes PT-BR, deduplicados por data.
+ *  O gerador de calendário usa a lista só para decidir quais células pintar. */
+export function listarFeriados(ano) {
+  return request(`/calendario/feriados?ano=${ano}`);
+}
+
+// ─── Estilização do calendário de kick-off (Fase 28, ADR-031) ───────────────
+
+/** Cores por etapa persistidas do gerador (mapa chave→hex; {} se nunca salvo). */
+export function obterCalendarioConfig(projetoId) {
+  return request(`/projetos/${projetoId}/calendario-config`);
+}
+
+/** Grava (upsert) as cores por etapa do gerador de calendário. */
+export function salvarCalendarioConfig(projetoId, cores) {
+  return request(`/projetos/${projetoId}/calendario-config`, {
+    method: 'PUT',
+    body: JSON.stringify({ cores }),
+  });
+}
+
 // ─── Documentos importantes da área (Fase 18, ADR-020) ──────────────────────
 
 export function listarDocumentos() {

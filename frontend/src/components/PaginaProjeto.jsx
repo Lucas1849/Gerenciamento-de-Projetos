@@ -160,7 +160,7 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
       )}
 
       {abaAtiva === 'etapas' && (
-        <EtapasProjeto projetoId={projeto.id} toast={toast} />
+        <EtapasProjeto projetoId={projeto.id} projetoNome={projeto.nome} toast={toast} />
       )}
 
     </div>

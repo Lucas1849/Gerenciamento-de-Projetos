@@ -100,6 +100,56 @@ def proximo_dia_util(data: date) -> date:
     return _calendario.add_working_days(data, 1)
 
 
+# Mapa de nomes PT-BR dos feriados nacionais (Fase 28, ADR-031/005). O
+# workalendar devolve os nacionais em INGLÊS (`Independence Day`, `Christmas
+# Day`…); repassar o rótulo cru colocaria "Feriado - Independence Day" no slide
+# do cliente. Transcrito de fonte oficial (não traduzir de memória): a chave é
+# o rótulo cru da biblioteca; o valor é o nome que vai para a apresentação. Os
+# feriados que a Fase 23 acrescentou (municipais/estaduais) já vêm em PT-BR e
+# passam intactos. O port para o Hub (Fase 29) tem de bater 1:1 com este mapa.
+NOMES_FERIADOS_PT = {
+    "New year": "Confraternização Universal",
+    "Easter Sunday": "Páscoa",
+    "Tiradentes' Day": "Tiradentes",
+    "Labour Day": "Dia do Trabalho",
+    "Corpus Christi": "Corpus Christi",
+    "Independence Day": "Independência do Brasil",
+    "Our Lady of Aparecida": "Nossa Senhora Aparecida",
+    "All Souls' Day": "Finados",
+    "Republic Day": "Proclamação da República",
+    "Christmas Day": "Natal",
+}
+
+
+def feriados_do_ano(ano: int) -> list[dict]:
+    """Feriados do ano na fonte única `_calendario` (ADR-025), tratados para
+    o calendário de kick-off (Fase 28, ADR-031). Três tratamentos sobre a
+    saída crua do workalendar (ver docs/features/calendario-kickoff.md):
+
+    1. Deduplicação por data — 21/04 volta duas vezes (Aniversário de Minas
+       Gerais + Tiradentes); pintar/legendar o mesmo dia em dobro é defeito.
+       Quando coincidem, prevalece o nome nacional (o que está no mapa PT-BR).
+    2. Nomes em PT-BR, do mapa transcrito — nunca o rótulo cru da biblioteca.
+    3. Feriado em fim de semana NÃO é filtrado aqui (é dado): a rota devolve
+       todos; o frontend só pinta/legenda os que caem em dia de semana.
+
+    Devolve [{"data": date, "nome": str}] ordenado por data.
+    """
+    # Agrupa por data para deduplicar; guarda se o nome veio do mapa nacional
+    # (para eleger o nacional quando um estadual/municipal coincide na mesma data).
+    por_data: dict[date, tuple[str, bool]] = {}
+    for data, nome_cru in _calendario.holidays(ano):
+        nome_pt = NOMES_FERIADOS_PT.get(nome_cru, nome_cru)
+        eh_nacional = nome_cru in NOMES_FERIADOS_PT
+        atual = por_data.get(data)
+        # Mantém o primeiro; só troca se o novo é nacional e o guardado não é.
+        if atual is None or (eh_nacional and not atual[1]):
+            por_data[data] = (nome_pt, eh_nacional)
+    return [
+        {"data": data, "nome": por_data[data][0]} for data in sorted(por_data)
+    ]
+
+
 def janela_datas_plausiveis() -> tuple[date, date]:
     """Janela dinâmica de plausibilidade (Fase 10): 01/01/(ano atual − 1) a
     31/12/(ano atual + 2) — cobre gestões passadas recentes e planejamento

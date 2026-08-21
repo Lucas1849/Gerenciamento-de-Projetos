@@ -2,11 +2,15 @@
 
 Registro do planejamento pedido pelo responsável em **21/08/2026**. Origem: automatizar a montagem do calendário mensal da apresentação de kick-off, hoje feita à mão no Canva pelo gerente — pintar dias úteis por etapa, legenda, feriados — a partir de dados que o sistema já possui. A especificação da feature, a anatomia do modelo aprovado e a **análise das possibilidades técnicas** (pedida antes de qualquer definição) estão em [calendario-kickoff.md](calendario-kickoff.md); as decisões de arquitetura são os **ADRs 031, 032 e 033** ([../arquitetura/decisoes.md](../arquitetura/decisoes.md)) — **031 e 032 aceitos em 21/08/2026, 033 aceito no essencial**.
 
-> **STATUS: PLANEJADO — NADA EXECUTADO.**
+> **STATUS: FASE 28 EXECUTADA em 21/08/2026** (branch `execucao-fase-28`) por comando direto do responsável. **Fase 29 (port para o Hub) segue não iniciada.**
 >
-> ✅ **Condição 1 resolvida (21/08/2026):** o responsável escolheu a **possibilidade A — componente SVG único** (ADR-032, agora aceito, junto do ADR-031). O plano abaixo já era escrito sobre essa escolha e vale como está.
+> ✅ **Condição 1 resolvida (21/08/2026):** o responsável escolheu a **possibilidade A — componente SVG único** (ADR-032, aceito, junto do ADR-031).
 >
-> ⏳ **Condição 2 pendente:** o **comando direto do responsável** para começar (regra permanente do projeto).
+> ✅ **Condição 2 resolvida (21/08/2026):** o responsável deu o comando direto para executar a Fase 28.
+>
+> **Decisões em aberto da spec resolvidas na aprovação (21/08/2026):** bloco de entrega na legenda → **nomes compostos** dos membros (decisão 6); dias com etapas sobrepostas → **faixa dividida** (decisão 7); persistência da estilização → **tabela aditiva `CalendarioConfig`** (decisão 8); entrada na UI → **botão na sub-view Calendário** da aba Etapas (decisão 10). Fonte (Questrial no mês/ano + Inter no resto) e azul `#004AAD` seguem as recomendações registradas (decisões 3 e 4 de diretoria).
+>
+> **O que foi construído:** rota `GET /calendario/feriados` (nomes PT-BR de mapa transcrito, dedup por data, guarda de plausibilidade); modelo aditivo `CalendarioConfig` + `GET`/`PUT /projetos/{id}/calendario-config`; tema único `calendarioKickoffTema.js` (geometria 1440×810, paleta, fontes, logo); `calendarioKickoffUtils.js` (montagem das páginas, pintura por dia útil, termo aditivo, bloco, sobreposição em faixa dividida); componente SVG `CalendarioKickoff.jsx` (preview = exportação); `calendarioKickoffExport.js` (rasterização 2×, fontes embutidas via Google Fonts, copiar/baixar, zip store-only próprio); overlay `GeradorCalendarioKickoff.jsx` na sub-view Calendário. Logo limpo adicionado em `frontend/public/marca-apoio.svg`. Testes: `test_fase28.py` (10, backend 91 no total). Verificação de lógica de montagem via harness (Jul–Set/2026 cruzando 31/08 municipal e 07/09 nacional, termo aditivo pintado à parte). **A rasterização/fidelidade visual final (28e) precisa do teste manual no browser** — a extensão do Chrome não estava conectada nesta execução.
 >
 > ✅ **Insumos entregues (21/08/2026).** O responsável enviou o **logo vetorizado** e **dois PDFs reais** do kick-off da Midiática. Geometria (1440×810, colunas de 131, NOTAS a 29,3%), tipografia (Questrial 80pt no mês/ano; Klein Text no resto) e paleta (`#004AAD`, `#C9E597`, `#2A965C`, `#E2A9F1`, `#8C52FF`, `#B4B4B4`, `#FCFFB8`, `#FFBD59`) estão **transcritas de fonte oficial** em [calendario-kickoff.md → Valores extraídos](calendario-kickoff.md#valores-extraídos-do-template-transcritos-em-21082026). A implementação **não começa mais com placeholders** — começa com os números reais.
 >
