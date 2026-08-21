@@ -2,13 +2,16 @@
 
 Itens fora do escopo da "base sólida" (Fases 0–5 do plano de continuidade). Cada um depende de dados que a base sólida já vai deixar prontos, mas nenhum deve ser implementado antes dela.
 
-## Calendário estilizado automático
+## Calendário estilizado automático → promovido a especificação (Fases 28–29)
 
 Gerar calendário mostrando os dias úteis de cada etapa, feriados e período de férias da universidade — usado para preparar slides de apresentação ao cliente.
 
+**Atualização de 21/08/2026 — o item saiu do roadmap e virou documentação base**, por pedido do responsável (com o modelo real do Canva como referência): especificação e análise das possibilidades técnicas em [calendario-kickoff.md](calendario-kickoff.md), plano executável em [plano-fases-28-29.md](plano-fases-28-29.md) (Fase 28 no piloto, Fase 29 port para o Hub), ADRs 031–033 **propostos**. Nada executado — aguarda a escolha da possibilidade de geração e o comando do responsável.
+
 - **Depende de:** `Etapa.dias_uteis_esperados` e `Etapa.data_inicio` (existem; a Fase 5 adotou `workalendar` com feriados nacionais para o cálculo de data final — `app/utils/calendario.py`).
-- **Falta levantar:** ~~feriados estaduais/municipais~~ (endereçados pela **Fase 23**, ADR-025 — feriados municipais de Uberlândia no cálculo de dias úteis; ver [plano-fases-23-24.md](plano-fases-23-24.md)) e **calendário de férias/recesso da universidade** (ainda pendente — levantamento com a diretoria, mesma pauta da Fase 23).
-- **Falta decidir:** formato/estilo visual do calendário gerado (o cálculo de dias úteis já existe; o que falta é a geração visual).
+- **Falta levantar:** ~~feriados estaduais/municipais~~ (endereçados pela **Fase 23**, ADR-025); **calendário de férias/recesso da universidade** (ainda pendente — levantamento com a diretoria, mesma pauta da Fase 23; quando entrar no `_calendario`, o gerador das Fases 28–29 herda automaticamente); paleta/fonte/logo do template do Canva (pré-requisito das Fases 28–29, com a diretoria).
+- ~~**Falta decidir:** formato/estilo visual do calendário gerado~~ — especificado em [calendario-kickoff.md](calendario-kickoff.md) (anatomia transcrita do modelo real; possibilidades A–E com recomendação registrada).
+- **Permanece aqui como evolução futura:** exportação direta PPTX / integração com a API do Canva (possibilidade E da especificação) — só sobre a base entregue, se o uso pedir.
 
 ## Exportação automática para SIEX (ficha de cadastro de projeto de extensão)
 
