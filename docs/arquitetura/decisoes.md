@@ -458,3 +458,57 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** a fase é o dado que mais muda no dia a dia e era o mais caro de mudar. Devolver o controle ao card recupera a agilidade que o Kanban dava, sem devolver o Kanban — e sem tocar em backend, schema ou modelo.
 
 **Status:** **implementado no piloto** (08/08/2026, Fase 26, por comando direto do responsável); **27b (Hub) segue proposto**. Componente único `frontend/src/components/SeletorFase.jsx` (popover próprio, não `<select>` nativo, com teclado/foco: `Esc`/clique-fora fecham, setas + Home/End navegam, `role="menu"`/`menuitemradio`, foco de volta ao gatilho), duas variantes: `badge` (gatilho no canto do card, substitui o antigo `<span className="badge-fase">` em `GaleriaProjetos.jsx`, com `stopPropagation` na raiz contra o clique do card) e `campo` (substitui o `<select>` "Mover para a fase" da Visão Geral em `PaginaProjeto.jsx`). No card, atualização **otimista com rollback** + toast, via `atualizarProjetoLocal` **reintroduzido** em `useDados` (o que a Fase 22 removera). Sem mudança de backend (usa o `PUT /projetos/{id}` existente). O fallback `<select>` nativo previsto não foi necessário. Ver [plano-fases-25-27.md](../features/plano-fases-25-27.md).
+
+---
+
+### ADR-031 — Calendário de kick-off renderiza no navegador do gerente; o backend só fornece dados (Fase 28)
+
+**Contexto:** o responsável pediu (21/08/2026) a geração automática do calendário mensal da apresentação de kick-off — hoje montado à mão no Canva a partir de dados que o sistema já tem (etapas, dias úteis, data final derivada, termos aditivos, feriados). A definição de carga foi explícita: a solução não pode pesar o Apoio Hub (49 membros ativos, possíveis 70; hospedagem compartilhada Hostgator/PHP), e problemas de escala não devem ser ocultados. A dúvida central era **onde** a imagem nasce: no servidor ou no navegador. Especificação completa e análise das possibilidades em [../features/calendario-kickoff.md](../features/calendario-kickoff.md).
+
+**Decisão:**
+- **Renderização e rasterização acontecem no navegador do gerente.** O servidor não gera imagem nenhuma — as possibilidades avaliadas (SVG próprio, captura de DOM, Canvas 2D) são todas client-side; a renderização no servidor foi **rejeitada**: Chromium headless custa centenas de MB de RAM por instância e é inviável na hospedagem compartilhada do Hub (sem processo persistente, sem binário de navegador) — a opção morreria no port, que é o destino real da feature. Desenho server-side com Pillow/GD foi rejeitado por duplicar o layout fora do preview (drift entre o que o gerente vê e o que exporta).
+- **A única adição de backend é uma rota de leitura de feriados** — `GET /calendario/feriados?ano` devolvendo `[{data, nome}]` de `_calendario.holidays(ano)` (o calendário `Uberlandia` do ADR-025 é a fonte única), com o ano validado contra a janela de plausibilidade da Fase 10 (guarda no espírito do hardening de 12/07/2026). Resposta estática por ano, cacheável.
+- **A rota normaliza antes de devolver, e isso faz parte da decisão:** deduplica datas (21/04 volta duplicado do workalendar) e devolve **nomes em PT-BR de um mapa transcrito** (padrão ADR-005) — a biblioteca rotula os feriados nacionais em inglês, e o rótulo cru apareceria no slide do cliente como "Feriado - Independence Day". Feriado que cai em fim de semana **viaja na resposta** mas **não é pintado** pelo frontend: dado é do backend, exibição é do frontend.
+- **Fronteira do ADR-008 explicitada, não violada:** `data_inicio`/`data_fim` de cada etapa continuam vindo exclusivamente do backend; com a lista de feriados em mãos, o frontend decide apenas **quais células pintar** (dia de semana + não-feriado dentro do intervalo) — lógica de exibição. A math de dias úteis (somar, contar, cascatear) permanece exclusiva do backend.
+- **Consequência de escala, registrada com números:** custo de servidor por renderização = zero; o que viaja é o `GET` de etapas que já existe + ~1 KB de feriados por ano. O número de membros não entra na equação — não há endpoint quente novo.
+
+**Justificativa:** é a única distribuição de trabalho em que as quatro definições do responsável (fácil, fiel ao modelo, sem falhas, sem pesar o Hub) não conflitam entre si, e a única que sobrevive à hospedagem real do Hub. O navegador do gerente rasteriza 4–6 páginas em menos de um segundo — o servidor não faria melhor, faria apenas mais caro.
+
+**Status:** **aceito** (21/08/2026, mesmo dia da proposta) — o responsável escolheu a **possibilidade A** (ver ADR-032), que é client-side; a renderização no servidor fica registrada como alternativa descartada. **Nada executado** — falta o comando direto para começar. Plano executável em [../features/plano-fases-28-29.md](../features/plano-fases-28-29.md).
+
+---
+
+### ADR-032 — Um único componente SVG é o preview e a fonte da exportação (Fase 28)
+
+**Contexto:** decidido o *onde* (navegador, ADR-031), resta o *como*: captura de DOM com biblioteca (`html-to-image` e afins), desenho imperativo em Canvas 2D, ou um componente SVG próprio. O material gerado vai direto para a frente do cliente — a definição do responsável é "bem renderizado, bonito e sem falhas". O comparativo completo das possibilidades (prós, contras e a tabela contra as definições) está em [../features/calendario-kickoff.md](../features/calendario-kickoff.md).
+
+**Decisão:**
+- **Um componente React que renderiza SVG (`CalendarioKickoff`) é, ao mesmo tempo, o preview na tela e a fonte da exportação**: exportar é serializar **o mesmo SVG** e rasterizá-lo num `<canvas>` em 2×/3× (`toBlob('image/png')`). Preview = exportação por construção, não por aproximação.
+- **Captura de DOM rejeitada** para este artefato: as bibliotecas do gênero reimplementam/serializam a renderização com falhas conhecidas (fontes, sombras, variações entre navegadores) — "quase sempre certo" é inaceitável em material de cliente — e adicionariam dependência nova sem eliminar o trabalho de layout fino. **Canvas 2D direto rejeitado** por separar preview e exportação em dois códigos (drift) e ter a pior API de texto, sem ganho sobre o SVG (que rasteriza no mesmo canvas ao final).
+- **Custos assumidos do SVG:** layout posicionado por código (a grade rígida do calendário é o caso favorável); quebra de linha da coluna NOTAS via helper próprio de medida; **fonte embutida no SVG como `@font-face` data-URI (woff2 base64)** — sem isso a rasterização perde a fonte. O hex da paleta, o azul do cabeçalho, a fonte e o logo são **transcritos do template do Canva com a diretoria** (princípio ADR-005), não inferidos.
+- **Bônus de port registrado:** SVG com cores via props não depende nem das custom properties do piloto nem do Tailwind do Hub — o componente atravessa a fronteira das duas stacks (armadilha 2 do plano 25–27) quase intacto; a reescrita visual fica confinada à moldura (formulário/botões).
+- Zero dependência nova de renderização.
+
+**Justificativa:** entre as possibilidades client-side, só o SVG único garante fidelidade determinística entre o que o gerente aprova no preview e o que o cliente vê no slide, com resolução de exportação livre e sem lib. O custo real (layout à mão) paga-se uma vez; os custos das alternativas (fidelidade probabilística, dois códigos) pagam-se para sempre.
+
+**Status:** **aceito** (21/08/2026) — o responsável, apresentado ao comparativo das cinco possibilidades, **escolheu a possibilidade A**. As alternativas (captura de DOM, Canvas 2D, servidor, PPTX/API do Canva) ficam registradas como descartadas: reabri-las exige revisão deste ADR, não decisão de execução. **Nada executado** — falta o comando direto para começar.
+
+**Nota de execução:** cores, fonte e logo entram **parametrizados** num único arquivo de tema, mantendo o SVG livre de literais espalhados e portável para o Hub. Os insumos foram **entregues no mesmo dia** (logo vetorizado + dois PDFs reais do kick-off da Midiática) e os valores estão **transcritos de fonte oficial** em [../features/calendario-kickoff.md](../features/calendario-kickoff.md#valores-extraídos-do-template-transcritos-em-21082026) — base **1440×810**, colunas de 131, NOTAS a 29,3%, paleta completa. `frontend/public/mono-light.png` **não serve** (é só o símbolo, em branco-acinzentado para fundo escuro); o logo novo foi limpo (fundo de página removido, `viewBox` ajustado, metadados descartados) e entra em `frontend/public/` quando a fase for autorizada.
+
+**Consequência tipográfica registrada:** o template usa `Questrial` (Google Fonts, OFL — embutível) no mês/ano e **`Klein Text` (comercial)** no cabeçalho, números e legenda. Embutir o Klein Text extrapola a licença do Canva ⇒ a decisão recomendada é **`Inter` no lugar dele**, mantendo `Questrial` onde mais aparece. Isso significa que o gerado **não é tipograficamente idêntico** ao template nesses elementos — trade-off consciente, sujeito a decisão da diretoria (a alternativa é licenciar a fonte).
+
+---
+
+### ADR-033 — Exportação do calendário: copiar por mês, baixar tudo em .zip — limitação de clipboard registrada (Fase 28)
+
+**Contexto:** o pedido define dois botões — **Copiar** (imagem direto para a área de transferência) e **Baixar** (arquivos) — e o próprio responsável apontou o problema em aberto: como copiar vários meses sem repetir o gesto mês a mês. A resposta precisa ser honesta, não escondida (definição explícita do pedido).
+
+**Decisão:**
+- **Copiar é por mês, e isso não tem contorno:** a área de transferência do sistema e a API (`navigator.clipboard.write` + `ClipboardItem` `image/png`) comportam **uma imagem por cópia**. Cada página do preview ganha o seu botão Copiar (exige HTTPS/localhost, gesto do usuário, aba em foco — atendido no uso real). Colar todos os meses numa imagem única foi considerado e rejeitado: o deck do Canva precisa de uma imagem **por slide**.
+- **O multi-mês resolve-se no Baixar:** botão **"Baixar todos (.zip)"** com um PNG por mês em nome previsível (`calendario-{projeto}-{ano}-{mes}.png`), além do download individual. O fluxo recomendado ao gerente: baixar o zip e **arrastar os arquivos de uma vez** para o painel de uploads do Canva (que aceita multi-arquivo) — é o gerenciador de arquivos, não o clipboard, que faz a "colagem múltipla".
+- **Zip sem dependência como primeira opção:** PNG já é comprimido ⇒ zip **store-only** (cabeçalhos + diretório central + CRC32, ~80 linhas próprias). Fallback aceito, como decisão de execução: micro-dependência `client-zip` (~2.5 KB) se o escritor próprio se mostrar mais caro que o ganho — mesmo padrão do fallback registrado no ADR-030.
+- **Exportação em 2× da base** (proposta: 1140×640 → 2280×1280) para nitidez no slide; valor final a confirmar com o template real.
+
+**Justificativa:** os dois botões pedidos existem, cada um fazendo o que a plataforma realmente permite; a limitação do clipboard fica documentada como limitação — apresentá-la como escolha de UX seria ocultar exatamente o tipo de problema que o responsável pediu para não ocultar.
+
+**Status:** **aceito no essencial** (21/08/2026) — decorre da escolha da possibilidade A (ADR-032), que pressupõe rasterizar o próprio SVG do preview no cliente. Seguem como **decisão de execução**, sem necessidade de revisar o ADR: escritor zip próprio × micro-dependência `client-zip`, e o fator de exportação (2× sobre a base, a confirmar contra as proporções reais do template). **Nada executado.**
