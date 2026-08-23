@@ -20,12 +20,45 @@ e os passos concretos para colocar o piloto em produção com segurança.
 | 2 | Sem autenticação + endpoints destrutivos públicos | Crítico (ao hospedar) | ⚠️ Aberto — mitigar por gate de rede até a Fase 11 |
 | 3 | CORS `*` combinado com `allow_credentials=True` | Médio | ⚠️ Aberto — configurar `FRONTEND_ORIGIN` |
 | 4 | Swagger `/docs` e artefatos sensíveis expostos | Médio | ⚠️ Aberto — desligar em produção / proteger arquivos |
+| 5 | Endpoints de cálculo do **Hub publicado** respondem sem autenticação | Baixo | ℹ️ Observado em 23/08/2026 — **limitado**, ver abaixo |
 
 O achado **1 já foi corrigido no código** (teto `MAX_DIAS_UTEIS = 2000` em
 `app/utils/calendario.py`, aplicado nas rotas de `/calendario`, nos schemas de
 entrada de dias úteis e reforçado no núcleo; regressão em
 `backend/tests/test_seguranca.py`). Os itens **2, 3 e 4 dependem da
 configuração de deploy** e estão detalhados abaixo como checklist de execução.
+
+---
+
+## 5. Endpoints de cálculo do Apoio Hub publicado respondem sem sessão (observação, 23/08/2026)
+
+**O que foi observado.** Durante a auditoria de paridade do calendário (registrada em
+[gaps-publicacao-hostgator.md](gaps-publicacao-hostgator.md)), o endpoint
+`https://apoioconsultoriajunior.com.br/ApoioHub/api/proj_calendario_data_fim.php`
+respondeu normalmente a um `GET` feito de um navegador **sem nenhuma sessão no Hub**.
+O arquivo (`api/proj_calendario_data_fim.php`) de fato não chama `proj_exigir_editor()`
+nem verifica sessão — é um endpoint de cálculo puro, sem acesso a dados.
+
+**Por que a severidade é baixa, e não alta:**
+
+- **Não vaza dado.** O endpoint recebe uma data e um número e devolve outra data. Não toca
+  em projeto, etapa, membro ou qualquer registro — só na lib de calendário.
+- **O vetor de DoS está capado.** `PROJ_MAX_DIAS_UTEIS = 2000` na lib do Hub é a transcrição
+  do mesmo teto que corrigiu o achado 1 deste documento no piloto (12/07/2026). Sem ele,
+  esses laços dia-a-dia seriam exatamente o problema já conhecido — **com** ele, o custo por
+  requisição é limitado.
+- É coerente com a política declarada do Hub, em que **leitura é aberta à empresa inteira**
+  por design (`proj_auth_lib.php` exige editor só na escrita).
+
+**O que fica registrado como melhoria, não como correção urgente:** endpoints de cálculo
+públicos não precisam vazar nada para merecerem, ainda assim, o mesmo tratamento dos demais
+— exigir sessão (não necessariamente `podeEditar`) alinharia a superfície do Hub com a
+política de "leitura aberta **à empresa**", que não é o mesmo que "aberta à internet".
+Decisão do mantenedor do Hub; não bloqueia a Fase 29.
+
+> **Nota de escopo:** este documento trata do **piloto**. Este achado é do **Hub publicado** e
+> entra aqui porque é o único lugar do repo que consolida postura de segurança — a ação, se
+> houver, é do lado do Hub.
 
 ---
 

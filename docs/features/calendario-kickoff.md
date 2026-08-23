@@ -4,6 +4,8 @@ Especificação base da feature pedida pelo responsável em **21/08/2026**: auto
 
 > **STATUS: FASE 28 EXECUTADA (21/08/2026).** O gerador (possibilidade A, componente SVG único) foi construído no piloto por comando direto do responsável — ver o resumo do que foi entregue em [plano-fases-28-29.md](plano-fases-28-29.md). Este documento segue como fonte da anatomia do modelo, dos valores transcritos e das decisões resolvidas. A **Fase 29 (port para o Hub)** continua não iniciada.
 >
+> 🔁 **Refinos propostos em 22/08/2026** (Fase 30, nada executado): tamanho do chip da legenda, espaçamento padrão entre entradas e paleta de etapas ampliada de 6 para 15 cores, extraídas de dois PDFs novos de kick-off. Ver [plano-fase-30.md](plano-fase-30.md) — inclusive o levantamento que confirma que **a geometria transcrita abaixo continua válida** (os PDFs novos entram como fonte de cor, não de medida).
+>
 > **DECISÃO DE 21/08/2026 — a escolha do responsável é a possibilidade A (componente SVG único).** Os ADRs 031 e 032 estão **aceitos e implementados**; a análise das possibilidades abaixo fica preservada como registro do que foi comparado e por quê. As decisões em aberto de produto (bloco, sobreposição, persistência, UX) foram resolvidas na aprovação — ver "Decisões em aberto".
 
 ## O problema hoje

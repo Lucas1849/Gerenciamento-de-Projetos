@@ -14,6 +14,80 @@
 > processo Python. Isso explica por que os comandos para criar tabelas precisam ser **SQL
 > (DDL para MySQL/MariaDB)**, não Alembic/SQLAlchemy.
 
+---
+
+## Atualização de 23/08/2026 — auditoria por código + teste do ambiente publicado
+
+> **Mudança de método, e ela importa.** O documento original (15/07/2026) nasceu de **inspeção visual** do site publicado, e por isso a seção 4 lista as Fases 12–24 como "a verificar". Desde então o repositório do Hub passou a estar disponível localmente em `C:\Users\lukin\Vs Projects\ApoioHub` (PHP em `api/proj_*.php`, React em `src/components/projetos/`), o que permite **auditar por código** — definitivo, e sem tocar em produção.
+>
+> **Armadilha registrada:** o working tree do repo do Hub estava com a branch `feat/fase-27-meus-projetos-seletor-fase` em checkout. **Ver um arquivo no diretório não significa que ele está publicado** — o que vale é o que está em **`main`**. Toda afirmação abaixo foi verificada com `git cat-file -e main:<arquivo>`, não com `ls`.
+
+### Como cada achado foi verificado
+
+| Método | Alcance |
+|---|---|
+| **Leitura de código em `main`** | presença de endpoints, campos das respostas, lógica de calendário |
+| **Teste ao vivo, GET sem autenticação** | `proj_calendario_data_fim.php` no ambiente publicado, comparado com o piloto rodando local como oráculo |
+| **Não verificado** (exige sessão logada) | dados de produção (gap 1) e fluxos de UI — o gaps doc segue dependendo disso |
+
+### Paridade do calendário: verificada ao vivo, 5 de 5
+
+O plano da Fase 29 partia de que "o Hub não tem workalendar" e que a fonte de feriados seria **o maior trabalho do port**. **Não é.** `api/proj_calendario_lib.php` está em `main` e transcreve o calendário inteiro do piloto: Páscoa por Meeus/Jones/Butcher, Sexta-feira Santa e Corpus Christi (móveis), os dois municipais de Uberlândia (15/08 e 31/08), convenção **inclusiva** (ADR-018) e o teto anti-DoS `PROJ_MAX_DIAS_UTEIS = 2000` (mesmo hardening do piloto).
+
+Testado contra o **ambiente publicado**, com o piloto local como oráculo:
+
+| Caso | Piloto (workalendar) | Hub publicado | |
+|---|---|---|---|
+| 28/08/2026 + 3 dias úteis — **31/08 Aniversário de Uberlândia** (municipal) | 02/09 | 02/09 | ✅ |
+| 02/06/2026 + 3 — **04/06 Corpus Christi** (móvel) | 05/06 | 05/06 | ✅ |
+| 02/04/2026 + 2 — **03/04 Sexta-feira Santa** (móvel) | 06/04 | 06/04 | ✅ |
+| 04/09/2026 + 2 — **07/09 Independência** (nacional, controle) | 08/09 | 08/09 | ✅ |
+| 16/02/2026 + 3 — **Carnaval, que NÃO é feriado** | 18/02 | 18/02 | ✅ |
+
+O último caso é o que descarta coincidência: bate inclusive no que **não** é feriado. **A Fase 23 (ADR-025) está portada e no ar.**
+
+### O que a auditoria de código fechou
+
+| Fase | Item | Situação em `main` |
+|---|---|---|
+| 12 (ADR-014) | cascata de datas, edição de etapa | ✅ `proj_calendario_cascata.php`, `proj_editar_etapa.php`, `proj_reordenar_etapas.php` |
+| 13 (ADR-015) | dependências + Cronograma interativo | ✅ `proj_criar_dependencia.php`, `proj_deletar_dependencia.php`, `CronogramaEtapas.jsx` |
+| 16 (ADR-018) | dia útil inclusivo | ✅ documentado e implementado em `proj_calendario_lib.php`; confirmado pelos testes acima |
+| 17 (ADR-019) | termos aditivos | ✅ `proj_criar_termo.php`, `proj_anexar_doc_termo.php`, `proj_deletar_termo.php`, `ModalTermoAditivo.jsx` |
+| 19 (ADR-021) | links de entrega/demanda | ✅ `proj_criar_link_etapa.php`, `proj_deletar_link_etapa.php` |
+| 22 (ADR-024) | galeria de projetos | ✅ `GaleriaProjetos.jsx` |
+| 23 (ADR-025) | feriados municipais | ✅ **verificado ao vivo** (tabela acima) |
+| 24 (ADR-026) | data final editável na criação | ✅ `proj_calendario_dias_uteis.php` + `EtapasEditor.jsx` |
+| **26/27 (ADR-029/030)** | seletor de fase no card + "Meus projetos" | ⚠️ **NÃO está em `main`** — ver abaixo |
+| 18 (ADR-020) | Documentos importantes | ❌ **confirmado ausente** — nenhum endpoint de `documentos` em `api/` |
+| **28 (ADR-031/032/033)** | gerador de calendário de kick-off | ❌ não portado (esperado — é a Fase 29) |
+
+**A seção 4 deste documento ("paridade das Fases 12–24 a verificar") está portanto respondida**, exceto pelo que depende de dado de produção.
+
+### Fase 27 está em PR de teste, não publicada
+
+`SeletorFase.jsx` existe no diretório, mas **não em `main`** — o commit `c02c6ca` ("feat: Fase 27 — filtro 'Meus projetos' e seletor de fase no card") vive só na branch `feat/fase-27-meus-projetos-seletor-fase`, que está pushed para o origin e **aguardando merge**. É exatamente o padrão "PR de teste" do [plano-fases-25-27.md](../features/plano-fases-25-27.md).
+
+Escopo do PR pendente: **4 arquivos, 262 inserções** — `SeletorFase.jsx` (novo), `GaleriaProjetos.jsx`, `VisaoGeral.jsx`, `src/pages/Projetos.jsx`.
+
+### Achado novo — os nomes dos feriados divergem (vai para o slide do cliente)
+
+O Hub tem os nomes apenas como **comentário** no PHP; o piloto os tem como dado (`NOMES_FERIADOS_PT`), e eles entram na legenda do calendário de kick-off ("Feriado - Independência do Brasil"). Quando a Fase 29 criar o endpoint de listagem, usar os comentários existentes produziria **texto diferente nas duas stacks para o mesmo projeto**:
+
+| Data | Piloto (correto, vai ao slide) | Hub (comentário atual) |
+|---|---|---|
+| 07/09 | Independência **do Brasil** | Independência |
+| 12/10 | **Nossa Senhora** Aparecida | N. Sra. Aparecida |
+| 15/08 | Nossa Senhora da Abadia **(padroeira de Uberlândia)** | N. Sra. da Abadia (Uberlândia) |
+
+O piloto também lista **Páscoa (05/04)**, ausente no Hub — inofensivo (cai no domingo e o frontend nunca pinta feriado de fim de semana), mas o endpoint deve ser escrito sabendo disso.
+
+### Observação de segurança (sem alarme)
+
+`proj_calendario_data_fim.php` respondeu **sem nenhuma sessão** — o teste acima foi feito de um navegador sem login no Hub. É um endpoint de cálculo público em produção. Está limitado por `PROJ_MAX_DIAS_UTEIS = 2000`, então o vetor de DoS que o hardening do piloto fechou em 12/07/2026 está capado ali também. Registrado em [hardening-producao.md](hardening-producao.md); não é incidente.
+
+---
+
 ## O que está OK
 
 - Tema escuro, cores de marca (indigo `#6C5CE7`), tipografia e grid da galeria de projetos
@@ -27,7 +101,9 @@
 
 ## Gaps encontrados
 
-### 1. Tabela de professores está vazia (crítico)
+### 1. Tabela de professores está vazia (crítico) — *não reverificado em 23/08/2026*
+
+> Este gap é de **dado de produção**, não de código: só se confirma com sessão logada no Hub. A auditoria de 23/08/2026 foi por código + endpoint público, então **não o revalidou** — segue como estava.
 
 **Onde:** aba "Projetos" → "Professores" mostra "Nenhum professor cadastrado"; no formulário
 de "Visão Geral" de um projeto, o campo "Professor orientador" só oferece "— Sem professor —".
@@ -51,7 +127,9 @@ um `INSERT` equivalente em MySQL, com os dados que hoje vivem no arquivo gitigno
    semeado — `proj_get_catalogo.php` respondeu 200 com dados, então isso já está OK; só
    professores está faltando.
 
-### 2. Aba "Documentos importantes" não existe na galeria de gestões (alto)
+### 2. Aba "Documentos importantes" não existe na galeria de gestões (alto) — ❌ **CONFIRMADO ABERTO** (23/08/2026)
+
+> Confirmado por código: não há nenhum endpoint de `documentos` em `api/`. Segue valendo integralmente.
 
 **Onde:** a galeria de gestões (`/ApoioHub/projetos`) só mostra as abas "Gestões" e
 "Professores". Falta a terceira aba **"Documentos importantes"** (Fase 18, ADR-020): lista
@@ -74,7 +152,9 @@ operacional — o motivo original era justamente consistência visual entre disp
 renderiza o card de etapa e trocar os emojis pelos SVGs equivalentes (ou recriá-los —
 são ícones simples de contorno, sem texto, coerentes com a paleta indigo/branco do tema).
 
-### 4. Paridade de features das Fases 12–24 precisa ser auditada (a verificar)
+### 4. Paridade de features das Fases 12–24 — ✅ **AUDITADA em 23/08/2026**
+
+> **Respondida** na seção "Atualização de 23/08/2026", por leitura de `main` + teste ao vivo do calendário. Resultado: **todas as Fases 12–24 estão em `main`**, incluindo os feriados municipais de Uberlândia (verificados 5/5 contra o piloto). O texto abaixo fica como registro do que se pediu auditar.
 
 Não foi possível confirmar em uma sessão de inspeção visual se todas as features abaixo
 existem no ambiente publicado (podem ter sido portadas parcialmente para o PHP). Vale um
@@ -225,6 +305,17 @@ CREATE TABLE IF NOT EXISTS documentos (
   url VARCHAR(1000) NOT NULL,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- Fase 28 (ADR-031) — estilização do gerador de calendário de kick-off.
+-- Necessária só quando a Fase 29 (port do gerador) for executada.
+CREATE TABLE IF NOT EXISTS calendario_config (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  projeto_id INT NOT NULL UNIQUE,
+  cores TEXT NOT NULL,
+  CONSTRAINT fk_calconfig_projeto FOREIGN KEY (projeto_id)
+    REFERENCES projetos(id) ON DELETE CASCADE
+);
 ```
 
 **Antes de rodar:** peça ao Claude do Hub para primeiro rodar `DESCRIBE <tabela>;` (ou
@@ -235,9 +326,21 @@ não precisam ser alteradas só por estética.
 
 ## Resumo executivo (para o Claude do Apoio Hub)
 
+*Atualizado em 23/08/2026 após a auditoria por código + teste do publicado.*
+
 1. **Popular a tabela `professores`** com os 72 professores da FAGEN (bloqueador do
    "Professor orientador" e da aba Professores) — prioridade máxima, é o bug mais visível.
-2. **Implementar a aba "Documentos importantes"** (tabela `documentos` + tela + endpoints).
+   **Único gap que a auditoria de 23/08 não pôde reverificar** (é dado de produção, exige
+   sessão logada).
+2. **Implementar a aba "Documentos importantes"** (tabela `documentos` + tela + endpoints) —
+   ❌ confirmado ausente por código.
 3. **Trocar os emojis ⏳/📅 pelos ícones SVG da marca** nos cards de etapa.
-4. **Auditar a paridade das Fases 12–24** feature a feature (lista na seção 4) e reportar de
-   volta o que falta antes de declarar a publicação completa.
+4. ~~Auditar a paridade das Fases 12–24~~ — ✅ **feito em 23/08/2026**: todas em `main`,
+   incluindo os feriados municipais de Uberlândia, verificados **5/5 ao vivo** contra o
+   piloto. Nada a fazer aqui.
+5. **Mergear o PR da Fase 27** (`feat/fase-27-meus-projetos-seletor-fase`, 4 arquivos) —
+   está pushed e parado; o seletor de fase e o filtro "Meus projetos" **não estão no ar**.
+6. **Quando a Fase 29 for executada:** criar a tabela `calendario_config` (DDL acima) e um
+   `proj_get_feriados.php` que exponha o `proj_feriados()` que já existe — **usando os nomes
+   PT-BR do piloto**, não os comentários do PHP (a divergência está registrada acima; esse
+   texto vai para o slide do cliente).
