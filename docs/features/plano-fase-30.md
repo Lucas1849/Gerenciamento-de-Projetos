@@ -6,6 +6,8 @@ Contexto anterior: spec em [calendario-kickoff.md](calendario-kickoff.md), plano
 
 > **STATUS: EXECUTADA em 23/08/2026** (comando direto do responsável, branch `execucao-fase-30`). 100% frontend, sem backend/schema/ADR-001. Decisões do §11 aplicadas nas recomendações (chip da legenda; NOTAS 34%; 15 cores; política A de estouro; congelar cores; contraste WCAG); ADR-034 escrito em [decisoes.md](../arquitetura/decisoes.md). Build + lint verdes; contraste das 15 cores verificado por harness. **Pendência 28e/30e (passada visual do PNG no browser) segue aberta.**
 >
+> 🔧 **Refino pós-execução (23/08/2026):** o teste manual do port (Fase 29) revelou que o contraste WCAG do §30d só chegou ao chip da legenda — o **número do dia na grade some sobre etapa de cor escura**. Corrigido primeiro no Hub; **mesmo fix pendente aqui** (paridade 29d). Detalhes no §6.
+>
 > ⚠️ **Ordem de execução: 28 → 30 → 29.** Esta fase vem **antes da Fase 29** (port para o Apoio Hub), e isso está registrado como **dependência**, não como preferência: os três refinos caem inteiros dentro de `calendarioKickoffTema.js`, que é justamente o contrato de portabilidade da 29. Portar primeiro seria transcrever para o Hub valores já sabidos errados e pagar o mesmo trabalho duas vezes, em duas linguagens de estilo (armadilha 2 do [plano-fases-25-27.md](plano-fases-25-27.md)). Ver "Dependência da Fase 30" e o passo **29d** em [plano-fases-28-29.md](plano-fases-28-29.md).
 
 ---
@@ -263,6 +265,12 @@ Cores reservadas seguem intocadas: `#004AAD` cabeçalho, `#FFBD59` feriado, `#E8
 O caso de `#CB69FF` mostra a fragilidade: luminância **0,594** contra um corte de **0,6** — erra por 0,006. E o problema **já existe na paleta atual**: `#2A965C` (verde-escuro) recebe branco a 3,74 quando preto daria 5,62.
 
 **Proposta:** trocar a heurística de luminância pelo **contraste WCAG real** — calcular a razão contra preto e contra branco e escolher a maior. É mudança contida na própria função, sem efeito em nenhum outro ponto do gerador, e resolve os 6 casos de uma vez.
+
+> 🔧 **Refino pós-execução (23/08/2026) — a correção do texto só chegou à metade.** Durante o teste manual do port para o Hub (Fase 29), o responsável notou que, ao escolher uma **cor de etapa escura**, o **número do dia dentro da célula da grade some** — a legenda troca a cor do texto (usa `textoSobre()`), mas o número do dia na grade continuava fixo em `CORES.textoEscuro` e ficava invisível sobre a faixa escura. É o mesmo defeito de contraste do §6, num segundo ponto de uso que o §30d não cobriu: o §7 já registrava que "o número do dia fica *por cima* da cor" (linha ~280), mas como a leitura (b) não foi ativada, esse `<text>` nunca recebeu o tratamento WCAG.
+>
+> **Correção:** em `CalendarioKickoff.jsx`, o número do dia passa a usar `textoSobre(faixas[0].cor)` quando a célula está pintada (a faixa de cima é a que fica sob o número, no topo-direito), e mantém `CORES.textoEscuro` na célula sem pintura. Mesma função, mesma regra do chip — só o segundo ponto de uso que faltava. Feriado (laranja claro) segue com número escuro.
+>
+> **Aplicado primeiro no Hub** (PR da Fase 29, onde o bug foi visto). O piloto tem o **mesmo defeito** e precisa do mesmo fix para manter a paridade 29d — pendência a aplicar aqui em `calendarioKickoffTema.js`/`CalendarioKickoff.jsx`.
 
 ---
 
