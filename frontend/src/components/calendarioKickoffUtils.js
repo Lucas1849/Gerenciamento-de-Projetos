@@ -21,12 +21,19 @@ import {
 const ddmm = (iso) => formatarData(iso).slice(0, 5); // "18/06"
 
 const ALTURA_LINHA_NOME = 1.1; // multiplicador do corpo p/ altura de linha do nome
+// Fase 30: até 4 linhas por nome. Com NOTAS a 34% (chip 172) cabem ~19 chars por
+// linha × 4 = ~76, o que acomoda o nome mais longo do catálogo ("Análise de
+// Concorrentes e Vantagens Competitivas", 48) e os feriados por extenso ("Feriado
+// - Aniversário de Uberlândia") SEM as reticências que ficavam estranhas para o
+// cliente (feedback do responsável, 23/08/2026). A altura da entrada acompanha
+// (planejarLegenda usa linhas.length), então as linhas extras não sobrepõem nada.
+const MAX_LINHAS_NOME = 4;
 
 // Quebra um nome em até `maxLinhas` linhas que caibam em `larguraMax` (px),
 // estimando ~0,55·corpo por caractere (Inter). Layout SVG não tem wrap de CSS
 // (ADR-032), então a quebra é manual. Movido do componente para cá na Fase 30
 // para que o planejamento da legenda (planejarLegenda) seja lógica pura testável.
-export function quebrarTexto(texto, larguraMax, corpo, maxLinhas = 2) {
+export function quebrarTexto(texto, larguraMax, corpo, maxLinhas = MAX_LINHAS_NOME) {
   const porChar = corpo * 0.55;
   const maxChars = Math.max(4, Math.floor(larguraMax / porChar));
   const palavras = texto.split(' ');
@@ -63,7 +70,7 @@ export function planejarLegenda(entradas) {
   const nomeLargura = larguraNomeLegenda();
   const alturaDisponivel = alturaLinhaSemana() * GEO.semanas - padding;
 
-  const linhasPor = entradas.map(e => quebrarTexto(e.nome, nomeLargura, corpoNome, 2));
+  const linhasPor = entradas.map(e => quebrarTexto(e.nome, nomeLargura, corpoNome));
   const alturaConteudo = (chipAltura, i) =>
     Math.max(chipAltura, linhasPor[i].length * alturaLinha);
 
