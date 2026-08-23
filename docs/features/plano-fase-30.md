@@ -4,7 +4,7 @@ Registro do pedido do responsável em **22/08/2026**, depois de usar a primeira 
 
 Contexto anterior: spec em [calendario-kickoff.md](calendario-kickoff.md), plano/entrega em [plano-fases-28-29.md](plano-fases-28-29.md), decisões em [ADR-031/032/033](../arquitetura/decisoes.md).
 
-> **STATUS: PROPOSTA — NADA FOI EXECUTADO.** Nenhuma linha de código foi escrita; este documento é só o levantamento e a proposta, conforme pedido explícito ("não realize nenhum código, apenas documente a proposta de melhoria"). **Nenhuma fase começa sem comando direto do responsável.**
+> **STATUS: EXECUTADA em 23/08/2026** (comando direto do responsável, branch `execucao-fase-30`). 100% frontend, sem backend/schema/ADR-001. Decisões do §11 aplicadas nas recomendações (chip da legenda; NOTAS 34%; 15 cores; política A de estouro; congelar cores; contraste WCAG); ADR-034 escrito em [decisoes.md](../arquitetura/decisoes.md). Build + lint verdes; contraste das 15 cores verificado por harness. **Pendência 28e/30e (passada visual do PNG no browser) segue aberta.**
 >
 > ⚠️ **Ordem de execução: 28 → 30 → 29.** Esta fase vem **antes da Fase 29** (port para o Apoio Hub), e isso está registrado como **dependência**, não como preferência: os três refinos caem inteiros dentro de `calendarioKickoffTema.js`, que é justamente o contrato de portabilidade da 29. Portar primeiro seria transcrever para o Hub valores já sabidos errados e pagar o mesmo trabalho duas vezes, em duas linguagens de estilo (armadilha 2 do [plano-fases-25-27.md](plano-fases-25-27.md)). Ver "Dependência da Fase 30" e o passo **29d** em [plano-fases-28-29.md](plano-fases-28-29.md).
 

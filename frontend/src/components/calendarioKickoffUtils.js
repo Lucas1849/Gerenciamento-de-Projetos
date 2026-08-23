@@ -14,9 +14,95 @@ import {
   formatarData,
 } from './datasUtils';
 import { agruparCards, numerosDosBlocos } from './etapasUtils';
-import { PALETA_ETAPAS, CORES, GEO } from './calendarioKickoffTema';
+import {
+  PALETA_ETAPAS, CORES, GEO, larguraColunaNotas, alturaLinhaSemana,
+} from './calendarioKickoffTema';
 
 const ddmm = (iso) => formatarData(iso).slice(0, 5); // "18/06"
+
+const ALTURA_LINHA_NOME = 1.1; // multiplicador do corpo p/ altura de linha do nome
+// Fase 30: até 4 linhas por nome. Com NOTAS a 34% (chip 172) cabem ~19 chars por
+// linha × 4 = ~76, o que acomoda o nome mais longo do catálogo ("Análise de
+// Concorrentes e Vantagens Competitivas", 48) e os feriados por extenso ("Feriado
+// - Aniversário de Uberlândia") SEM as reticências que ficavam estranhas para o
+// cliente (feedback do responsável, 23/08/2026). A altura da entrada acompanha
+// (planejarLegenda usa linhas.length), então as linhas extras não sobrepõem nada.
+const MAX_LINHAS_NOME = 4;
+
+// Quebra um nome em até `maxLinhas` linhas que caibam em `larguraMax` (px),
+// estimando ~0,55·corpo por caractere (Inter). Layout SVG não tem wrap de CSS
+// (ADR-032), então a quebra é manual. Movido do componente para cá na Fase 30
+// para que o planejamento da legenda (planejarLegenda) seja lógica pura testável.
+export function quebrarTexto(texto, larguraMax, corpo, maxLinhas = MAX_LINHAS_NOME) {
+  const porChar = corpo * 0.55;
+  const maxChars = Math.max(4, Math.floor(larguraMax / porChar));
+  const palavras = texto.split(' ');
+  const linhas = [];
+  let atual = '';
+  for (const p of palavras) {
+    const tentativa = atual ? `${atual} ${p}` : p;
+    if (tentativa.length <= maxChars) atual = tentativa;
+    else { if (atual) linhas.push(atual); atual = p; }
+    if (linhas.length === maxLinhas) break;
+  }
+  if (atual && linhas.length < maxLinhas) linhas.push(atual);
+  if (linhas.length === maxLinhas) {
+    const usado = linhas.join(' ').length;
+    if (usado < texto.length) linhas[maxLinhas - 1] = linhas[maxLinhas - 1].replace(/.{1}$/, '…');
+  }
+  return linhas;
+}
+
+// Largura disponível para o NOME à direita do chip (deriva de notasFracao).
+export function larguraNomeLegenda() {
+  const { padding, chipLargura } = GEO.legenda;
+  return larguraColunaNotas() - padding * 2 - chipLargura - 12;
+}
+
+// Planeja o layout vertical da legenda (Fase 30, M2): escolhe o preset (normal
+// ou compacto) que faz TUDO caber, com a altura de cada entrada = função do
+// conteúdo (1 ou 2 linhas de nome) e o espaçamento como TOKEN fixo — nunca mais
+// o resto elástico que sobrepunha chips. Devolve as posições já resolvidas para
+// o componente só desenhar, e `estouro`/`modo` para o gerador avisar o gerente.
+export function planejarLegenda(entradas) {
+  const { corpoNome, padding, presets } = GEO.legenda;
+  const alturaLinha = corpoNome * ALTURA_LINHA_NOME;
+  const nomeLargura = larguraNomeLegenda();
+  const alturaDisponivel = alturaLinhaSemana() * GEO.semanas - padding;
+
+  const linhasPor = entradas.map(e => quebrarTexto(e.nome, nomeLargura, corpoNome));
+  const alturaConteudo = (chipAltura, i) =>
+    Math.max(chipAltura, linhasPor[i].length * alturaLinha);
+
+  const cabe = (preset) => {
+    let total = padding;
+    entradas.forEach((_, i) => {
+      total += alturaConteudo(preset.chipAltura, i);
+      if (i < entradas.length - 1) total += preset.espacamento;
+    });
+    return total <= alturaDisponivel;
+  };
+
+  let modo = 'normal';
+  let estouro = false;
+  if (!cabe(presets.normal)) {
+    modo = 'compacto';
+    if (!cabe(presets.compacto)) estouro = true; // nem compacto cabe: melhor esforço
+  }
+  const preset = presets[modo];
+
+  let cursor = padding;
+  const itens = entradas.map((e, i) => {
+    const altura = alturaConteudo(preset.chipAltura, i);
+    const top = cursor;
+    cursor += altura + preset.espacamento;
+    return {
+      cor: e.cor, intervalo: e.intervalo, linhas: linhasPor[i],
+      top, alturaConteudo: altura, chipAltura: preset.chipAltura,
+    };
+  });
+  return { modo, estouro, itens };
+}
 
 /** Itera dias de calendário (inclusivo) entre dois ISO, chamando fn(iso). */
 function porDia(inicioISO, fimISO, fn) {
@@ -173,7 +259,7 @@ function montarPagina(ano, mes, itens, feriadosMap) {
       });
     });
 
-  return { ano, mes, celulas, legenda };
+  return { ano, mes, celulas, legenda, legendaPlano: planejarLegenda(legenda) };
 }
 
 /** Ponto de entrada: monta todas as páginas do projeto.

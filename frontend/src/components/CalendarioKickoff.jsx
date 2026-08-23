@@ -7,30 +7,6 @@ import { rotuloMes } from './datasUtils';
 
 const DIAS_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
-// Quebra um nome em até `maxLinhas` linhas que caibam em `larguraMax` (px),
-// estimando ~0,55·corpo por caractere (Inter). Layout SVG não tem wrap de CSS
-// (ADR-032), então a quebra é manual — helper próprio, como previsto no plano.
-function quebrarTexto(texto, larguraMax, corpo, maxLinhas = 2) {
-  const porChar = corpo * 0.55;
-  const maxChars = Math.max(4, Math.floor(larguraMax / porChar));
-  const palavras = texto.split(' ');
-  const linhas = [];
-  let atual = '';
-  for (const p of palavras) {
-    const tentativa = atual ? `${atual} ${p}` : p;
-    if (tentativa.length <= maxChars) atual = tentativa;
-    else { if (atual) linhas.push(atual); atual = p; }
-    if (linhas.length === maxLinhas) break;
-  }
-  if (atual && linhas.length < maxLinhas) linhas.push(atual);
-  // Se sobrou texto, reticências na última linha.
-  if (linhas.length === maxLinhas) {
-    const usado = linhas.join(' ').length;
-    if (usado < texto.length) linhas[maxLinhas - 1] = linhas[maxLinhas - 1].replace(/.{1}$/, '…');
-  }
-  return linhas;
-}
-
 // Componente SVG de UMA página do calendário de kick-off (ADR-032). O mesmo SVG
 // é o preview na tela e a fonte da exportação (rasterizado em canvas 2×). Cores
 // e fontes vêm do tema (calendarioKickoffTema.js) — sem custom properties do app
@@ -135,41 +111,36 @@ const CalendarioKickoff = forwardRef(function CalendarioKickoff(
           stroke={CORES.gradeLinha} strokeWidth="1" />
       ))}
 
-      {/* Legenda na coluna NOTAS */}
-      <Legenda entradas={pagina.legenda} x={notasX} y={gridY} largura={colNotas}
-        alturaTotal={rowH * GEO.semanas} familia={familiaTexto} />
+      {/* Legenda na coluna NOTAS — layout já resolvido em montarPagina */}
+      <Legenda plano={pagina.legendaPlano} x={notasX} y={gridY} familia={familiaTexto} />
     </svg>
   );
 });
 
-function Legenda({ entradas, x, y, largura, alturaTotal, familia }) {
+// Fase 30: o layout vertical (preset normal/compacto, altura por conteúdo,
+// espaçamento fixo) vem pronto de planejarLegenda; o componente só desenha.
+function Legenda({ plano, x, y, familia }) {
   const pad = GEO.legenda.padding;
-  const { chipLargura, chipAltura, corpoIntervalo, corpoNome } = GEO.legenda;
-  // Altura por entrada ajustada para caber tudo (mínimo 40, evita estouro).
-  const alturaEntrada = Math.min(
-    GEO.legenda.alturaEntrada,
-    entradas.length ? (alturaTotal - pad) / entradas.length : GEO.legenda.alturaEntrada
-  );
+  const { chipLargura, chipRaio, corpoIntervalo, corpoNome } = GEO.legenda;
   const nomeX = x + pad + chipLargura + 12;
-  const nomeLargura = largura - pad * 2 - chipLargura - 12;
+  const itens = plano ? plano.itens : [];
 
   return (
     <g>
-      {entradas.map((e, i) => {
-        const ey = y + pad + i * alturaEntrada;
-        const chipY = ey + (alturaEntrada - chipAltura) / 2;
-        const linhas = quebrarTexto(e.nome, nomeLargura, corpoNome, 2);
-        const nomeY = ey + alturaEntrada / 2 - (linhas.length - 1) * (corpoNome * 0.55);
+      {itens.map((e, i) => {
+        const top = y + e.top;
+        const chipY = top + (e.alturaConteudo - e.chipAltura) / 2;
+        const nomeY = top + e.alturaConteudo / 2 - (e.linhas.length - 1) * (corpoNome * 0.55);
         return (
           <g key={i}>
-            <rect x={x + pad} y={chipY} width={chipLargura} height={chipAltura}
-              rx="6" fill={e.cor} />
+            <rect x={x + pad} y={chipY} width={chipLargura} height={e.chipAltura}
+              rx={chipRaio} fill={e.cor} />
             <text
-              x={x + pad + chipLargura / 2} y={chipY + chipAltura / 2 + corpoIntervalo / 3}
+              x={x + pad + chipLargura / 2} y={chipY + e.chipAltura / 2 + corpoIntervalo / 3}
               textAnchor="middle" fontFamily={familia} fontSize={corpoIntervalo}
               fontWeight="700" fill={textoSobre(e.cor)}
             >{e.intervalo}</text>
-            {linhas.map((ln, k) => (
+            {e.linhas.map((ln, k) => (
               <text
                 key={k} x={nomeX} y={nomeY + k * (corpoNome * 1.1) + corpoNome / 3}
                 fontFamily={familia} fontSize={corpoNome} fontWeight="700"
