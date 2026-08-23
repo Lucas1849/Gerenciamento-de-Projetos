@@ -6,7 +6,7 @@ Contexto anterior: spec em [calendario-kickoff.md](calendario-kickoff.md), plano
 
 > **STATUS: EXECUTADA em 23/08/2026** (comando direto do responsável, branch `execucao-fase-30`). 100% frontend, sem backend/schema/ADR-001. Decisões do §11 aplicadas nas recomendações (chip da legenda; NOTAS 34%; 15 cores; política A de estouro; congelar cores; contraste WCAG); ADR-034 escrito em [decisoes.md](../arquitetura/decisoes.md). Build + lint verdes; contraste das 15 cores verificado por harness. **Pendência 28e/30e (passada visual do PNG no browser) segue aberta.**
 >
-> 🔧 **Refino pós-execução (23/08/2026):** o teste manual do port (Fase 29) revelou que o contraste WCAG do §30d só chegou ao chip da legenda — o **número do dia na grade some sobre etapa de cor escura**. Corrigido primeiro no Hub; **mesmo fix pendente aqui** (paridade 29d). Detalhes no §6.
+> 🔧 **Refinos pós-execução (23/08/2026), achados no teste do port (Fase 29), corrigidos primeiro no Hub e pendentes aqui (paridade 29d):** (1) o contraste WCAG do §30d só chegou ao chip da legenda — o **número do dia na grade some sobre etapa de cor escura** (detalhes no §6); (2) o **título da entrega era abreviado com "…"** mesmo com espaço livre — o teto de 4 linhas foi removido, o nome nunca mais é cortado (detalhes no §4.3).
 >
 > ⚠️ **Ordem de execução: 28 → 30 → 29.** Esta fase vem **antes da Fase 29** (port para o Apoio Hub), e isso está registrado como **dependência**, não como preferência: os três refinos caem inteiros dentro de `calendarioKickoffTema.js`, que é justamente o contrato de portabilidade da 29. Portar primeiro seria transcrever para o Hub valores já sabidos errados e pagar o mesmo trabalho duas vezes, em duas linguagens de estilo (armadilha 2 do [plano-fases-25-27.md](plano-fases-25-27.md)). Ver "Dependência da Fase 30" e o passo **29d** em [plano-fases-28-29.md](plano-fases-28-29.md).
 
@@ -183,6 +183,12 @@ O comportamento elástico de hoje é feio, mas existe por um motivo — nunca de
 | D | Página extra do mês só com a legenda | Nunca trunca nada | Slide a mais no deck do cliente sem calendário nenhum |
 
 Em qualquer política escolhida, **avisar o gerente no painel do gerador** quando um mês entrar em modo compacto — ele decide se aceita ou se junta etapas em bloco. Nunca produzir slide quebrado em silêncio.
+
+> 🔧 **Refino pós-execução (23/08/2026) — o título da entrega nunca é abreviado.** Durante o teste do port (Fase 29), o responsável viu um **bloco de 3 etapas** ter uma etapa inteira do nome composto ("Bloco N: A + B + C") cortada com "…" na coluna NOTAS — **mesmo com bastante espaço vertical livre**. Causa: `quebrarTexto` tinha um teto fixo de **4 linhas** (`MAX_LINHAS_NOME`) que truncava independentemente do espaço disponível. Para o cliente, isso esconde o que compõe a entrega em bloco.
+>
+> **Decisão:** o nome **nunca** é abreviado. O teto foi removido — o nome quebra em quantas linhas precisar, e a altura da entrada acompanha (`planejarLegenda` já usa `linhas.length`, então nada sobrepõe). Quando genuinamente não couber, o preset `compacto` + o aviso de `estouro` (esta §4.3) alertam o gerente — mas o texto continua **completo**, nunca cortado. `quebrarTexto` só trunca se receber um teto finito explícito (nenhum chamador passa).
+>
+> **Aplicado primeiro no Hub** (PR da Fase 29). Mesmo fix **pendente no piloto** (`calendarioKickoffUtils.js`) para manter a paridade 29d.
 
 ---
 
