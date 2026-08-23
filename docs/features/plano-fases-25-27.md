@@ -5,7 +5,14 @@ Registro do planejamento pedido pelo responsável em **08/08/2026**, na sequênc
 1. **Alternância de visualização** — um botão no **canto superior direito** que troca entre "apenas os meus projetos" e "todos os projetos", com **padrão em "meus"**. Motivação declarada pelo responsável: *"melhorar a visualização e tirar a poluição"* — é **filtro de conforto, não controle de acesso**.
 2. **Mudar a situação do projeto mais facilmente** — hoje a fase só muda dentro do projeto, na aba Visão Geral. A ideia do responsável: um **dropdown no próprio card**, mostrando a situação atual e permitindo trocá-la ali.
 
-> **STATUS: PLANEJADO — NADA EXECUTADO.** Nenhuma fase começa sem comando direto do responsável (regra permanente do projeto). Este documento existe para ser aprovado ou recusado antes de qualquer código.
+> **STATUS (atualizado em 23/08/2026):**
+>
+> - **Fases 25 e 26 — EXECUTADAS** no piloto em 08/08/2026 e mergeadas no `master` (PRs #29 e #31).
+> - **Fase 27 — EXECUTADA como PR de teste, ainda NÃO MERGEADA.** Auditoria de 23/08/2026 no repo do Hub: commit `c02c6ca` ("feat: Fase 27 — filtro 'Meus projetos' e seletor de fase no card") existe na branch `feat/fase-27-meus-projetos-seletor-fase`, pushed para o origin, **mas não é ancestral de `main`** — logo o seletor de fase e o filtro "Meus projetos" **não estão no ar**. Escopo do PR pendente: **4 arquivos, 262 inserções** — `SeletorFase.jsx` (novo), `GaleriaProjetos.jsx`, `VisaoGeral.jsx` e `src/pages/Projetos.jsx`.
+>
+> ⚠️ **Armadilha registrada:** o working tree do repo do Hub fica nessa branch. **Ver o arquivo no diretório não significa que está publicado** — conferir sempre com `git cat-file -e main:<arquivo>`. Esse erro já foi cometido uma vez nesta documentação.
+>
+> O texto original desta seção era *"PLANEJADO — NADA EXECUTADO"*; ficou desatualizado por duas semanas. Detalhes da auditoria em [../arquitetura/gaps-publicacao-hostgator.md](../arquitetura/gaps-publicacao-hostgator.md#fase-27-está-em-pr-de-teste-não-publicada).
 
 ## O enquadramento que define este plano: duas stacks
 
