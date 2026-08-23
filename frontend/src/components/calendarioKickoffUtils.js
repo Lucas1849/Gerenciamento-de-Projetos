@@ -14,7 +14,7 @@ import {
   formatarData,
 } from './datasUtils';
 import { agruparCards, numerosDosBlocos } from './etapasUtils';
-import { PALETA_ETAPAS, CORES } from './calendarioKickoffTema';
+import { PALETA_ETAPAS, CORES, GEO } from './calendarioKickoffTema';
 
 const ddmm = (iso) => formatarData(iso).slice(0, 5); // "18/06"
 
@@ -131,6 +131,15 @@ function montarPagina(ano, mes, itens, feriadosMap) {
     });
     return { dia: c.dia, iso: c.iso, faixas };
   });
+  // A grade de um mês tem 4, 5 ou 6 semanas (gradeCalendario só completa até
+  // o múltiplo de 7), mas a moldura da página é sempre de GEO.semanas linhas —
+  // é geometria transcrita do template. Sem completar aqui, o mês curto saía
+  // com uma faixa vazia no rodapé: o fundo da coluna NOTAS e as divisórias
+  // verticais desciam até a 6ª linha, mas sem células não havia nem fundo nem
+  // borda. 19 dos 24 meses de 2026-2027 caem nesse caso (fevereiro/2026 usa só
+  // 4 semanas). As células extras são vazias, iguais às que já aparecem antes
+  // do dia 1 e depois do último dia do mês.
+  while (celulas.length < GEO.semanas * 7) celulas.push({ vazia: true });
 
   // Legenda: uma entrada por etapa/bloco com célula pintada no mês; termos e
   // feriados como entradas próprias. Etapas multi-mês repetem em cada mês.

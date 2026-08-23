@@ -107,3 +107,28 @@ def test_config_projeto_inexistente_404(client):
     assert client.put(
         "/projetos/99999/calendario-config", json={"cores": {}}
     ).status_code == 404
+
+
+def test_excluir_projeto_apaga_a_config(client, db_session):
+    """Excluir o projeto tem de levar a estilização junto (cascata do ADR-012).
+
+    Sem a cascata a linha ficava órfã, e como o SQLite não impõe FK e
+    reaproveita o id (max(rowid)+1), o PRÓXIMO projeto criado herdava as cores
+    do projeto excluído — vazamento de dado entre projetos.
+    """
+    from app.models.banco_de_dados import CalendarioConfig
+
+    base = _setup_base(client, n_templates=1, n_consultores=0)
+    projeto_id = _criar_projeto(client, base)
+    client.put(
+        f"/projetos/{projeto_id}/calendario-config",
+        json={"cores": {"e-1": "#8C52FF"}},
+    )
+    assert db_session.query(CalendarioConfig).count() == 1
+
+    assert client.delete(f"/projetos/{projeto_id}").status_code == 204
+    assert db_session.query(CalendarioConfig).count() == 0
+
+    # E o próximo projeto (que pode receber o mesmo id) nasce sem cores.
+    novo_id = _criar_projeto(client, base)
+    assert client.get(f"/projetos/{novo_id}/calendario-config").json()["cores"] == {}

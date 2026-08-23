@@ -130,6 +130,16 @@ class Projeto(Base):
         order_by="Etapa.ordem",
         cascade="all, delete-orphan",
     )
+    # Mesma cascata para a estilização do gerador de calendário (Fase 28).
+    # Sem ela a linha de calendario_configs ficava órfã: o SQLite não impõe
+    # FK (não ligamos PRAGMA foreign_keys) e reaproveita o id — max(rowid)+1 —
+    # então o próximo projeto criado herdava as cores do projeto excluído.
+    calendario_config = relationship(
+        "CalendarioConfig",
+        back_populates="projeto",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 # 7. Etapa (substitui TarefaKanban) — etapa real de um projeto.
@@ -311,4 +321,4 @@ class CalendarioConfig(Base):
     # "{}" = nenhuma cor sobrescrita (o frontend usa a paleta do tema).
     cores = Column(String, nullable=False, default="{}")
 
-    projeto = relationship("Projeto")
+    projeto = relationship("Projeto", back_populates="calendario_config")
