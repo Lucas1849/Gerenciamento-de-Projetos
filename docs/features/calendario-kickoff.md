@@ -2,9 +2,9 @@
 
 Especificação base da feature pedida pelo responsável em **21/08/2026**: automatizar a criação do calendário mensal usado na apresentação de kick-off ao cliente, hoje montado **à mão no Canva**, mês a mês, pelo gerente do projeto. A referência visual é o modelo real usado nas apresentações (quatro imagens de exemplo — Junho a Setembro/2026 — fornecidas pelo responsável na abertura desta especificação).
 
-> **STATUS: DOCUMENTAÇÃO BASE — NADA EXECUTADO.** Este documento existe para (1) registrar a anatomia do modelo e os dados de origem, (2) apresentar **as possibilidades de solução técnica** antes de qualquer definição — pedido explícito do responsável — e (3) servir de fonte para o plano executável ([plano-fases-28-29.md](plano-fases-28-29.md)) e os ADRs 031–033 ([../arquitetura/decisoes.md](../arquitetura/decisoes.md)).
+> **STATUS: FASE 28 EXECUTADA (21/08/2026).** O gerador (possibilidade A, componente SVG único) foi construído no piloto por comando direto do responsável — ver o resumo do que foi entregue em [plano-fases-28-29.md](plano-fases-28-29.md). Este documento segue como fonte da anatomia do modelo, dos valores transcritos e das decisões resolvidas. A **Fase 29 (port para o Hub)** continua não iniciada.
 >
-> **DECISÃO DE 21/08/2026 — a escolha do responsável é a possibilidade A (componente SVG único).** Os ADRs 031 e 032 passam de propostos a **aceitos**; a análise das possibilidades abaixo fica preservada como registro do que foi comparado e por quê. **Continua sem execução:** falta o comando direto do responsável para começar (regra permanente do projeto) e os [insumos do template](#insumos-a-fornecer-pelo-responsável) para o acabamento visual.
+> **DECISÃO DE 21/08/2026 — a escolha do responsável é a possibilidade A (componente SVG único).** Os ADRs 031 e 032 estão **aceitos e implementados**; a análise das possibilidades abaixo fica preservada como registro do que foi comparado e por quê. As decisões em aberto de produto (bloco, sobreposição, persistência, UX) foram resolvidas na aprovação — ver "Decisões em aberto".
 
 ## O problema hoje
 
@@ -162,7 +162,7 @@ O SVG recebido (`Logo Apoio Consultoria Vetorizada.svg`) é utilizável, com tr�
 - **Não vinha transparente:** trazia um retângulo branco cobrindo os 1920 × 1080 inteiros, e o desenho ocupava só 72% dessa moldura. Já foi removido, com o `viewBox` recalculado para a caixa real do desenho — proporção final **2,043 : 1**, arquivo de 32,4 KB → **19,9 KB** (46 paths preservados, metadados C2PA descartados).
 - **Tem 11 formas brancas internas** (vazados do símbolo). Sobre o fundo branco do calendário elas funcionam como devem; sobre qualquer fundo colorido apareceriam como manchas brancas. **Só usar este arquivo sobre fundo claro** — o que é o caso aqui.
 
-A versão limpa está preparada e pronta para entrar em `frontend/public/` **quando a Fase 28 for autorizada** — nada foi adicionado ao repositório ainda.
+A versão limpa foi **adicionada ao repositório em `frontend/public/marca-apoio.svg`** na execução da Fase 28 (21/08/2026); o gerador a consome via `LOGO_URL` no tema.
 
 ## As possibilidades de geração (análise pedida antes de qualquer definição)
 
@@ -260,11 +260,11 @@ O pedido menciona "aba calendário" (interação/estilização) e "aba formulár
 3. **Substituição do Klein Text** (fonte comercial usada em cabeçalho, números e legenda) — recomendação: **Inter**, mantendo **Questrial** no mês/ano. Alternativa: licenciar Klein Text para web. **Decisão da diretoria.**
 4. **Azul do cabeçalho:** manter o `#004AAD` do template (recomendado, fidelidade ao material atual) ou unificar com o marinho da marca `#03345F`. **Decisão de identidade.**
 5. ~~Confirmar se existe **vetor oficial do logo**~~ — **RESOLVIDO em 21/08/2026: não existe.** O responsável vetorizou a marca justamente por não haver nenhuma versão vetorial oficial; o arquivo entregue passa a ser a referência vetorial da marca para esta feature.
-6. Representação do **bloco de entrega** na legenda (uma entrada vs. uma por membro).
-7. Pintura de **dias com etapas sobrepostas** (faixa dividida vs. prioridade + aviso).
-8. **Persistência da estilização** (tabela aditiva recomendada vs. localStorage vs. nenhuma).
+6. ~~Representação do **bloco de entrega** na legenda~~ — **RESOLVIDO (Fase 28, 21/08/2026): nomes compostos** dos membros (uma entrada por bloco, rótulo "Bloco N: nome1 + nome2").
+7. ~~Pintura de **dias com etapas sobrepostas**~~ — **RESOLVIDO (Fase 28): faixa dividida** (bandas horizontais de cor, uma por etapa que ocupa o dia).
+8. ~~**Persistência da estilização**~~ — **RESOLVIDO (Fase 28): tabela aditiva `CalendarioConfig`** (`projeto_id` FK única, `cores` JSON), `GET`/`PUT /projetos/{id}/calendario-config`, `create_all` sem fluxo destrutivo.
 9. ~~**Proporção/tamanho da exportação**~~ — **RESOLVIDO pelos PDFs**: a base é a do próprio template, **1440 × 810** (16:9 exato). Exportar em **2× = 2880 × 1620** cobre o slide com folga.
-10. Confirmar a **interpretação da UX** (gerador dentro da sub-view Calendário).
+10. ~~Confirmar a **interpretação da UX**~~ — **RESOLVIDO (Fase 28): botão "Gerar calendário de kick-off" na sub-view Calendário** da aba Etapas, abrindo o gerador (estilização + preview paginado).
 
 ## Relacionados
 

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SquareKanban, Table2, ChartGantt, CalendarDays } from 'lucide-react';
+import { SquareKanban, Table2, ChartGantt, CalendarDays, CalendarRange } from 'lucide-react';
 import KanbanEtapas from './KanbanEtapas';
 import TabelaEtapas from './TabelaEtapas';
 import CronogramaEtapas from './CronogramaEtapas';
 import CalendarioEtapas from './CalendarioEtapas';
+import GeradorCalendarioKickoff from './GeradorCalendarioKickoff';
 import ModalEditarEtapa from './ModalEditarEtapa';
 import ModalTermoAditivo from './ModalTermoAditivo';
 import { mesDeISO, hojeISO } from './datasUtils';
@@ -28,10 +29,12 @@ const VISOES = [
 // Container da aba Etapas: busca etapas + colaboradores uma vez e concentra os
 // handlers compartilhados pelas quatro visões. A visão ativa não persiste entre
 // navegações (useState local — trade-off registrado no ADR-010).
-export default function EtapasProjeto({ projetoId, toast }) {
+export default function EtapasProjeto({ projetoId, projetoNome, toast }) {
   const [etapas, setEtapas] = useState([]);
   const [colaboradores, setColaboradores] = useState([]);
   const [visao, setVisao] = useState('kanban');
+  // Gerador de calendário de kick-off (Fase 28), aberto pela sub-view Calendário.
+  const [geradorAberto, setGeradorAberto] = useState(false);
   // Mês exibido, compartilhado entre Cronograma e Calendário.
   const [mesExibido, setMesExibido] = useState(mesDeISO(hojeISO()));
   // Ids da etapa/bloco em edição no modal (Fase 12); os membros são derivados
@@ -175,7 +178,24 @@ export default function EtapasProjeto({ projetoId, toast }) {
         />
       )}
       {visao === 'calendario' && (
-        <CalendarioEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--sp-12)' }}>
+            <button type="button" className="btn-primary btn-sm" onClick={() => setGeradorAberto(true)}>
+              <CalendarRange size={15} /> Gerar calendário de kick-off
+            </button>
+          </div>
+          <CalendarioEtapas etapas={etapas} mes={mesExibido} aoMudarMes={setMesExibido} />
+        </>
+      )}
+
+      {geradorAberto && (
+        <GeradorCalendarioKickoff
+          projetoId={projetoId}
+          projetoNome={projetoNome}
+          etapas={etapas}
+          toast={toast}
+          aoFechar={() => setGeradorAberto(false)}
+        />
       )}
 
       {termoIds && membrosTermo.length > 0 && (

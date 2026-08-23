@@ -130,6 +130,16 @@ class Projeto(Base):
         order_by="Etapa.ordem",
         cascade="all, delete-orphan",
     )
+    # Mesma cascata para a estilização do gerador de calendário (Fase 28).
+    # Sem ela a linha de calendario_configs ficava órfã: o SQLite não impõe
+    # FK (não ligamos PRAGMA foreign_keys) e reaproveita o id — max(rowid)+1 —
+    # então o próximo projeto criado herdava as cores do projeto excluído.
+    calendario_config = relationship(
+        "CalendarioConfig",
+        back_populates="projeto",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 # 7. Etapa (substitui TarefaKanban) — etapa real de um projeto.
@@ -291,3 +301,24 @@ class Documento(Base):
     nome = Column(String, nullable=False)
     url = Column(String, nullable=False)
     criado_em = Column(DateTime, nullable=False, default=datetime.now)
+
+
+# 13. CalendarioConfig — estilização persistida do gerador de calendário de
+# kick-off (Fase 28, ADR-031/032). Uma linha por projeto (FK única): guarda o
+# mapa de cores por etapa (JSON de string→hex) escolhido pelo gerente, para que
+# a re-geração — comum por causa dos termos aditivos — não perca a estilização.
+# `cores` é texto JSON (SQLite não tem tipo JSON nativo no piloto); o backend
+# só o persiste opaco, quem interpreta é o frontend. Tabela puramente aditiva:
+# create_all a materializa no próximo boot sem dropar o .db (como ADR-013/019).
+class CalendarioConfig(Base):
+    __tablename__ = "calendario_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    projeto_id = Column(
+        Integer, ForeignKey("projetos.id"), unique=True, nullable=False
+    )
+    # JSON de string→hex: chave da etapa (id ou chave de bloco) → cor. Default
+    # "{}" = nenhuma cor sobrescrita (o frontend usa a paleta do tema).
+    cores = Column(String, nullable=False, default="{}")
+
+    projeto = relationship("Projeto", back_populates="calendario_config")

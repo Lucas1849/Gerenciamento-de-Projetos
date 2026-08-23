@@ -1,12 +1,13 @@
 """Rotas de projetos. A criação usa o cascade em app.services.projetos."""
 
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.models.banco_de_dados import Etapa, Projeto
+from app.models.banco_de_dados import CalendarioConfig, Etapa, Projeto
 from app.routes.etapas import consultores_ativos, serializar_etapa
 from app.services import projetos as servico_projetos
 from app.utils.db import get_db
@@ -274,3 +275,51 @@ def listar_etapas_do_projeto(projeto_id: int, db: Session = Depends(get_db)):
     if projeto is None:
         raise HTTPException(status_code=404, detail="Projeto não encontrado")
     return [serializar_etapa(e) for e in projeto.etapas]
+
+
+@router.get(
+    "/{projeto_id}/calendario-config",
+    response_model=schemas.CalendarioConfigResposta,
+)
+def obter_calendario_config(projeto_id: int, db: Session = Depends(get_db)):
+    """Estilização persistida do gerador de calendário (Fase 28, ADR-031).
+
+    Sem config gravada devolve cores vazias (o frontend cai na paleta do tema)
+    — evita 404 no fluxo comum de abrir o gerador pela primeira vez.
+    """
+    if db.get(Projeto, projeto_id) is None:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    config = (
+        db.query(CalendarioConfig)
+        .filter(CalendarioConfig.projeto_id == projeto_id)
+        .first()
+    )
+    cores = json.loads(config.cores) if config else {}
+    return schemas.CalendarioConfigResposta(projeto_id=projeto_id, cores=cores)
+
+
+@router.put(
+    "/{projeto_id}/calendario-config",
+    response_model=schemas.CalendarioConfigResposta,
+)
+def salvar_calendario_config(
+    projeto_id: int,
+    dados: schemas.CalendarioConfigAtualizar,
+    db: Session = Depends(get_db),
+):
+    """Grava (upsert) a estilização do gerador de calendário (Fase 28)."""
+    if db.get(Projeto, projeto_id) is None:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    config = (
+        db.query(CalendarioConfig)
+        .filter(CalendarioConfig.projeto_id == projeto_id)
+        .first()
+    )
+    cores_json = json.dumps(dados.cores)
+    if config is None:
+        config = CalendarioConfig(projeto_id=projeto_id, cores=cores_json)
+        db.add(config)
+    else:
+        config.cores = cores_json
+    db.commit()
+    return schemas.CalendarioConfigResposta(projeto_id=projeto_id, cores=dados.cores)

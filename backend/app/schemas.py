@@ -457,6 +457,30 @@ class BlocoEstender(BaseModel):
     etapa_ids: List[int] = Field(min_length=1)
 
 
+class CalendarioConfigAtualizar(BaseModel):
+    """Estilização do gerador de calendário de kick-off (Fase 28, ADR-031):
+    mapa de cores por etapa (chave da etapa/bloco → hex). Validação leve de
+    hex #RGB/#RRGGBB para o material continuar dentro da identidade — o gerador
+    já restringe a escolha à paleta do template, isto é a rede de segurança."""
+
+    cores: dict[str, str] = {}
+
+    @field_validator("cores")
+    @classmethod
+    def _valida_hex(cls, valor: dict[str, str]) -> dict[str, str]:
+        import re
+
+        for chave, cor in valor.items():
+            if not re.fullmatch(r"#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?", cor):
+                raise ValueError(f"cor inválida para '{chave}': {cor}")
+        return valor
+
+
+class CalendarioConfigResposta(BaseModel):
+    projeto_id: int
+    cores: dict[str, str] = {}
+
+
 class ProjetoResposta(BaseModel):
     id: int
     nome: str
