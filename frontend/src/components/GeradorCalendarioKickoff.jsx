@@ -21,9 +21,11 @@ const nomeArquivo = (projetoNome, ano, mes) =>
 export default function GeradorCalendarioKickoff({ projetoId, projetoNome, etapas, toast, aoFechar }) {
   const [feriados, setFeriados] = useState([]);
   const [cores, setCores] = useState({});
+  const [configVazia, setConfigVazia] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [ocupado, setOcupado] = useState(false);
   const svgRefs = useRef(new Map());
+  const congelou = useRef(false); // evita PUT duplicado (StrictMode) ao congelar cores
 
   useEffect(() => {
     // Preview precisa da Questrial (não carregada pelo app): injeta o link.
@@ -44,6 +46,7 @@ export default function GeradorCalendarioKickoff({ projetoId, projetoNome, etapa
       .then(([listas, coresSalvas]) => {
         setFeriados(listas.flat());
         setCores(coresSalvas || {});
+        setConfigVazia(!coresSalvas || Object.keys(coresSalvas).length === 0);
       })
       .catch(() => toast.error('Erro ao carregar feriados/estilização.'))
       .finally(() => setCarregando(false));
@@ -54,6 +57,28 @@ export default function GeradorCalendarioKickoff({ projetoId, projetoNome, etapa
     () => montarPaginas(etapas, feriados, cores),
     [etapas, feriados, cores]
   );
+
+  // Fase 30 (30e): congela as cores default no primeiro uso. Sem isto, ampliar a
+  // paleta de 6 → 15 (e reordená-la) mudaria o default de todo projeto sem config
+  // gravada — um kick-off já apresentado sairia diferente do que o cliente viu.
+  // Ao abrir sem config, grava imediatamente as cores calculadas (chamada ao
+  // salvarCalendarioConfig que já existe); a partir daí o projeto fica imune a
+  // mudanças futuras de paleta.
+  useEffect(() => {
+    if (carregando || !configVazia || congelou.current || itens.length === 0) return;
+    congelou.current = true;
+    const defaults = Object.fromEntries(itens.map(it => [it.key, it.cor]));
+    setCores(defaults);
+    setConfigVazia(false);
+    salvarCalendarioConfig(projetoId, defaults).catch(() => { congelou.current = false; });
+  }, [carregando, configVazia, itens, projetoId]);
+
+  // Meses que caíram em modo compacto/estouro — o gerente decide se aceita ou
+  // agrupa etapas em bloco (nunca produzir slide quebrado em silêncio).
+  const avisosLegenda = useMemo(() => paginas
+    .filter(p => p.legendaPlano && (p.legendaPlano.modo === 'compacto' || p.legendaPlano.estouro))
+    .map(p => ({ rotulo: rotuloMes(p.ano, p.mes), estouro: p.legendaPlano.estouro })),
+    [paginas]);
 
   const mudarCor = useCallback((key, cor) => {
     setCores(prev => {
@@ -183,6 +208,18 @@ export default function GeradorCalendarioKickoff({ projetoId, projetoNome, etapa
               <p style={{ color: 'var(--color-text-secondary)' }}>
                 Sem páginas para exibir — as etapas do projeto precisam de datas.
               </p>
+            )}
+            {!carregando && avisosLegenda.length > 0 && (
+              <div style={{
+                marginBottom: 'var(--sp-16)', padding: 'var(--sp-12) var(--sp-16)',
+                borderRadius: 8, background: 'rgba(255,189,89,0.12)',
+                border: '1px solid var(--color-warning, #FFBD59)', fontSize: 'var(--text-caption)',
+                lineHeight: 1.5, color: 'var(--color-text)',
+              }}>
+                Legenda cheia em: <strong>{avisosLegenda.map(a => a.rotulo).join(', ')}</strong>.
+                {' '}Esses meses usam a legenda <strong>compacta</strong> para caber.
+                {avisosLegenda.some(a => a.estouro) && ' Em alguns não cabe nem compacta — considere agrupar etapas em bloco de entrega.'}
+              </div>
             )}
             {paginas.map((pagina, i) => (
               <div key={`${pagina.ano}-${pagina.mes}`} style={{ marginBottom: 'var(--sp-24)' }}>
