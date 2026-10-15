@@ -32,3 +32,6 @@ docs/arquitetura/dados/apoio-hub-columns.csv
 # O formato está documentado em professores_seed.exemplo.json; o arquivo
 # real é distribuído fora do git (OneDrive da área).
 backend/app/dados/professores_seed.json
+# Entregáveis internos para validação da diretoria (.docx/.pdf gerados a
+# partir das docs) — conteúdo interno e o repo é público. Ficam fora do git.
+docs/features/entregaveis/
