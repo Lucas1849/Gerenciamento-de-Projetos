@@ -530,3 +530,52 @@ Registro curto das decisões de design assumidas na reconstrução do modelo de 
 **Justificativa:** os três refinos corrigem defeitos medidos, não preferências — texto escapando da caixa, chips se sobrepondo e cores repetidas na mesma legenda são erros de leitura em material de cliente. O afastamento do template é consciente, confinado a `calendarioKickoffTema.js` (constantes num arquivo só) e reversível.
 
 **Status:** **implementado** (23/08/2026, Fase 30, por comando direto do responsável; branch `execucao-fase-30`). 100% frontend, **sem mudança de backend e sem fluxo destrutivo ADR-001** (`CalendarioConfig.cores` já valida qualquer hex). Arquivos: `calendarioKickoffTema.js` (geometria, paleta 15 reordenada, `textoSobre` WCAG, presets), `calendarioKickoffUtils.js` (`quebrarTexto` movido do componente + `planejarLegenda`), `CalendarioKickoff.jsx` (`Legenda` consome o plano), `GeradorCalendarioKickoff.jsx` (aviso de compacto + congelamento). Build + lint verdes; contraste das 15 cores verificado por harness (todas ≥3:1). **Dependência registrada: ordem 28 → 30 → 29** — os refinos caem inteiros no `calendarioKickoffTema.js`, que é o contrato de portabilidade da Fase 29 (passo 29d, paridade de tema e de cor). **Pendência 28e/30e (passada visual do PNG rasterizado no browser) segue em aberto.**
+
+---
+
+### ADR-035 — Fase do escopo (Alinhamento/Diagnóstico/Estratégia/Ação) como atributo da etapa (Fase 31) — **proposto**
+
+**Contexto:** a próxima feature é gerar o slide "Cronograma de Execução" da proposta comercial, no
+mesmo molde do calendário de kick-off (ADR-031/032). Nesse slide as etapas aparecem agrupadas em
+quatro fases. Para a geração ser automática, cada etapa precisa de uma fase — e ela precisa vir **do
+serviço**, não de decisão caso a caso: o levantamento dos 9 projetos da gestão 2026.2 (07/09/2026)
+mostrou a mesma etapa ("Definição do Público-alvo e Amostra") classificada em fases diferentes em dois
+projetos de Pesquisa de Mercado, porque em cada um ela caiu num bloco de entrega diferente. Em
+12/10/2026 chegaram dois insumos: os **escopos oficiais** (que mudam 8 dos 9 serviços do catálogo de
+04/07) e a **proposta de estruturação em fases** (24/09, feita sobre o catálogo antigo). A
+reconciliação está em [../features/classificacao-fases-etapas.md](../features/classificacao-fases-etapas.md).
+
+**Decisão proposta:**
+- **Fase é atributo da etapa, não tabela nova e não derivação da ordem:** coluna `fase` em
+  `EtapaTemplate` (ponto de partida, do catálogo) e em `Etapa` (o que vale no projeto). Enum
+  `alinhamento | diagnostico | estrategia | acao`, sem acento, como `Etapa.status`. **Nulo = não
+  classificada**, estado legítimo para os projetos que já existem e para etapas manuais.
+  Dependência entre etapas virou tabela (ADR-015) porque é relação N:N; fase é classificação 1:1 —
+  uma coluna resolve, e não cria segunda fonte de verdade sobre a etapa.
+- **Colisão de nome registrada:** `Projeto.fase` já existe e significa o estágio do projeto na galeria
+  (`kickoff | andamento | ajustes | concluido`, ADR-024/030). São eixos diferentes. Recomendação:
+  nomear o campo novo **`fase_escopo`** no código.
+- **A fase propaga dentro do bloco de entrega** (como prazo e data, ADR-009; diferente de nome e
+  descrição, que são individuais). Decorre do princípio P2 — um bloco é uma entrega só e desenha um
+  prazo só no slide, logo não pode estar em duas fases. A UI move o bloco inteiro.
+- **No Kanban interno a fase entra como chip, nunca como coluna:** as colunas são `Etapa.status`, e
+  misturar os dois eixos na mesma tela a torna ambígua.
+- **A atualização do catálogo é fluxo destrutivo ADR-001 no piloto, e NÃO no Hub:** `seed_catalogo` é
+  idempotente por nome de serviço, então re-rodar não atualiza nada — no piloto apaga-se o `.db`; no
+  Hub, que tem projeto real em produção, a atualização terá de ser `UPDATE`/`INSERT` preservando os
+  projetos existentes.
+
+**Justificativa:** manter a fase no mesmo lugar onde já vivem ordem, prazo e bloco mantém uma etapa
+sendo descrita por uma linha só, e deixa a nova tela ser uma reorganização do editor que já existe em
+vez de um subsistema. Separar a fase (Fase 31) da geração do slide (Fase 32) repete o que funcionou
+em 28/30: primeiro o dado e a decisão de produto, depois o SVG.
+
+**Pendências que bloqueiam o status "aceito":** as nove decisões Q1–Q9 (destaque para **Q1** — três
+dos oito serviços ficaram com uma fase vazia depois de 12/10 —, **Q5**, o Valuation que deixou de ser
+oficial mas tem projeto em andamento, e **Q7**, erro aritmético na fonte oficial) e a escolha entre as
+opções A/B/C para a relação ordem × fase no editor (§5 do plano).
+
+**Status:** **proposto** (12/10/2026). Nada implementado. Plano executável em
+[../features/plano-fase-31.md](../features/plano-fase-31.md); catálogo normativo em
+[../features/catalogo-servicos.md](../features/catalogo-servicos.md). **Nenhuma fase começa sem
+comando direto do responsável.**

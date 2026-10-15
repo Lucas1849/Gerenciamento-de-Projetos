@@ -13,6 +13,27 @@ Gerar calendário mostrando os dias úteis de cada etapa, feriados e período de
 - ~~**Falta decidir:** formato/estilo visual do calendário gerado~~ — especificado em [calendario-kickoff.md](calendario-kickoff.md) (anatomia transcrita do modelo real; possibilidades A–E com recomendação registrada).
 - **Permanece aqui como evolução futura:** exportação direta PPTX / integração com a API do Canva (possibilidade E da especificação) — só sobre a base entregue, se o uso pedir.
 
+## Slide "Cronograma de Execução" da proposta → promovido a especificação (Fases 31–32)
+
+Gerar automaticamente o slide de cronograma da proposta comercial, com as etapas agrupadas nas quatro
+fases (Alinhamento, Diagnóstico, Estratégia, Ação) e a identidade visual da Apoio — hoje montado à mão
+no Canva, como era o calendário de kick-off antes da Fase 28.
+
+**Atualização de 12/10/2026 — o item saiu do roadmap e virou documentação base.** Insumos recebidos:
+os escopos oficiais dos serviços (que mudam 8 dos 9 serviços do catálogo) e a proposta de
+estruturação das etapas em fases. Catálogo normativo em [catalogo-servicos.md](catalogo-servicos.md),
+critério e decisões pendentes em [classificacao-fases-etapas.md](classificacao-fases-etapas.md),
+plano executável da **Fase 31** (dado + formulário) em [plano-fase-31.md](plano-fase-31.md), ADR-035
+**proposto**. A **Fase 32** (o slide em si) não está planejada.
+
+- **Depende de:** `fase` em `EtapaTemplate`/`Etapa` (Fase 31) e da validação da diretoria sobre as
+  nove decisões Q1–Q9.
+- **Falta levantar:** o **arquivo original** do slide (Canva/PDF) — a imagem de referência atual é
+  captura de tela e serve para entender a estrutura, não para transcrever geometria e cor. Foi o
+  arquivo original que permitiu a fidelidade da Fase 28.
+- **Reaproveitamento previsto:** a exportação da Fase 28 (rasterização 2×, fontes embutidas, copiar
+  por mês, zip store-only) é genérica e deve ser **extraída**, não duplicada.
+
 ## Exportação automática para SIEX (ficha de cadastro de projeto de extensão)
 
 Gerar a ficha de cadastro de projeto de extensão no SIEX da universidade, exportando para Google Sheets no formato exigido, reduzindo o tempo da diretoria com burocracia.
