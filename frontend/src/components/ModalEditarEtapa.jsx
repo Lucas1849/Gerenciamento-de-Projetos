@@ -9,6 +9,7 @@ import { useState, useRef } from 'react';
 import { Pencil, ArrowUp, ArrowDown, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { atualizarEtapa, reordenarEtapas, calcularDataFim, contarDiasUteis, criarEtapaLink, excluirEtapaLink } from '../services/api';
 import { janelaDatas, dataPlausivel, formatarData } from './datasUtils';
+import { FASES_ESCOPO } from './fasesEscopo';
 
 export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, aoFechar, aoSalvo, aoAtualizar }) {
   const ehBloco = membros.length > 1;
@@ -59,6 +60,11 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
   );
   const [descricao, setDescricao] = useState(membros[0].descricao ?? '');
   const [ordemIds, setOrdemIds] = useState(membros.map(m => m.id));
+  // Fase 31 (ADR-035): a fase do escopo é individual por etapa, mas em
+  // bloco o modal aplica o MESMO valor a todos os membros (um PATCH por
+  // membro, via o loop de campos individuais abaixo) — P2: o bloco é uma
+  // entrega só, não pode estar em duas fases.
+  const [faseEscopo, setFaseEscopo] = useState(membros[0].fase_escopo ?? '');
   const [salvando, setSalvando] = useState(false);
 
   // Fase 19 (ADR-021): links de entregas/demandas — SEMPRE da etapa
@@ -112,6 +118,7 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
         const dados = {};
         if (nomes[m.id] !== m.nome) dados.nome = nomes[m.id];
         if (!ehBloco && descricao !== (m.descricao ?? '')) dados.descricao = descricao || null;
+        if (faseEscopo !== (m.fase_escopo ?? '')) dados.fase_escopo = faseEscopo || null;
         if (Object.keys(dados).length > 0) await atualizarEtapa(m.id, dados);
       }
 
@@ -239,6 +246,16 @@ export default function ModalEditarEtapa({ projetoId, membros, etapas, toast, ao
               disabled={!dataInicio}
               title={dataInicio ? undefined : 'Defina a data de início primeiro'}
               onChange={e => aoMudarFim(e.target.value)} />
+          </label>
+          <label style={labelEstilo}>
+            Fase do escopo
+            <select className="input-field" value={faseEscopo}
+              onChange={e => setFaseEscopo(e.target.value)} style={{ width: '160px' }}>
+              <option value="">Não classificada</option>
+              {FASES_ESCOPO.map(f => (
+                <option key={f.valor} value={f.valor}>{f.titulo}</option>
+              ))}
+            </select>
           </label>
         </div>
 

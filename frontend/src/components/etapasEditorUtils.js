@@ -1,5 +1,7 @@
-// ─── Helpers do editor de etapas (Fase 5 / ADR-008) ─────────────────────────
+// ─── Helpers do editor de etapas (Fase 5 / ADR-008; fase_escopo Fase 31) ────
 // Em arquivo próprio (sem componentes) para o Fast Refresh do Vite.
+
+import { ORDEM_FASES_ESCOPO } from './fasesEscopo';
 
 let proximoUid = 1;
 export const novoUid = () => `item-${proximoUid++}`;
@@ -19,7 +21,60 @@ export function itensDosTemplates(templates) {
     membros: grupo.map(t => ({ nome: t.nome, etapaTemplateId: t.id })),
     dias: grupo[0].dias_uteis_esperados_padrao ?? '',
     dataInicio: '',
+    // Fase 31 (ADR-035): copiada do template; propaga ao bloco inteiro (P2)
+    // porque o item do editor representa o bloco como uma unidade só.
+    faseEscopo: grupo[0].fase_escopo ?? null,
   }));
+}
+
+/** Agrupa os itens em faixas por fase_escopo (Opção A, ADR-035): a lista
+ *  continua sendo uma só (ordem = cronograma); as faixas são bandas sobre
+ *  ela, SEMPRE nas quatro posições canônicas — uma fase sem etapa nenhuma
+ *  ainda aparece, vazia (Q1). Itens sem fase (manuais, não classificados)
+ *  formam uma faixa própria (`fase: null`) onde aparecerem na lista. */
+export function construirFaixas(itens) {
+  if (itens.length === 0) return ORDEM_FASES_ESCOPO.map(fase => ({ fase, itens: [] }));
+
+  const faixas = [];
+  let ultimoIndiceCanonico = -1;
+  let grupoAtual = null;
+
+  itens.forEach(item => {
+    if (!grupoAtual || grupoAtual.fase !== item.faseEscopo) {
+      const indiceCanonico = ORDEM_FASES_ESCOPO.indexOf(item.faseEscopo);
+      for (let f = ultimoIndiceCanonico + 1; f < indiceCanonico; f++) {
+        faixas.push({ fase: ORDEM_FASES_ESCOPO[f], itens: [] });
+      }
+      grupoAtual = { fase: item.faseEscopo, itens: [] };
+      faixas.push(grupoAtual);
+      if (indiceCanonico >= 0) ultimoIndiceCanonico = indiceCanonico;
+    }
+    grupoAtual.itens.push(item);
+  });
+
+  for (let f = ultimoIndiceCanonico + 1; f < ORDEM_FASES_ESCOPO.length; f++) {
+    faixas.push({ fase: ORDEM_FASES_ESCOPO[f], itens: [] });
+  }
+  return faixas;
+}
+
+/** Índice de destino para "mover de faixa" (Alt+←/→, §5 do plano): pula o
+ *  resto da faixa atual e aterra logo no início da próxima (ou no fim da
+ *  anterior), já adotando a fase vizinha por construção (mover() abaixo
+ *  recomputa `faseEscopo` do item pelo vizinho). `null` se não houver
+ *  faixa seguinte/anterior (já é a primeira/última etapa da lista). */
+export function limiteFaixaSeguinte(itens, indice) {
+  const fase = itens[indice].faseEscopo;
+  let i = indice;
+  while (i + 1 < itens.length && itens[i + 1].faseEscopo === fase) i++;
+  return i + 1 < itens.length ? i + 1 : null;
+}
+
+export function limiteFaixaAnterior(itens, indice) {
+  const fase = itens[indice].faseEscopo;
+  let i = indice;
+  while (i - 1 >= 0 && itens[i - 1].faseEscopo === fase) i--;
+  return i - 1 >= 0 ? i - 1 : null;
 }
 
 /** Cascata reativa de datas (Fase 12 / ADR-014): recomputa as datas de início
@@ -58,6 +113,9 @@ export function etapasParaPayload(itens) {
         data_inicio: item.dataInicio || null,
         etapa_template_id: m.etapaTemplateId ?? null,
         bloco_grupo: blocoGrupo,
+        // Fase 31 (ADR-035): a mesma fase para todos os membros do bloco
+        // (o item do editor já guarda uma fase só para o conjunto, P2).
+        fase_escopo: item.faseEscopo ?? null,
       });
     });
   });

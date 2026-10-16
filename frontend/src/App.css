@@ -38,6 +38,14 @@
   --fase-ajustes:     #EF4444;
   --fase-concluido:   #22C55E;
 
+  /* Fases do escopo da proposta comercial (Fase 31/ADR-035) — eixo
+     diferente do Kanban de fases acima (Etapa.fase_escopo, não Projeto.fase).
+     Tokens próprios, deliberadamente sem reusar os --fase-* de cima. */
+  --fase-escopo-alinhamento: #5B8DEF;
+  --fase-escopo-diagnostico: #F5C542;
+  --fase-escopo-estrategia:  #A78BFA;
+  --fase-escopo-acao:        #22C55E;
+
   /* === TIPOGRAFIA === */
   --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;

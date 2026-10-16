@@ -570,12 +570,52 @@ sendo descrita por uma linha só, e deixa a nova tela ser uma reorganização do
 vez de um subsistema. Separar a fase (Fase 31) da geração do slide (Fase 32) repete o que funcionou
 em 28/30: primeiro o dado e a decisão de produto, depois o SVG.
 
-**Pendências que bloqueiam o status "aceito":** as nove decisões Q1–Q9 (destaque para **Q1** — três
-dos oito serviços ficaram com uma fase vazia depois de 12/10 —, **Q5**, o Valuation que deixou de ser
-oficial mas tem projeto em andamento, e **Q7**, erro aritmético na fonte oficial) e a escolha entre as
-opções A/B/C para a relação ordem × fase no editor (§5 do plano).
+**As nove decisões Q1–Q9, resolvidas em 16/10/2026 por comando direto do responsável** (seguindo as
+recomendações já registradas no plano e em [../features/classificacao-fases-etapas.md](../features/classificacao-fases-etapas.md);
+leitura conservadora onde o plano não recomendava explicitamente):
 
-**Status:** **proposto** (12/10/2026). Nada implementado. Plano executável em
+- **Q1 — fase vazia:** **aparece**, com estado vazio ("nenhuma etapa nesta fase"), tanto no editor
+  (§5 do plano) quanto, por consistência, no futuro slide da Fase 32. Esconder produziria layout de
+  largura variável — pior do que uma faixa vazia explícita.
+- **Q2 — "Potenciais Parcerias":** a fase é **por serviço, não por nome de etapa** (o princípio que
+  motivou toda a Fase 31) — Diagnóstico em Pesquisa de Mercado (bloco com Análise de Tendências, P2),
+  Estratégia em Plano de Marketing. As duas classificações convivem sem contradição.
+- **Q3 — bloco 4 do Plano de Comunicação:** **Estratégia para as duas** etapas (Mensagens + Meios) —
+  já refletido na tabela de `catalogo-servicos.md`.
+- **Q4 — Mapeamento da Estrutura Organizacional / Mapeamento de Processos:** **Diagnóstico** (segue o
+  critério escrito: levantar o como-é é diagnóstico, não desenho de solução) — reverte a classificação
+  provisória ⚑ de 24/09.
+- **Q5 — Valuation:** **mantido como serviço legado não ofertável.** `Servico` ganha a coluna
+  `ofertavel` (Boolean, default `True`; `False` só para Valuation) em vez de remover a linha —
+  preserva o projeto #6 (Midiática), em andamento, sem exigir decisão sobre o destino dele. O catálogo
+  público (frontend de criação) deve ocultar serviços com `ofertavel=False`.
+- **Q6 — ordens 6/7 do Plano de Marketing:** **invertidas** ("Definição do Público-alvo" passa a ser a
+  ordem 6, "Potenciais Parcerias" a ordem 7) — resolve a única quebra de P1 do catálogo, e tem
+  precedente no slide já aprovado pelo cliente (§8 do plano).
+- **Q7 — total do Plano de Comunicação:** **53 dias úteis** (soma das linhas, considerando que membros
+  de um mesmo bloco não somam entre si — eles compartilham o prazo). O "60" do documento oficial é o
+  erro; a tabela de `catalogo-servicos.md` já usa 53, e é esse valor que entra no seed.
+- **Q8 — início do Plano de Negócios:** segue a **tabela de cronograma** (Kick Off → Planejamento das
+  Atividades → …), não a lista "Escopo do projeto" (4.1) do mesmo documento — já era a leitura adotada.
+- **Q9 — projetos já cadastrados:** **não recebem fase retroativa automática.** `Etapa.fase_escopo`
+  nasce `NULL` nesses projetos (etapa manual/fora do template); a atribuição é manual, pela tela da
+  Fase 31d — coerente com "nulo = não classificada" já decidido para o campo.
+
+**As três decisões de produto do §4/§5 do plano, confirmadas:** Opção **A** (fase derivada da posição
+na lista única — a ordem do cronograma nunca fica ambígua); a fase **propaga dentro do bloco** de
+entrega (o bloco é uma entrega só, não pode estar em duas fases); o campo chama-se **`fase_escopo`**
+(evita a colisão de nome com `Projeto.fase`).
+
+**Status:** **implementado** (16/10/2026, Fase 31, por comando direto do responsável). 31a
+(catálogo sincronizado + `Servico.ofertavel`, fluxo destrutivo ADR-001 executado — `piloto_projetos.db`
+apagado e os dois seeds rerodados), 31b (`fase_escopo` em `EtapaTemplate`/`Etapa`, API: `GET
+/catalogo/servicos`, `POST /projetos/`, `GET /projetos/{id}/etapas`, `PATCH /etapas/{id}` e a rota nova
+`PUT /projetos/{id}/etapas/fases` em lote), 31c (quatro faixas em `EtapasEditor.jsx`, Opção A — fase
+derivada da posição, com Alt+←/→ e chevrons como equivalente de teclado/mouse ao arrasto entre faixas),
+31d (seletor de fase em `ModalEditarEtapa.jsx` + nova sub-view "Fases" com `CaixasDeFase.jsx` para
+reclassificação em lote) e 31e (coluna "Fase" na tabela, chip discreto no Kanban) — todas executadas e
+verificadas no browser (faixa vazia de Plano Operacional, Valuation oculto do formulário, reclassificação
+em lote persistindo). Backend: 92/92 testes verdes; build + lint do frontend verdes. Plano executável em
 [../features/plano-fase-31.md](../features/plano-fase-31.md); catálogo normativo em
-[../features/catalogo-servicos.md](../features/catalogo-servicos.md). **Nenhuma fase começa sem
-comando direto do responsável.**
+[../features/catalogo-servicos.md](../features/catalogo-servicos.md). Pendente: Fase 32 (o slide),
+não planejada aqui.

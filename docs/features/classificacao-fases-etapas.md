@@ -1,6 +1,9 @@
-# Classificação das etapas em fases — critério, reconciliação e decisões pendentes
+# Classificação das etapas em fases — critério, reconciliação e decisões (resolvidas)
 
-**Status: insumo da Fase 31. Nada implementado.**
+**Status: insumo da Fase 31. As Q1–Q9 abaixo foram resolvidas em 16/10/2026 por comando direto do
+responsável — respostas e justificativa em ADR-035 ([decisoes.md](../arquitetura/decisoes.md)) e,
+aplicadas à tabela, em [catalogo-servicos.md](catalogo-servicos.md). Este documento fica como registro
+do critério e da reconciliação original.**
 
 As quatro fases — **Alinhamento · Diagnóstico · Estratégia · Ação** — são o agrupamento que o slide
 "Cronograma de Execução" da proposta comercial precisa para ser gerado automaticamente, do mesmo
@@ -55,7 +58,7 @@ porque o slide desenha um prazo só para elas.
 
 Os dois princípios continuam **pendentes de aval**.
 
-## Decisões pendentes
+## Decisões (resolvidas em 16/10/2026 — ver ADR-035)
 
 | # | Questão | Por que ficou maior depois de 12/10 |
 |---|---|---|

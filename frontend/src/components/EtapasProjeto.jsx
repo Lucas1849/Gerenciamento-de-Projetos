@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SquareKanban, Table2, ChartGantt, CalendarDays, CalendarRange } from 'lucide-react';
+import { SquareKanban, Table2, ChartGantt, CalendarDays, CalendarRange, LayoutGrid } from 'lucide-react';
 import KanbanEtapas from './KanbanEtapas';
 import TabelaEtapas from './TabelaEtapas';
 import CronogramaEtapas from './CronogramaEtapas';
@@ -7,6 +7,8 @@ import CalendarioEtapas from './CalendarioEtapas';
 import GeradorCalendarioKickoff from './GeradorCalendarioKickoff';
 import ModalEditarEtapa from './ModalEditarEtapa';
 import ModalTermoAditivo from './ModalTermoAditivo';
+import CaixasDeFase from './CaixasDeFase';
+import { agruparCards } from './etapasUtils';
 import { mesDeISO, hojeISO } from './datasUtils';
 import {
   listarEtapasDoProjeto,
@@ -17,6 +19,7 @@ import {
   removerConsultorEtapa,
   criarDependencia,
   removerDependencia,
+  reatribuirFasesEtapas,
 } from '../services/api';
 
 const VISOES = [
@@ -24,6 +27,8 @@ const VISOES = [
   { id: 'tabela',     rotulo: 'Tabela',     Icone: Table2 },
   { id: 'cronograma', rotulo: 'Cronograma', Icone: ChartGantt },
   { id: 'calendario', rotulo: 'Calendário', Icone: CalendarDays },
+  // Fase 31d (ADR-035): reclassificação em lote da fase do escopo.
+  { id: 'fases',      rotulo: 'Fases',      Icone: LayoutGrid },
 ];
 
 // Container da aba Etapas: busca etapas + colaboradores uma vez e concentra os
@@ -175,6 +180,13 @@ export default function EtapasProjeto({ projetoId, projetoNome, toast }) {
           aoMudarMes={setMesExibido}
           aoAtualizarEtapa={aplicarDatasEtapa}
           aoCriarDependencia={adicionarDependencia}
+        />
+      )}
+      {visao === 'fases' && (
+        <CaixasDeFase
+          cards={agruparCards(etapas)}
+          toast={toast}
+          aoSalvar={fases => reatribuirFasesEtapas(projetoId, fases).then(() => recarregar())}
         />
       )}
       {visao === 'calendario' && (

@@ -12,7 +12,9 @@ router = APIRouter(tags=["Catálogo de Serviços"])
 
 @router.post("/servicos/", response_model=schemas.ServicoResposta)
 def criar_servico(servico: schemas.ServicoCriar, db: Session = Depends(get_db)):
-    novo = Servico(nome=servico.nome, descricao=servico.descricao)
+    novo = Servico(
+        nome=servico.nome, descricao=servico.descricao, ofertavel=servico.ofertavel
+    )
     db.add(novo)
     db.commit()
     db.refresh(novo)
@@ -21,6 +23,9 @@ def criar_servico(servico: schemas.ServicoCriar, db: Session = Depends(get_db)):
 
 @router.get("/servicos/", response_model=list[schemas.ServicoResposta])
 def listar_servicos(db: Session = Depends(get_db)):
+    """Lista o catálogo completo, incluindo serviços legados (Fase 31,
+    ADR-035, Q5) — o frontend filtra `ofertavel` onde fizer sentido oferecer
+    só serviços ativos (ex. formulário de criação)."""
     return db.query(Servico).all()
 
 
@@ -44,6 +49,7 @@ def criar_etapa_template(
         nome=etapa.nome,
         descricao_padrao=etapa.descricao_padrao,
         dias_uteis_esperados_padrao=etapa.dias_uteis_esperados_padrao,
+        fase_escopo=etapa.fase_escopo,
     )
     db.add(nova)
     db.commit()

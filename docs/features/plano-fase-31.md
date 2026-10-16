@@ -1,7 +1,10 @@
 # Plano de ação — Fase 31 (fases do escopo: catálogo novo + organização das etapas em Alinhamento / Diagnóstico / Estratégia / Ação)
 
-> **STATUS: PLANEJADA, NÃO EXECUTADA.** Nenhuma linha de código foi escrita. Como todas as fases
-> deste repositório, **só começa por comando direto do responsável**.
+> **STATUS: EXECUTADA (16/10/2026), por comando direto do responsável.** As nove decisões Q1–Q9 e as
+> três decisões de produto do §§4/5 foram resolvidas (seguindo as recomendações do plano) e registradas
+> no ADR-035 ([decisoes.md](../arquitetura/decisoes.md)) antes da implementação. 31a–31e completas e
+> verificadas (testes de backend 92/92, build+lint do frontend, fluxo manual no browser). Pendente:
+> Fase 32 (o slide) e a passada visual 28e/30e, herdadas.
 >
 > **Esta fase não gera o slide.** Ela entrega o *dado* (a fase de cada etapa) e a *tela* (as quatro
 > caixas no formulário) que o gerador de slide vai consumir depois, na Fase 32. É a mesma separação
@@ -232,11 +235,19 @@ O slide "Cronograma de Execução" sai do mesmo molde do calendário de kick-off
 A exportação (rasterização 2×, fontes embutidas, copiar por mês, zip store-only) é **genérica** e deve
 ser extraída, não duplicada. Fica registrado como dívida a pagar na Fase 32, não agora.
 
-**Insumo que falta para a Fase 32:** o modelo visual do slide. A imagem de referência que existe hoje
-é uma captura de tela de uma proposta pronta — serve para entender a estrutura (quatro fases, nomes
-das etapas numerados, prazo por bloco, "Duração Total do Projeto" no rodapé), **não** para transcrever
-geometria e cor. A Fase 28 só conseguiu ser fiel porque recebeu o **PDF/arquivo original** do Canva.
-Pedir o arquivo original é pré-requisito da 32, do mesmo jeito que foi da 28.
+**Insumo recebido em 15/10/2026 — o pré-requisito visual está resolvido:** `Proposta Espaço da
+Mente.pdf`, página única de **1440×810** (a mesma base do calendário de kick-off), transcrita pelos
+objetos internos em [cronograma-proposta.md](cronograma-proposta.md) — geometria, cores, fontes e a
+estrutura de células mescladas. Plano de execução em [plano-fase-32.md](plano-fase-32.md).
+
+Dois achados dessa transcrição realimentam **esta** fase:
+
+- **A célula de prazo mesclada do slide é exatamente o `bloco_entrega`** do modelo. O slide não
+  precisa de conceito novo — ele já desenha um dado que existe desde a Fase 5. Isso reforça a
+  recomendação do §4: a fase **propaga dentro do bloco**, porque o bloco é uma linha só no slide.
+- **A Q6 pode ser considerada respondida pela evidência:** neste slide aprovado por cliente o
+  "Público-alvo" (Diagnóstico) vem **antes** da "Jornada do cliente" (Estratégia), e as fases ficam
+  contínuas. A prática comercial já faz a inversão que a regra P1 pede.
 
 ---
 

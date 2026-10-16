@@ -62,6 +62,10 @@ def _etapas_dos_templates(db: Session, servico_id: int) -> list[Etapa]:
                 dias_uteis_esperados=template.dias_uteis_esperados_padrao,
                 bloco_entrega=chave,
                 status="nao_iniciada",
+                # Fase 31 (ADR-035): copiado do template; propagação dentro
+                # do bloco é automática aqui porque todo o bloco vem do
+                # mesmo `ordem` de template, logo da mesma fase na origem.
+                fase_escopo=template.fase_escopo,
             )
         )
     return etapas
@@ -79,6 +83,7 @@ def _etapas_customizadas(
     valores_por_grupo: dict[str, tuple] = {}
     etapas = []
     for indice, item in enumerate(itens):
+        template = None
         if item.etapa_template_id is not None:
             template = db.get(EtapaTemplate, item.etapa_template_id)
             if template is None or template.servico_id != servico_id:
@@ -87,9 +92,18 @@ def _etapas_customizadas(
                 )
         chave = None
         dias, inicio = item.dias_uteis_esperados, item.data_inicio
+        # Fase 31 (ADR-035): se o item não traz fase_escopo explícita, herda
+        # do template (quando houver); etapa manual sem fase ⇒ não classificada.
+        fase_escopo = item.fase_escopo
+        if fase_escopo is None and template is not None:
+            fase_escopo = template.fase_escopo
         if item.bloco_grupo:
             chave = chave_por_grupo.setdefault(item.bloco_grupo, str(uuid.uuid4()))
-            dias, inicio = valores_por_grupo.setdefault(item.bloco_grupo, (dias, inicio))
+            # A fase propaga dentro do bloco (ADR-009/ADR-035): o primeiro
+            # item do grupo decide, como já acontece com dias/inicio.
+            dias, inicio, fase_escopo = valores_por_grupo.setdefault(
+                item.bloco_grupo, (dias, inicio, fase_escopo)
+            )
         etapas.append(
             Etapa(
                 etapa_template_id=item.etapa_template_id,
@@ -100,6 +114,7 @@ def _etapas_customizadas(
                 data_inicio=inicio,
                 bloco_entrega=chave,
                 status="nao_iniciada",
+                fase_escopo=fase_escopo,
             )
         )
     return etapas

@@ -80,6 +80,7 @@ def serializar_etapa(etapa: Etapa) -> schemas.EtapaResposta:
         ],
         bloco_entrega=etapa.bloco_entrega,
         status=etapa.status,
+        fase_escopo=etapa.fase_escopo,
         consultores=[
             schemas.TrabalhadorResposta.model_validate(t)
             for t in consultores_ativos(etapa)
@@ -111,6 +112,7 @@ def criar_etapa(etapa: schemas.EtapaCriar, db: Session = Depends(get_db)):
         dias_uteis_esperados=etapa.dias_uteis_esperados,
         data_inicio=etapa.data_inicio,
         bloco_entrega=etapa.bloco_entrega,
+        fase_escopo=etapa.fase_escopo,
     )
     db.add(nova)
     db.commit()
@@ -140,7 +142,9 @@ def editar_etapa(
 
     Aplica só os campos enviados. Se a etapa pertence a um bloco de entrega,
     dias_uteis_esperados/data_inicio propagam a todos os membros (redundância
-    do ADR-009); nome/descricao permanecem individuais.
+    do ADR-009); nome/descricao/fase_escopo permanecem individuais nesta rota
+    (Fase 31, ADR-035) — mover um bloco inteiro de fase usa o
+    PUT /projetos/{id}/etapas/fases em lote.
     """
     etapa = db.get(Etapa, etapa_id)
     if etapa is None:
@@ -151,6 +155,8 @@ def editar_etapa(
         etapa.nome = campos["nome"]
     if "descricao" in campos:
         etapa.descricao = campos["descricao"]
+    if "fase_escopo" in campos:
+        etapa.fase_escopo = campos["fase_escopo"]
 
     compartilhados = {
         c: campos[c] for c in ("dias_uteis_esperados", "data_inicio") if c in campos

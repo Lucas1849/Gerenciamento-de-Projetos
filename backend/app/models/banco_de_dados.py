@@ -65,6 +65,11 @@ class Servico(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, unique=True, nullable=False)
     descricao = Column(String, nullable=True)
+    # Fase 31 (ADR-035, Q5): False = serviço legado, não oferecido em
+    # projetos novos (ex. Valuation), mas preservado no catálogo porque há
+    # projeto real em andamento usando-o. O catálogo público do formulário
+    # de criação oculta serviços com ofertavel=False.
+    ofertavel = Column(Boolean, nullable=False, default=True)
 
     etapas_template = relationship(
         "EtapaTemplate", back_populates="servico", order_by="EtapaTemplate.ordem"
@@ -83,6 +88,10 @@ class EtapaTemplate(Base):
     nome = Column(String, nullable=False)
     descricao_padrao = Column(String, nullable=True)
     dias_uteis_esperados_padrao = Column(Integer, nullable=True)
+    # Fase 31 (ADR-035): fase do escopo (alinhamento|diagnostico|estrategia|
+    # acao), ponto de partida copiado para Etapa.fase_escopo na criação do
+    # projeto. Nulo = não classificada (template sem fase atribuída).
+    fase_escopo = Column(String, nullable=True)
 
     servico = relationship("Servico", back_populates="etapas_template")
 
@@ -164,6 +173,14 @@ class Etapa(Base):
     bloco_entrega = Column(String, nullable=True)
     # Kanban interno (ADR-003): nao_iniciada | em_andamento | concluida
     status = Column(String, nullable=False, default="nao_iniciada")
+    # Fase 31 (ADR-035): fase do escopo da proposta comercial — alinhamento |
+    # diagnostico | estrategia | acao. Eixo DIFERENTE de Projeto.fase (que é
+    # o estágio do projeto na galeria, ADR-003/024/030); o nome fase_escopo
+    # evita a colisão. Nulo = não classificada (etapa manual, ou projeto
+    # anterior à Fase 31 — atribuição manual via tela da Fase 31d). Propaga
+    # dentro do bloco de entrega, como prazo e data (ADR-009): um bloco é uma
+    # entrega só e não pode estar em duas fases.
+    fase_escopo = Column(String, nullable=True)
 
     projeto = relationship("Projeto", back_populates="etapas")
     etapa_template = relationship("EtapaTemplate")

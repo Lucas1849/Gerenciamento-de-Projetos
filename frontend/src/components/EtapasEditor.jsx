@@ -10,9 +10,12 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ArrowUp, ArrowDown, Trash2, Plus, Link2, Unlink } from 'lucide-react';
+import { GripVertical, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Trash2, Plus, Link2, Unlink } from 'lucide-react';
 import { calcularDataFim, contarDiasUteis, cascataDatas } from '../services/api';
-import { novoUid, cascatearItens } from './etapasEditorUtils';
+import {
+  novoUid, cascatearItens, construirFaixas, limiteFaixaSeguinte, limiteFaixaAnterior,
+} from './etapasEditorUtils';
+import { FASE_ESCOPO_LABEL, corFaseEscopo } from './fasesEscopo';
 import { janelaDatas, formatarData } from './datasUtils';
 import ModalBloco from './ModalBloco';
 
@@ -111,7 +114,7 @@ function HandleLigacao({ uid }) {
   );
 }
 
-function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover, onDesfazer }) {
+function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onMoverFaixa, onRemover, onDesfazer }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
     useSortable({ id: item.uid });
   const ehBloco = item.membros.length > 1;
@@ -120,10 +123,20 @@ function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover,
   // bloco — soltar sobre bloco estende, Fase 8).
   const alvoDeLigacao = ligando && isOver;
 
+  // Fase 31 (ADR-035, §5): Alt+←/→ move o card para a faixa anterior/
+  // seguinte — equivalente por teclado do arrasto entre faixas, para a
+  // tela não ficar dependente só de mouse.
+  const aoTeclar = (e) => {
+    if (!e.altKey) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); onMoverFaixa(indice, 'anterior'); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); onMoverFaixa(indice, 'seguinte'); }
+  };
+
   return (
     <div
       ref={setNodeRef}
       className="ui-card"
+      onKeyDown={aoTeclar}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -229,6 +242,18 @@ function CardEtapa({ item, indice, total, ligando, onEditar, onMover, onRemover,
           aria-label="Remover etapa" onClick={() => onRemover(indice)}>
           <Trash2 size={14} />
         </button>
+        <div style={{ display: 'flex', gap: 'var(--sp-4)', marginTop: 'var(--sp-4)' }}>
+          <button type="button" className="btn btn-secondary btn-sm"
+            title="Mover para a faixa anterior (Alt+←)"
+            aria-label="Mover para a faixa anterior" onClick={() => onMoverFaixa(indice, 'anterior')}>
+            <ChevronLeft size={14} />
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm"
+            title="Mover para a faixa seguinte (Alt+→)"
+            aria-label="Mover para a faixa seguinte" onClick={() => onMoverFaixa(indice, 'seguinte')}>
+            <ChevronRight size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -243,7 +268,30 @@ export default function EtapasEditor({ itens, onChange }) {
   // Sequência das cascatas em voo: só a resposta mais recente é aplicada.
   const cascataSeq = useRef(0);
 
-  const mover = (de, para) => onChange(arrayMove(itens, de, para));
+  // Fase 31 (ADR-035, Opção A): a fase é derivada da posição — qualquer
+  // reordenação (arrasto ⠿, setas ↑/↓ ou Alt+←/→) recomputa faseEscopo do
+  // item movido pelo vizinho na NOVA posição. Isso garante, por construção,
+  // que etapas da mesma fase fiquem contíguas (P1) sem lógica extra: mover
+  // um card para o meio de outra faixa automaticamente o "converte" para
+  // aquela fase.
+  const mover = (de, para) => {
+    const novos = arrayMove(itens, de, para);
+    const vizinho = novos[para - 1] ?? novos[para + 1];
+    const novaFase = vizinho ? vizinho.faseEscopo : novos[para].faseEscopo;
+    onChange(
+      novos.map((it, idx) => (idx === para ? { ...it, faseEscopo: novaFase } : it))
+    );
+  };
+
+  // Alt+←/→ e os chevrons do card: pula o resto da faixa atual e aterra no
+  // início da faixa seguinte (ou fim da anterior) — equivalente de teclado
+  // ao arrasto entre faixas (acessibilidade, §5 do plano).
+  const moverFaixa = (indice, direcao) => {
+    const destino = direcao === 'seguinte'
+      ? limiteFaixaSeguinte(itens, indice)
+      : limiteFaixaAnterior(itens, indice);
+    if (destino !== null) mover(indice, destino);
+  };
 
   const aoIniciarDrag = ({ active }) =>
     setLigando(String(active.id).startsWith('link:'));
@@ -298,6 +346,7 @@ export default function EtapasEditor({ itens, onChange }) {
       membros: [m],
       dias: item.dias,
       dataInicio: item.dataInicio,
+      faseEscopo: item.faseEscopo,
     }));
     onChange([...itens.slice(0, indice), ...soltos, ...itens.slice(indice + 1)]);
   };
@@ -331,7 +380,16 @@ export default function EtapasEditor({ itens, onChange }) {
       membros: [{ nome: 'Nova etapa', etapaTemplateId: null }],
       dias: '',
       dataInicio: '',
+      // Fase 31: herda a fase da última etapa (entra na última faixa não
+      // vazia) em vez de nascer "não classificada" — ajustável com os
+      // chevrons/Alt+← se o gerente quiser outra fase.
+      faseEscopo: itens[itens.length - 1]?.faseEscopo ?? 'alinhamento',
     }]);
+
+  // Fase 31 (ADR-035): faixas sempre nas quatro posições canônicas — uma
+  // fase sem etapa nenhuma aparece vazia (Q1), não é omitida.
+  const faixas = construirFaixas(itens);
+  let indiceGlobal = 0;
 
   return (
     <div>
@@ -343,19 +401,47 @@ export default function EtapasEditor({ itens, onChange }) {
         onDragCancel={() => setLigando(false)}
       >
         <SortableContext items={itens.map(i => i.uid)} strategy={verticalListSortingStrategy}>
-          {itens.map((item, indice) => (
-            <CardEtapa
-              key={item.uid}
-              item={item}
-              indice={indice}
-              total={itens.length}
-              ligando={ligando}
-              onEditar={novo => editar(indice, novo)}
-              onMover={mover}
-              onRemover={remover}
-              onDesfazer={desfazer}
-            />
-          ))}
+          {faixas.map((faixa, i) => {
+            const diasTotal = faixa.itens.reduce((s, it) => s + (Number(it.dias) || 0), 0);
+            const cards = faixa.itens.map(item => {
+              const indice = indiceGlobal++;
+              return (
+                <CardEtapa
+                  key={item.uid}
+                  item={item}
+                  indice={indice}
+                  total={itens.length}
+                  ligando={ligando}
+                  onEditar={novo => editar(indice, novo)}
+                  onMover={mover}
+                  onMoverFaixa={moverFaixa}
+                  onRemover={remover}
+                  onDesfazer={desfazer}
+                />
+              );
+            });
+            return (
+              <div key={faixa.fase ?? `nao-classificada-${i}`} style={{ marginBottom: 'var(--sp-12)' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 'var(--sp-8)',
+                  padding: '4px 0', marginBottom: 'var(--sp-4)',
+                  borderLeft: `3px solid ${corFaseEscopo(faixa.fase)}`, paddingLeft: 'var(--sp-8)',
+                }}>
+                  <strong style={{ fontSize: 'var(--text-caption)' }}>
+                    {FASE_ESCOPO_LABEL[faixa.fase] ?? 'Não classificada'}
+                  </strong>
+                  <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)' }}>
+                    {faixa.itens.length} etapa(s){diasTotal > 0 ? ` · ${diasTotal} dias úteis` : ''}
+                  </span>
+                </div>
+                {faixa.itens.length > 0 ? cards : (
+                  <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-disabled)', margin: '0 0 var(--sp-8) var(--sp-8)' }}>
+                    Nenhuma etapa nesta fase.
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </SortableContext>
       </DndContext>
       <button type="button" className="kanban-ghost" onClick={adicionar}>

@@ -8,6 +8,23 @@ import { IconePrazo, IconeData } from './Icones';
 import { criarBloco, desfazerBloco, estenderBloco, removerEtapaDoBloco } from '../services/api';
 import { formatarData } from './datasUtils';
 import { agruparCards, statusDoCard, FLUXO } from './etapasUtils';
+import { FASE_ESCOPO_LABEL, corFaseEscopo } from './fasesEscopo';
+
+// Chip discreto da fase do escopo (Fase 31, ADR-035). Eixo DIFERENTE das
+// colunas deste Kanban (Etapa.status) — por isso um chip, nunca uma coluna
+// nova: misturar os dois eixos tornaria a tela ambígua. null = não
+// classificada (não renderiza nada).
+function ChipFaseEscopo({ faseEscopo }) {
+  if (!faseEscopo) return null;
+  return (
+    <span
+      className="chip"
+      style={{ borderLeft: `3px solid ${corFaseEscopo(faseEscopo)}`, paddingLeft: 'var(--sp-8)', marginBottom: 'var(--sp-8)', display: 'inline-block' }}
+    >
+      {FASE_ESCOPO_LABEL[faseEscopo]}
+    </span>
+  );
+}
 
 const COLUNAS = [
   { status: 'nao_iniciada', titulo: 'Não Iniciada', cor: 'var(--color-text-secondary)' },
@@ -194,6 +211,9 @@ function CardEtapaAvulsa({ etapa, colaboradores, aoMover, aoAdicionar, aoRemover
         </p>
       )}
 
+      <div>
+        <ChipFaseEscopo faseEscopo={etapa.fase_escopo} />
+      </div>
       <BadgeTermo dias={etapa.dias_aditivos} />
       <ChipLinks etapas={[etapa]} aoAbrir={() => aoEditar([etapa])} />
 
@@ -246,6 +266,9 @@ function CardBloco({ rotulo, membros, colaboradores, aoMover, aoAdicionar, aoRem
       <h4 style={{ fontSize: 'var(--text-h4)', fontWeight: 600 }}>
         Bloco de {membros.length} etapas
       </h4>
+      <div>
+        <ChipFaseEscopo faseEscopo={ref.fase_escopo} />
+      </div>
       <BadgeTermo dias={ref.dias_aditivos} />
       <ChipLinks etapas={membros} aoAbrir={() => aoEditar(membros)} />
       <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', fontWeight: 600, margin: 'var(--sp-4) 0 var(--sp-8)' }}>

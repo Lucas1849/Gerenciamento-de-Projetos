@@ -146,7 +146,10 @@ export default function FormularioProjeto({ toast, gestaoInicialId, aoCriar }) {
             <label className="field-label">Serviço</label>
             <select className="input-field" value={campos.servicoId} onChange={set('servicoId')} required>
               <option value="">Selecione o serviço...</option>
-              {servicos.map(s => (
+              {/* Fase 31 (ADR-035, Q5): serviços legados (ofertavel=false,
+                  ex. Valuation) ficam fora de novos projetos — preservados
+                  no catálogo só pelo projeto em andamento que já os usa. */}
+              {servicos.filter(s => s.ofertavel !== false).map(s => (
                 <option key={s.id} value={s.id}>{s.nome}</option>
               ))}
             </select>

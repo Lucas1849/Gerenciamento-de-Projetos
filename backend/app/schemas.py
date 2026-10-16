@@ -19,6 +19,10 @@ def validar_url_http(url: Optional[str]) -> Optional[str]:
 # Valores permitidos nos campos de ciclo de vida (ADR-003 / ADR-007).
 Fase = Literal["kickoff", "andamento", "finalizacao", "ajustes", "concluido"]
 StatusEtapa = Literal["nao_iniciada", "em_andamento", "concluida"]
+# Fase 31 (ADR-035): fase do escopo da proposta comercial — eixo diferente
+# de `Fase` (estágio do projeto na galeria). Nome `fase_escopo` nos campos
+# evita a colisão.
+FaseEscopo = Literal["alinhamento", "diagnostico", "estrategia", "acao"]
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +112,7 @@ class EtapaTemplateCriar(BaseModel):
     nome: str
     descricao_padrao: Optional[str] = None
     dias_uteis_esperados_padrao: Optional[int] = Field(default=None, ge=0, le=MAX_DIAS_UTEIS)
+    fase_escopo: Optional[FaseEscopo] = None
 
 
 class EtapaTemplateResposta(BaseModel):
@@ -117,6 +122,7 @@ class EtapaTemplateResposta(BaseModel):
     nome: str
     descricao_padrao: Optional[str] = None
     dias_uteis_esperados_padrao: Optional[int] = None
+    fase_escopo: Optional[FaseEscopo] = None
 
     class Config:
         from_attributes = True
@@ -128,12 +134,14 @@ class EtapaTemplateResposta(BaseModel):
 class ServicoCriar(BaseModel):
     nome: str
     descricao: Optional[str] = None
+    ofertavel: bool = True
 
 
 class ServicoResposta(BaseModel):
     id: int
     nome: str
     descricao: Optional[str] = None
+    ofertavel: bool = True
 
     class Config:
         from_attributes = True
@@ -176,6 +184,7 @@ class EtapaCriar(BaseModel):
     data_inicio: Optional[date] = None
     bloco_entrega: Optional[str] = None
     etapa_template_id: Optional[int] = None
+    fase_escopo: Optional[FaseEscopo] = None
 
     # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
@@ -195,6 +204,9 @@ class EtapaProjetoCriar(BaseModel):
     # Nulo = etapa adicionada manualmente (fora do template).
     etapa_template_id: Optional[int] = None
     bloco_grupo: Optional[str] = None
+    # Fase 31 (ADR-035): se omitido, herda o fase_escopo do EtapaTemplate
+    # (quando etapa_template_id é informado); nulo nos dois ⇒ não classificada.
+    fase_escopo: Optional[FaseEscopo] = None
 
     # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
@@ -210,12 +222,15 @@ class EtapaEditar(BaseModel):
     Aplica só os campos enviados. Se a etapa pertence a um bloco, mudanças de
     dias_uteis_esperados/data_inicio propagam a todos os membros (ADR-009);
     nome/descricao permanecem individuais. O status tem rota própria.
+    fase_escopo (Fase 31) também é individual nesta rota — mover um bloco
+    inteiro de fase usa o PUT /projetos/{id}/etapas/fases em lote.
     """
 
     nome: Optional[str] = None
     descricao: Optional[str] = None
     dias_uteis_esperados: Optional[int] = Field(default=None, ge=0, le=MAX_DIAS_UTEIS)
     data_inicio: Optional[date] = None
+    fase_escopo: Optional[FaseEscopo] = None
 
     # Janela de plausibilidade (Fase 10): rejeita anos absurdos com 422.
     _valida_data = field_validator("data_inicio")(validar_data_plausivel)
@@ -226,6 +241,15 @@ class OrdemEtapas(BaseModel):
     na nova ordem visual; o backend reatribui ordem = índice + 1."""
 
     ordem: List[int] = Field(min_length=1)
+
+
+class FasesEtapas(BaseModel):
+    """Reatribuição de fase_escopo em lote (Fase 31, ADR-035): o editor de
+    criação e a tela de reclassificação pós-criação movem um bloco inteiro
+    (ou várias etapas) num só round-trip. Chave = etapa_id, valor = nova
+    fase (ou null para "não classificada")."""
+
+    fases: dict[int, Optional[FaseEscopo]] = Field(min_length=1)
 
 
 class CascataCriar(BaseModel):
@@ -396,6 +420,9 @@ class EtapaResposta(BaseModel):
     links: List[EtapaLinkResposta] = []
     bloco_entrega: Optional[str] = None
     status: StatusEtapa
+    # Fase 31 (ADR-035): fase do escopo da proposta comercial. Nulo = não
+    # classificada (etapa manual, ou projeto anterior à Fase 31).
+    fase_escopo: Optional[FaseEscopo] = None
     # Equipe embutida: consultores ativos da etapa (data_saida IS NULL).
     consultores: List[TrabalhadorResposta] = []
     # Dependências informativas (Fase 13, ADR-015): quem bloqueia esta etapa

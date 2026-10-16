@@ -217,6 +217,16 @@ export function reordenarEtapas(projetoId, ordemIds) {
   });
 }
 
+/** Reatribui fase_escopo em lote (Fase 31, ADR-035): `fases` é um mapa
+ *  etapaId → fase (ou null). Um round-trip para mover um bloco inteiro
+ *  (ou várias etapas) entre as quatro caixas. */
+export function reatribuirFasesEtapas(projetoId, fases) {
+  return request(`/projetos/${projetoId}/etapas/fases`, {
+    method: 'PUT',
+    body: JSON.stringify({ fases }),
+  });
+}
+
 // ─── Calendário ─────────────────────────────────────────────────────────────
 
 /** Prévia da data final (data_inicio + dias úteis, feriados nacionais).

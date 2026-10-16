@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pencil, Paperclip } from 'lucide-react';
 import { formatarData } from './datasUtils';
 import { numerosDosBlocos, STATUS_LABEL } from './etapasUtils';
+import { FASE_ESCOPO_LABEL, corFaseEscopo } from './fasesEscopo';
 
 // Célula de dependência (Fase 13, ADR-015): chips das etapas relacionadas com
 // × para remover e um <select> para adicionar. Usada nas duas colunas
@@ -64,6 +65,7 @@ export default function TabelaEtapas({ etapas, aoMover, aoEditar, aoCriarDepende
             <th>Início</th>
             <th>Término</th>
             <th>Prazo</th>
+            <th>Fase</th>
             <th>Links</th>
             <th>Bloqueado por</th>
             <th>Bloqueando</th>
@@ -100,6 +102,16 @@ export default function TabelaEtapas({ etapas, aoMover, aoEditar, aoCriarDepende
                     +{e.dias_aditivos} · termo aditivo
                   </span>
                 )}
+              </td>
+
+              {/* Fase do escopo (Fase 31, ADR-035) — eixo diferente de
+                  Projeto.fase (estágio na galeria); null = não classificada. */}
+              <td>
+                {e.fase_escopo ? (
+                  <span className="chip" style={{ borderLeft: `3px solid ${corFaseEscopo(e.fase_escopo)}`, paddingLeft: 'var(--sp-8)' }}>
+                    {FASE_ESCOPO_LABEL[e.fase_escopo]}
+                  </span>
+                ) : '—'}
               </td>
 
               {/* Links de entregas/demandas (Fase 19): contagem compacta —

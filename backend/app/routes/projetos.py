@@ -277,6 +277,32 @@ def listar_etapas_do_projeto(projeto_id: int, db: Session = Depends(get_db)):
     return [serializar_etapa(e) for e in projeto.etapas]
 
 
+@router.put("/{projeto_id}/etapas/fases", response_model=list[schemas.EtapaResposta])
+def reatribuir_fases(
+    projeto_id: int, dados: schemas.FasesEtapas, db: Session = Depends(get_db)
+):
+    """Reatribui fase_escopo em lote (Fase 31, ADR-035): um round-trip só
+    para mover um bloco inteiro (ou várias etapas) entre as quatro caixas —
+    usado pelo editor de criação e pela tela de reclassificação pós-criação
+    (Fase 31d). Chave = etapa_id, valor = nova fase (ou null)."""
+    projeto = db.get(Projeto, projeto_id)
+    if projeto is None:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+
+    etapas_por_id = {e.id: e for e in projeto.etapas}
+    invalidos = [eid for eid in dados.fases if eid not in etapas_por_id]
+    if invalidos:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Etapa(s) {invalidos} não pertence(m) a este projeto",
+        )
+
+    for etapa_id, fase_escopo in dados.fases.items():
+        etapas_por_id[etapa_id].fase_escopo = fase_escopo
+    db.commit()
+    return [serializar_etapa(etapas_por_id[i]) for i in dados.fases]
+
+
 @router.get(
     "/{projeto_id}/calendario-config",
     response_model=schemas.CalendarioConfigResposta,

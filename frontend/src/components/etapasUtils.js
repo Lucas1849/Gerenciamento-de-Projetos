@@ -54,6 +54,29 @@ export function agruparCards(etapas) {
   return cards;
 }
 
+/** Constrói os cards das "quatro caixas de fase" (Fase 31d, ADR-035) a
+ *  partir de `agruparCards`: cada card ganha `chave` (id da etapa, ou chave
+ *  de bloco), `titulo`, `idsMembros` e a fase atual (lida do primeiro
+ *  membro — mesma convenção de dias/data compartilhados do bloco, ADR-009). */
+export function cardsParaCaixas(cardsAgrupados) {
+  return cardsAgrupados.map(card => {
+    if (card.tipo === 'etapa') {
+      return {
+        chave: `e-${card.etapa.id}`,
+        titulo: card.etapa.nome,
+        idsMembros: [card.etapa.id],
+        faseEscopo: card.etapa.fase_escopo ?? null,
+      };
+    }
+    return {
+      chave: `b-${card.membros[0].bloco_entrega}`,
+      titulo: `${card.rotulo}: ${card.membros.map(m => m.nome).join(' + ')}`,
+      idsMembros: card.membros.map(m => m.id),
+      faseEscopo: card.membros[0].fase_escopo ?? null,
+    };
+  });
+}
+
 /** Status do card: o próprio, ou o da etapa menos avançada no caso de bloco. */
 export const statusDoCard = (card) =>
   card.tipo === 'etapa'
