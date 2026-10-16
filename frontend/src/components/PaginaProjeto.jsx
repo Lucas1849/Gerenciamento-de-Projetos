@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import { FileClock } from 'lucide-react';
 import EtapasProjeto from './EtapasProjeto';
 import Checkbox from './Checkbox';
 import SeletorFase from './SeletorFase';
+import GeradorCronogramaProposta from './GeradorCronogramaProposta';
 import { FASE_LABEL } from './fases';
 import { obterProjeto, atualizarProjeto } from '../services/api';
 
@@ -17,6 +19,11 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
   const [abaAtiva, setAbaAtiva] = useState('etapas');
   const [projeto,  setProjeto]  = useState(null);
   const [erro,     setErro]     = useState(null);
+  // Fase 32 (ADR-036): gerador do cronograma de proposta — na Visão Geral,
+  // não na sub-visão Calendário da aba Etapas (é material comercial, usado
+  // antes do projeto andar, não pertence à mesma gaveta do calendário
+  // operacional de kick-off).
+  const [geradorCronogramaAberto, setGeradorCronogramaAberto] = useState(false);
 
   const carregar = useCallback(() => {
     obterProjeto(projetoId)
@@ -139,6 +146,16 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
           </div>
 
           <div className="ui-card">
+            <span className="field-label">Material comercial</span>
+            <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', marginTop: 'var(--sp-4)', marginBottom: 'var(--sp-12)' }}>
+              Slide "Cronograma de Execução" gerado a partir das etapas reais deste projeto.
+            </p>
+            <button type="button" className="btn-primary btn-sm" onClick={() => setGeradorCronogramaAberto(true)}>
+              <FileClock size={15} /> Gerar cronograma da proposta
+            </button>
+          </div>
+
+          <div className="ui-card">
             <span className="field-label">Equipe do Projeto</span>
             <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-secondary)', marginTop: 'var(--sp-4)' }}>
               Derivada dos consultores ativos das etapas.
@@ -161,6 +178,15 @@ export default function PaginaProjeto({ projetoId, aoVoltar, toast }) {
 
       {abaAtiva === 'etapas' && (
         <EtapasProjeto projetoId={projeto.id} projetoNome={projeto.nome} toast={toast} />
+      )}
+
+      {geradorCronogramaAberto && (
+        <GeradorCronogramaProposta
+          projetoNome={projeto.nome}
+          etapas={projeto.etapas}
+          toast={toast}
+          aoFechar={() => setGeradorCronogramaAberto(false)}
+        />
       )}
 
     </div>
