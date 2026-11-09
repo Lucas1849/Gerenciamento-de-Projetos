@@ -689,6 +689,11 @@ decisões deste ADR:
 - **Marca:** "APOIO CONSULTORIA" no canto superior direito, na caixa medida no PDF, a partir do
   **mesmo `marca-apoio.svg` com a cor trocada para branco** (constante do tema, aplicada na montagem)
   — sem arquivo novo; o calendário de kick-off mantém a cor original.
+  *Revisto em 09/11/2026:* o arquivo da plataforma traz o símbolo e um traçado em camadas de cinza.
+  O filtro de cor fecha os furos das letras e cola o "I" ao "O". Por isso a marca do slide passa a ser
+  o **novo `frontend/public/marca-apoio-texto.svg`**: só o texto, branco nativo, vetorizado da imagem
+  `/X5` do próprio PDF modelo (ADR-005), posicionado na tinta medida (1304,8 · 6,4) 109,9 × 32,8.
+  O calendário de kick-off segue com `marca-apoio.svg`.
 - **Cores corrigidas pela releitura do PDF (09/11/2026):** o D1 continua valendo (gradiente vetorial),
   mas as cores registradas acima estavam erradas — o gradiente do modelo vai de **`#00063B` a
   `#000000`**; `#1F2F47`/`#253753` eram cores de traço (separador interno e borda dos cards). Painel e

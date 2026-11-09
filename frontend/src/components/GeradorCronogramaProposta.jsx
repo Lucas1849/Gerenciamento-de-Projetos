@@ -10,8 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Copy, Download, FileClock } from 'lucide-react';
 import { planejarCronograma } from './cronogramaPropostaUtils';
-import { FONTES, GEO } from './cronogramaPropostaTema';
-import { LOGO_URL } from './calendarioKickoffTema';
+import { FONTES, GEO, MARCA_TEXTO_URL } from './cronogramaPropostaTema';
 import CronogramaProposta from './CronogramaProposta';
 import { embutirFontes, svgParaPngBlob, copiarPng, baixarBlob } from './exportarSvg';
 
@@ -39,7 +38,7 @@ export default function GeradorCronogramaProposta({ projetoNome, etapas, toast, 
   const exportar = async () => {
     if (!svgRef.current) return null;
     return svgParaPngBlob(svgRef.current, {
-      largura: GEO.largura, altura: GEO.altura, escala: 2, fontsQuery: FONTS_QUERY, logoUrl: LOGO_URL,
+      largura: GEO.largura, altura: GEO.altura, escala: 2, fontsQuery: FONTS_QUERY, logoUrl: MARCA_TEXTO_URL,
     });
   };
 

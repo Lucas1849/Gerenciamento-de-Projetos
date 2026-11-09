@@ -1,6 +1,5 @@
 import { forwardRef } from 'react';
-import { GEO, CORES, FONTES, FILTRO_MARCA_BRANCA } from './cronogramaPropostaTema';
-import { LOGO_URL, LOGO_RATIO } from './calendarioKickoffTema';
+import { GEO, CORES, FONTES, MARCA_TEXTO_URL } from './cronogramaPropostaTema';
 
 // Componente SVG do slide "Cronograma de Execução" da proposta comercial
 // (Fase 32, ADR-036; corrigido no hotfix de 09/11/2026 —
@@ -20,13 +19,6 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
   const { painel, rodape, marca } = GEO;
   const familiaDisplay = `${FONTES.display}, ${FONTES.displayFallback}`;
   const familiaTexto = `${FONTES.texto}, ${FONTES.textoFallback}`;
-
-  // Marca "APOIO CONSULTORIA": mesmo arquivo do calendário de kick-off, cor
-  // trocada para branco via filtro CSS (H4, decisão 5) — nenhum arquivo novo.
-  // Mantém a proporção real do desenho (LOGO_RATIO) dentro da caixa medida
-  // no PDF, ancorada pela borda direita/superior.
-  const logoLargura = marca.altura * LOGO_RATIO;
-  const logoX = marca.x + marca.largura - logoLargura;
 
   const yBaseLinhaNome = (linha, i) => {
     // Centraliza o bloco de sub-linhas de etapa na altura da linha, uma
@@ -66,12 +58,12 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
         Cronograma de Execução
       </text>
 
-      {/* Marca "APOIO CONSULTORIA" (H4) — nunca o nome interno do projeto
-          (H5, removido: o slide vai para o cliente). */}
+      {/* Marca "APOIO CONSULTORIA" (H4, revisão 5' — só o texto, já branco
+          nativo em marca-apoio-texto.svg, sem filtro) — nunca o nome interno
+          do projeto (H5, removido: o slide vai para o cliente). */}
       <image
-        href={LOGO_URL} xlinkHref={LOGO_URL}
-        x={logoX} y={marca.y} width={logoLargura} height={marca.altura}
-        style={{ filter: FILTRO_MARCA_BRANCA }}
+        href={MARCA_TEXTO_URL} xlinkHref={MARCA_TEXTO_URL}
+        x={marca.x} y={marca.y} width={marca.largura} height={marca.altura}
       />
 
       {/* Painel da tabela: card opaco com borda e cantos arredondados (H6) —

@@ -1,8 +1,10 @@
 # Hotfix da Fase 32 — divergências entre o slide gerado e o modelo
 
-**Status: corrigido e verificado visualmente (09/11/2026).** H1-H12 implementados; critérios de
-aceite conferidos no PNG exportado (ABAHABAH, 11 etapas, projeto real do banco local) e na regressão
-(Plano de Marketing, 13 etapas soltas, projeto de teste criado e removido na verificação).
+**Status: corrigido e verificado visualmente (09/11/2026), incluindo a revisão 5′ da marca.** H1-H12
+implementados; critérios de aceite conferidos no PNG exportado (ABAHABAH, 11 etapas, projeto real do
+banco local) e na regressão (Plano de Marketing, 13 etapas soltas, projeto de teste criado e removido
+na verificação). A revisão 5′ (marca só com o texto, `marca-apoio-texto.svg`) também foi aplicada e
+conferida no PNG exportado — sem o símbolo, sem furos colados.
 
 **Achado adicional durante a verificação, fora do diagnóstico original:** o preset `compacto` (não
 recalibrado pelo hotfix — só o `normal` tinha valores medidos no PDF) não comportava de fato o caso
@@ -166,6 +168,41 @@ vetor. Fonte: **o mesmo `frontend/public/marca-apoio.svg`**, com a cor trocada p
 tem `fill #03345F` (azul-marinho), que sumiria sobre este fundo. Nada de arquivo novo: a cor da marca
 vira constante do tema (`CORES.marca = '#FFFFFF'`) e é aplicada ao SVG na montagem (sobrescrevendo o
 `fill` ao inline-lo como data-URI). O calendário de kick-off continua usando a marca na cor original.
+
+**Revisão da decisão 5 (09/11/2026, depois do hotfix aplicado):** usar o `marca-apoio.svg` com a cor
+trocada **não ficou igual ao modelo**, por dois motivos:
+
+1. **O arquivo traz o símbolo** (o "A" estilizado) ao lado do texto. O modelo mostra **só o texto**
+   "APOIO / CONSULTORIA": a imagem `/X5` contém o símbolo, mas o recorte da caixa deixa só o texto à vista.
+2. **O traçado do arquivo é em camadas de cinza.** O texto não é uma forma única, e sim sobreposições
+   `#353334`/`#626161`/`#7A7A7A`/`#D8D7D7` com furos pintados de `white`. O filtro
+   `brightness(0) invert(1)` pinta **os furos também** de branco, e o "I" de APOIO fica colado no "O"
+   (camada `#D8D7D7`).
+
+**Nova fonte da marca: `frontend/public/marca-apoio-texto.svg`** (arquivo novo, substitui a decisão 5).
+É a vetorização da própria imagem `/X5` do PDF modelo, só a área do texto. Foi traçada com potrace a
+partir do canal alfa ampliado 8×, e a conferência contra o bitmap original deu erro médio de 3,6/255 e
+nenhum pixel invertido. Características do arquivo:
+
+- um único `<path>` com `fill="#FFFFFF"` e `fill-rule="evenodd"`, ou seja, branco nativo;
+- **sem filtro** e sem símbolo;
+- `viewBox 0 0 417.7 125.2`, enquadrado justo na tinta, proporção **3,336**.
+
+**Posição medida no PDF:** a tinta do texto ocupa **x 1304,8–1414,7 · y 6,4–39,2**, isto é,
+**109,9 × 32,8**, proporção 3,34, dentro da caixa de recorte (1302,6 · 3,8) 113,2 × 38,2. A linha
+"APOIO" vai de x 1335,0 a 1384,4 e de y 6,4 a 19,3; a linha "CONSULTORIA" vai de x 1304,8 a 1414,7 e
+de y 26,1 a 39,2.
+
+**Implementação:**
+
+- `CronogramaProposta.jsx` desenha
+  `<image href="/marca-apoio-texto.svg" x=1304.8 y=6.4 width=109.9 height=32.8>`, **sem**
+  `FILTRO_MARCA_BRANCA`;
+- o tema ganha uma constante própria para essa URL e para essa caixa;
+- o `logoUrl` passado ao `exportarSvg.js` passa a ser o novo arquivo;
+- `FILTRO_MARCA_BRANCA` sai do tema, porque fica morto;
+- `LOGO_URL`/`LOGO_RATIO` do `calendarioKickoffTema.js` continuam intocados, e o calendário de kick-off
+  mantém a marca completa.
 
 ---
 
@@ -345,6 +382,7 @@ demais separadores.
 |3|H3 — escrita do total|**"Dias ÚTEIS"**|
 |4|H2 — revisão do D2|**Sim:** altura por conteúdo, esticada até preencher o painel|
 |5|H4 — origem da marca branca|**O mesmo `marca-apoio.svg`, com a cor trocada** — sem arquivo novo|
+|5′|H4 — revisão (09/11/2026)|**SVG novo só com o texto**, `marca-apoio-texto.svg`, vetorizado da imagem `/X5` do modelo: o símbolo e as camadas de cinza do arquivo da plataforma impediam a fidelidade|
 
 Registradas como revisão do ADR-036 em [decisoes.md](../arquitetura/decisoes.md).
 
@@ -357,8 +395,11 @@ Registradas como revisão do ADR-036 em [decisoes.md](../arquitetura/decisoes.md
 - [x] `ABAHABAH` gera em preset `normal`, **sem** o aviso "Conteúdo extenso".
 - [x] As linhas preenchem o painel até ≈ 721, sem vão antes do rodapé.
 - [x] Rodapé numa linha só: rótulo à esquerda (x 160,4), total na coluna do prazo (x 1088,8).
-- [x] Marca "APOIO CONSULTORIA" branca em (1302,6 · 3,8) 113,2 × 38,2, vinda do `marca-apoio.svg` com a cor
-  trocada, também no PNG exportado; o calendário de kick-off mantém a marca na cor original.
+- [x] ~~Marca "APOIO CONSULTORIA" branca em (1302,6 · 3,8) 113,2 × 38,2, vinda do `marca-apoio.svg`
+  com a cor trocada~~ — **superado pela revisão 5′ abaixo**: o `marca-apoio.svg` com filtro colava o
+  "I" de APOIO no "O"; o calendário de kick-off mantém a marca original (símbolo + texto), intocado.
+- [x] (revisão 5′) A marca é **só o texto**, sem o símbolo, vinda do `marca-apoio-texto.svg` sem
+  filtro, em (1304,8 · 6,4) 109,9 × 32,8, com os furos de O/P/R/A vazados, também no PNG exportado.
 - [x] Sem nome de projeto no slide.
 - [x] Painel `#162136` opaco, raio 22,5, borda `#253753` 3,0.
 - [x] Rodapé `#162136`, raio 18,75, borda `#253753` 3,0.
