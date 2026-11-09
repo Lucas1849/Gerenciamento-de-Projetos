@@ -28,9 +28,12 @@ plano executável da **Fase 31** (dado + formulário) em [plano-fase-31.md](plan
 
 - **Depende de:** `fase` em `EtapaTemplate`/`Etapa` (Fase 31) e da validação da diretoria sobre as
   nove decisões Q1–Q9.
-- **Falta levantar:** o **arquivo original** do slide (Canva/PDF) — a imagem de referência atual é
-  captura de tela e serve para entender a estrutura, não para transcrever geometria e cor. Foi o
-  arquivo original que permitiu a fidelidade da Fase 28.
+- ~~**Falta levantar:** o arquivo original do slide~~ — **recebido em 15/10/2026**
+  (`Proposta Espaço da Mente.pdf`, 1440×810, a mesma base do calendário de kick-off); anatomia
+  transcrita em [cronograma-proposta.md](cronograma-proposta.md), plano em
+  [plano-fase-32.md](plano-fase-32.md). **Falta um segundo exemplar**, de outro serviço, para separar
+  regra do template de escolha de proposta — foi com dois PDFs que a Fase 30 descobriu a variação de
+  montagem manual.
 - **Reaproveitamento previsto:** a exportação da Fase 28 (rasterização 2×, fontes embutidas, copiar
   por mês, zip store-only) é genérica e deve ser **extraída**, não duplicada.
 
