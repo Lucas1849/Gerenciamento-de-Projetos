@@ -619,3 +619,57 @@ em lote persistindo). Backend: 92/92 testes verdes; build + lint do frontend ver
 [../features/plano-fase-31.md](../features/plano-fase-31.md); catálogo normativo em
 [../features/catalogo-servicos.md](../features/catalogo-servicos.md). Pendente: Fase 32 (o slide),
 não planejada aqui.
+
+---
+
+### ADR-036 — Geração automática do slide "Cronograma de Execução": fundo vetorial, altura por conteúdo, presets de estouro (Fase 32)
+
+**Contexto:** a Fase 31 deu à etapa uma fase do escopo; a Fase 32 usa esse dado para gerar o slide
+comercial "Cronograma de Execução", no mesmo molde do calendário de kick-off (ADR-031/032/033) — mesma
+base 1440×810, mesma mecânica de exportação. A anatomia foi transcrita de um PDF real (`Proposta
+Espaço da Mente.pdf`, 15/10/2026) em
+[../features/cronograma-proposta.md](../features/cronograma-proposta.md), que registra seis decisões
+em aberto (D1–D6) e confirma que **a célula de prazo mesclada do slide é `Etapa.bloco_entrega`** — o
+slide não precisa de conceito novo, só agrupa o que já existe (fase → bloco → etapa).
+
+**Decisão** (seguindo as recomendações já registradas na spec e no plano, por comando direto do
+responsável em 16/10/2026):
+- **D1 (fundo texturizado):** gradiente SVG vetorial aproximando as duas camadas de cor (`#1F2F47`/
+  `#253753`), não a imagem rasterizada original. Mantém o componente 100% vetorial e leve — like o
+  calendário de kick-off — e portável para o Hub (contrato da Fase 33), ao custo de não ser pixel-a-
+  pixel idêntico ao PDF.
+- **D2 (altura de linha):** por **conteúdo, com mínimo fixo** — não as alturas desiguais do PDF
+  (resultado de montagem manual, não regra). Mesmo princípio de `planejarLegenda()` da Fase 30.
+- **D3/D6 (estouro: muitas linhas de prazo):** mesma política A da Fase 30 — dois presets
+  (`normal`/`compacto`) com aviso visível ao gerente quando o slide cai em compacto. **Página única,
+  sempre** — segunda página fica descartada enquanto o maior serviço do catálogo (Plano de Marketing,
+  13 linhas sem bloco) couber em compacto; reabrir essa opção é revisão deste ADR.
+- **D4 (= Q1 da Fase 31):** fase vazia **aparece**, com faixa vazia — decisão já tomada no ADR-035,
+  aqui apenas confirmada para o slide.
+- **D5 (nome longo de etapa):** nunca truncar — quebra em duas linhas. Mesma política já adotada no
+  calendário de kick-off (Fase 30).
+- **Ponto de entrada na UI:** botão "Gerar cronograma da proposta" na aba **Visão Geral** do projeto,
+  não na sub-visão Calendário da aba Etapas — é material comercial, usado antes do projeto andar, não
+  pertence à mesma gaveta do calendário operacional.
+- **Exportação extraída, não duplicada (32d):** a mecânica de `calendarioKickoffExport.js` (fontes/
+  logo embutidos, rasterização 2×, copiar, baixar, zip store-only) virou o módulo genérico
+  `exportarSvg.js`, que não conhece nenhum tema — ambos os geradores (calendário e cronograma) passam
+  sua própria geometria/fontes/logo. O calendário de kick-off foi migrado para o módulo extraído no
+  mesmo commit, evitando duas implementações divergindo com o tempo.
+- **Risco não-bloqueante registrado:** um segundo exemplar do slide, de outro serviço, permitiria
+  separar regra de template de particularidade daquela proposta (foi assim que a Fase 30 descobriu,
+  com dois PDFs, que as alturas de linha variavam por montagem manual) — recomendado, mas a fase não
+  foi bloqueada por ele, como a própria spec registra.
+
+**Justificativa:** cada decisão segue o padrão já validado nas Fases 28/30 (vetorial > fiel-mas-pesado;
+conteúdo > transcrição de irregularidade manual; degradação previsível e avisada > quebra silenciosa);
+nenhuma é nova arquitetura, é a mesma arquitetura aplicada a um tema e agrupamento diferentes — o que
+confirma a tese do plano ("é majoritariamente montagem de dados + um SVG novo").
+
+**Status:** implementado (16/10/2026, Fase 32, por comando direto do responsável). Arquivos novos:
+`cronogramaPropostaTema.js`, `cronogramaPropostaUtils.js`, `CronogramaProposta.jsx`,
+`GeradorCronogramaProposta.jsx`, `exportarSvg.js` (extraído); `calendarioKickoffExport.js` migrado para
+usar `exportarSvg.js`. Plano em [../features/plano-fase-32.md](../features/plano-fase-32.md), spec em
+[../features/cronograma-proposta.md](../features/cronograma-proposta.md). **Pendências herdadas, não
+resolvidas aqui:** a passada visual 28e/30e (PNG rasterizado no browser) e o segundo exemplar do slide
+(risco registrado, não bloqueante). Fase 33 (port ao Hub) não iniciada.
