@@ -1,22 +1,32 @@
 import { forwardRef } from 'react';
 import { GEO, CORES, FONTES } from './cronogramaPropostaTema';
+import { LOGO_URL, LOGO_RATIO } from './calendarioKickoffTema';
 
 // Componente SVG do slide "Cronograma de Execução" da proposta comercial
-// (Fase 32, ADR-036). Mesmo princípio do `CalendarioKickoff.jsx` (Fase 28,
-// ADR-032): o mesmo SVG é o preview na tela e a fonte da exportação
-// (rasterizado em canvas pelo `exportarSvg.js`, extraído na própria Fase 32).
+// (Fase 32, ADR-036; corrigido no hotfix de 09/11/2026 —
+// docs/features/hotfix-fase-32-cronograma.md). Mesmo princípio do
+// `CalendarioKickoff.jsx` (Fase 28, ADR-032): o mesmo SVG é o preview na tela
+// e a fonte da exportação (rasterizado em canvas pelo `exportarSvg.js`).
 // Cores/fontes vêm do tema (`cronogramaPropostaTema.js`) — sem custom
 // properties do app dentro do SVG, para portar ao Hub.
 //
 // `plano` é o resultado de `planejarCronograma(etapas)`
-// (`cronogramaPropostaUtils.js`): fases já com y/altura resolvidos, linhas já
-// quebradas em sub-linhas de texto (D5: nunca truncar).
+// (`cronogramaPropostaUtils.js`): fases já com y/altura resolvidos (linhas
+// esticadas para preencher o painel, H2), numeração já na ordem de desenho
+// (H1), linhas já quebradas em sub-linhas de texto (D5: nunca truncar).
 const CronogramaProposta = forwardRef(function CronogramaProposta(
-  { plano, nomeProjeto, estiloFontes = null }, ref
+  { plano, estiloFontes = null }, ref
 ) {
-  const { painel, rodape } = GEO;
+  const { painel, rodape, marca } = GEO;
   const familiaDisplay = `${FONTES.display}, ${FONTES.displayFallback}`;
   const familiaTexto = `${FONTES.texto}, ${FONTES.textoFallback}`;
+
+  // Marca "APOIO CONSULTORIA": mesmo arquivo do calendário de kick-off, cor
+  // trocada para branco via filtro CSS (H4, decisão 5) — nenhum arquivo novo.
+  // Mantém a proporção real do desenho (LOGO_RATIO) dentro da caixa medida
+  // no PDF, ancorada pela borda direita/superior.
+  const logoLargura = marca.altura * LOGO_RATIO;
+  const logoX = marca.x + marca.largura - logoLargura;
 
   const yBaseLinhaNome = (linha, i) => {
     // Centraliza o bloco de sub-linhas de etapa na altura da linha, uma
@@ -38,8 +48,8 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
     >
       <defs>
         {estiloFontes && <style dangerouslySetInnerHTML={{ __html: estiloFontes }} />}
-        {/* D1 (ADR-036): gradiente vetorial aproximando o fundo texturizado
-            do PDF original — mantém o componente 100% vetorial e portável. */}
+        {/* D1 (ADR-036): gradiente vetorial do fundo — H12: é o gradiente
+            real do PDF, vertical, do azul quase preto ao preto. */}
         <linearGradient id="cp-fundo" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={CORES.fundoTopo} />
           <stop offset="1" stopColor={CORES.fundoBase} />
@@ -55,46 +65,49 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
       >
         Cronograma de Execução
       </text>
-      {nomeProjeto && (
-        <text
-          x={GEO.titulo.x + 520} y={painel.y - 17}
-          fontFamily={familiaTexto} fontSize={18} fill={CORES.textoPrazo}
-        >
-          {nomeProjeto}
-        </text>
-      )}
 
-      {/* Sem fundo sólido para o painel: a tabela fica sobre o gradiente da
-          página (fundo), e a estrutura visual vem só dos separadores e da
-          barra do rodapé — os três compartilham a mesma cor no original
-          (CORES.painel), coerente com a leitura de que a tabela não tem
-          card de fundo próprio. */}
+      {/* Marca "APOIO CONSULTORIA" (H4) — nunca o nome interno do projeto
+          (H5, removido: o slide vai para o cliente). */}
+      <image
+        href={LOGO_URL} xlinkHref={LOGO_URL}
+        x={logoX} y={marca.y} width={logoLargura} height={marca.altura}
+        style={{ filter: 'brightness(0) invert(1)' }}
+      />
 
-      {/* Cabeçalho (rótulos das três colunas) */}
-      <text x={GEO.colunas.fase} y={painel.y + GEO.alturaCabecalho / 2 + 8}
-        fontFamily={familiaDisplay} fontSize={GEO.cabecalho.corpo} fill={CORES.destaque}>Fase</text>
-      <text x={GEO.colunas.etapa} y={painel.y + GEO.alturaCabecalho / 2 + 8}
-        fontFamily={familiaDisplay} fontSize={GEO.cabecalho.corpo} fill={CORES.destaque}>Etapa</text>
-      <text x={GEO.colunas.prazo} y={painel.y + GEO.alturaCabecalho / 2 + 8}
+      {/* Painel da tabela: card opaco com borda e cantos arredondados (H6) —
+          medido no PDF, não o retângulo translúcido da primeira spec. */}
+      <rect x={painel.x} y={painel.y} width={painel.largura} height={painel.altura}
+        rx={painel.raio} fill={CORES.painelFundo} stroke={CORES.painelBorda} strokeWidth={GEO.espessuraBorda} />
+
+      {/* Cabeçalho (rótulos das três colunas) — "Fase da Timeline" repetido
+          é do modelo aprovado e fica (H9, decisão do responsável). */}
+      <text x={GEO.cabecalhoColunas.fase} y={GEO.cabecalhoBase}
+        fontFamily={familiaDisplay} fontSize={GEO.cabecalho.corpo} fill={CORES.destaque}>Fase da Timeline</text>
+      <text x={GEO.cabecalhoColunas.etapa} y={GEO.cabecalhoBase}
+        fontFamily={familiaDisplay} fontSize={GEO.cabecalho.corpo} fill={CORES.destaque}>Fase da Timeline</text>
+      <text x={GEO.cabecalhoColunas.prazo} y={GEO.cabecalhoBase}
         fontFamily={familiaDisplay} fontSize={GEO.cabecalho.corpo} fill={CORES.destaque}>Prazo Estimado</text>
 
-      {/* Separador cheio abaixo do cabeçalho */}
+      {/* Separador cheio abaixo do cabeçalho — mesma cor do separador entre
+          fases (H10/H11). */}
       <rect x={painel.x} y={painel.y + GEO.alturaCabecalho} width={painel.largura}
-        height={GEO.espessuraSeparador} fill={CORES.painel === CORES.textoClaro ? CORES.textoClaro : '#1B3A5C'} />
+        height={GEO.espessuraSeparador} fill={CORES.separadorFase} />
 
       {plano.fases.map((f, fi) => (
         <g key={f.fase ?? `nc-${fi}`}>
           {/* Separador cheio entre fases (não antes da primeira, que já tem
-              o separador do cabeçalho). */}
+              o separador do cabeçalho) — H11: #254D77, mais visível. */}
           {fi > 0 && (
             <rect x={painel.x} y={f.yInicio} width={painel.largura}
-              height={GEO.espessuraSeparador} fill={CORES.painel} />
+              height={GEO.espessuraSeparador} fill={CORES.separadorFase} />
           )}
 
-          {/* Rótulo da fase, centrado na banda. */}
+          {/* Rótulo da fase, centrado na banda, com "Fase N:" (H7) — a
+              numeração é a posição canônica (1-4); a faixa "não classificada"
+              fica sem número. */}
           <text x={GEO.colunas.fase} y={(f.yInicio + f.yFim) / 2 + 7}
             fontFamily={familiaTexto} fontWeight="700" fontSize={GEO.rotuloFase.corpo} fill={CORES.destaque}>
-            {f.fase ? FASE_TITULO[f.fase] : 'Não classificada'}
+            {f.fase ? `Fase ${fi + 1}: ${FASE_TITULO[f.fase]}` : 'Não classificada'}
           </text>
 
           {f.linhas.length === 0 && (
@@ -107,10 +120,11 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
           {f.linhas.map((linha, li) => (
             <g key={linha.chave}>
               {/* Separador parcial entre linhas da mesma fase (não antes da
-                  primeira linha, cuja borda superior é a da própria fase). */}
+                  primeira linha, cuja borda superior é a da própria fase) —
+                  H11: #1F2F47, discreto. */}
               {li > 0 && (
                 <rect x={GEO.fronteiraEtapaX} y={linha.y} width={painel.x + painel.largura - GEO.fronteiraEtapaX}
-                  height={GEO.espessuraSeparador} fill={CORES.painel} />
+                  height={GEO.espessuraSeparador} fill={CORES.separadorInterno} />
               )}
 
               {linha.etapas.map((e, ei) => (
@@ -134,15 +148,17 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
         </g>
       ))}
 
-      {/* Rodapé */}
-      <rect x={rodape.x} y={rodape.y} width={rodape.largura} height={rodape.altura} fill={CORES.painel} />
-      <text x={GEO.titulo.x + 3} y={rodape.y + rodape.altura / 2 - 2}
+      {/* Rodapé: card igual ao painel (H6/H11), rótulo à esquerda e total na
+          coluna de prazo, numa linha só (H3). */}
+      <rect x={rodape.x} y={rodape.y} width={rodape.largura} height={rodape.altura}
+        rx={rodape.raio} fill={CORES.painelFundo} stroke={CORES.painelBorda} strokeWidth={GEO.espessuraBorda} />
+      <text x={GEO.rodapeRotulo.x} y={GEO.rodapeRotulo.base}
         fontFamily={familiaTexto} fontWeight="700" fontSize={GEO.rodapeRotulo.corpo} fill={CORES.textoClaro}>
         Duração Total do Projeto
       </text>
-      <text x={GEO.titulo.x + 3} y={rodape.y + rodape.altura / 2 + 22}
+      <text x={GEO.rodapeTotal.x} y={GEO.rodapeTotal.base}
         fontFamily={familiaTexto} fontWeight="700" fontSize={GEO.rodapeTotal.corpo} fill={CORES.destaque}>
-        {plano.total} Dias Úteis
+        {plano.total} Dias ÚTEIS
       </text>
     </svg>
   );

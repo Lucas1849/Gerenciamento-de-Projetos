@@ -673,3 +673,27 @@ usar `exportarSvg.js`. Plano em [../features/plano-fase-32.md](../features/plano
 [../features/cronograma-proposta.md](../features/cronograma-proposta.md). **Pendências herdadas, não
 resolvidas aqui:** a passada visual 28e/30e (PNG rasterizado no browser) e o segundo exemplar do slide
 (risco registrado, não bloqueante). Fase 33 (port ao Hub) não iniciada.
+
+**Revisão (hotfix, decidida e implementada em 09/11/2026).** A comparação do slide
+gerado com o modelo encontrou dez divergências, diagnosticadas em
+[../features/hotfix-fase-32-cronograma.md](../features/hotfix-fase-32-cronograma.md). As que mudam
+decisões deste ADR:
+- **D2 revisado:** a altura continua por conteúdo, mas as linhas passam a ser **esticadas até
+  preencher o painel**, como no modelo. O preset `normal` é recalibrado pelos valores medidos no PDF
+  (nome ≈ 42, padding ≈ 4, mínima ≈ 48): com os valores antigos, um serviço de 7 linhas caía em
+  `compacto` com aviso falso e deixava ~127 px vazios.
+- **Fidelidade ao modelo onde a implementação tinha se afastado sem registro:** o cabeçalho volta a
+  ser **"Fase da Timeline" · "Fase da Timeline" · "Prazo Estimado"** (a repetição é do modelo e fica);
+  o total usa **"Dias ÚTEIS"**; o **nome do projeto sai do slide**; o **painel da tabela volta**; os
+  rótulos de fase ganham **"Fase N:"**.
+- **Marca:** "APOIO CONSULTORIA" no canto superior direito, na caixa medida no PDF, a partir do
+  **mesmo `marca-apoio.svg` com a cor trocada para branco** (constante do tema, aplicada na montagem)
+  — sem arquivo novo; o calendário de kick-off mantém a cor original.
+- **Cores corrigidas pela releitura do PDF (09/11/2026):** o D1 continua valendo (gradiente vetorial),
+  mas as cores registradas acima estavam erradas — o gradiente do modelo vai de **`#00063B` a
+  `#000000`**; `#1F2F47`/`#253753` eram cores de traço (separador interno e borda dos cards). Painel e
+  rodapé são cards opacos `#162136`, raio 22,5/18,75, borda `#253753`. Detalhes e a origem do erro
+  em [../features/cronograma-proposta.md](../features/cronograma-proposta.md) §4.
+- **Numeração:** passa a seguir a **ordem de desenho** (fase → linha → membro), com aviso ao gerente
+  quando a `ordem` persistida diverge — e não mais a `ordem` crua, que imprimiu "3ª, 1ª, 2ª" num
+  projeto com ordem e fase incoerentes.

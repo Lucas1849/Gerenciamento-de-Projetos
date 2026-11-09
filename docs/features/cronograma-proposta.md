@@ -86,8 +86,14 @@ Página **1440 × 810**.
 |---|---|---|---|---|
 |Painel da tabela|127,6|52,5|1185,5|668,6|
 |Barra do rodapé|130,6|739,9|1181,7|62,2|
-|Separador cheio (atravessa a coluna de Fase)|127,6|124,1 · 206,1 · 440,6 · 630,6|1178,8|2,2|
-|Separador parcial (só Etapa + Prazo)|**460,0**|254,5 · 536,0 · 680,1|849,4|2,2|
+|Separador cheio (atravessa a coluna de Fase)|127,6|124,1 · 206,1 · 440,6 · 630,6|1178,8|2,25|
+|Separador parcial (só Etapa + Prazo)|**460,0**|254,5 · 536,0 · 680,1|849,4|2,25|
+|Marca "APOIO CONSULTORIA" (imagem `/X5`)|1302,6|3,8|113,2|38,2|
+
+**Painel e rodapé são cards** (medido em 09/11/2026): preenchimento opaco `#162136`, borda `#253753`
+de 3,0, raio **22,5** no painel e **18,75** no rodapé. O painel tem ainda um **brilho externo** azul
+(≈ `#224B75`, opacidade crescendo de 0 a ~12% nos ~35 pt antes da borda), desenhado como imagem com
+máscara (`/X8`).
 
 **A fronteira da coluna de etapas é x = 460,0** — é onde os separadores parciais começam. Ela separa
 a coluna de Fase (mesclada verticalmente) das colunas de Etapa e Prazo.
@@ -117,7 +123,8 @@ tabela em ~9 px de cada lado** e corta a faixa da Fase 2 ao meio, entre a linha 
 "5ª+6ª" — onde todas as outras divisões internas de fase usam o separador **parcial**, que começa em
 x = 460.
 
-É deslize de montagem manual, da mesma família do "achado 2" da Fase 28 (variação entre um material e
+Ele é traçado em `#1F2F47` — quase da cor do painel, por isso discreto na imagem. É deslize de
+montagem manual, da mesma família do "achado 2" da Fase 28 (variação entre um material e
 outro). **O gerador não deve reproduzi-lo:** divisão dentro de uma fase usa separador parcial.
 Registrado aqui para que a diferença entre o slide gerado e este PDF seja uma decisão consciente, e
 não pareça defeito.
@@ -126,11 +133,23 @@ não pareça defeito.
 
 ## 4. Cores
 
+> ⚠️ **Correção de 09/11/2026.** A primeira versão desta tabela (15/10) estava errada em três linhas:
+> dava `#1F2F47`/`#253753` como fundo da página e `#254D77` para painel, rodapé e todos os
+> separadores. O leitor de PDF usado acompanhava só a cor de **preenchimento** (`rg`); separadores e
+> bordas são **traços** (`S`, cor em `RG`, espessura em `/LW` do estado gráfico), o fundo é um
+> **padrão de gradiente** (`/P4`) e vários retângulos eram **recortes** (`re W n`), que não pintam
+> nada. A releitura trata os três separadamente. A implementação da Fase 32 herdou o erro — ver
+> [hotfix-fase-32-cronograma.md](hotfix-fase-32-cronograma.md), H6, H11 e H12.
+
 | Hex | Uso |
 |---|---|
-|`#1F2F47` / `#253753`|fundo da página (duas camadas chapadas, sob uma imagem de textura)|
-|`#254D77`|painel da tabela, barra do rodapé e todos os separadores|
-|`#FFFFFF`|título, nomes das etapas, rótulo "Duração Total do Projeto"|
+|`#00063B` → `#000000`|**fundo da página**: gradiente linear **vertical**, do topo à base (`/P4`)|
+|`#162136`|preenchimento opaco do **painel** e do **rodapé**|
+|`#253753`|**borda** do painel e do rodapé (3,0)|
+|`#254D77`|separador abaixo do cabeçalho e **entre fases** (2,25)|
+|`#1F2F47`|separador **dentro da fase** (2,25)|
+|≈ `#224B75`|brilho externo do painel (imagem com máscara, opacidade ≤ ~12%)|
+|`#FFFFFF`|título, nomes das etapas, rótulo "Duração Total do Projeto", marca|
 |`#8FC6FF`|cabeçalho da tabela, rótulos das fases, "83 Dias ÚTEIS"|
 |`#94A3B8`|valores de prazo ("5 dias", "15 dias"…)|
 
@@ -138,9 +157,12 @@ Nenhuma dessas cores existe no tema do calendário de kick-off (`#004AAD` cabeç
 feriado, `PALETA_ETAPAS`). **São dois temas distintos** — o slide de cronograma precisa do seu próprio
 arquivo de tema, não de um ramo dentro do existente.
 
-⚠️ **O fundo não é cor chapada.** Além das duas camadas de cor, há uma imagem rasterizada
-(5745 × 2989) e um `/Pattern` cobrindo a página — a textura/gradiente da identidade. Isso é uma
-diferença real em relação ao calendário, que é 100% vetorial. Ver §6.
+**Não há transparência no slide**, exceto o brilho do painel e a marca (imagens com máscara): todos os
+estados gráficos de pintura têm `/ca 1`.
+
+**O fundo é vetorial.** A "imagem de textura" que esta seção mencionava em 15/10 é, na verdade, o
+**brilho do painel** (`/X8`, que só tem opacidade perto das bordas do card). O fundo em si é o gradiente
+`/P4` — reproduzível 1:1 com `<linearGradient>`, o que torna a decisão D1 mais simples do que parecia.
 
 ---
 

@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Copy, Download, FileClock } from 'lucide-react';
 import { planejarCronograma } from './cronogramaPropostaUtils';
 import { FONTES, GEO } from './cronogramaPropostaTema';
+import { LOGO_URL } from './calendarioKickoffTema';
 import CronogramaProposta from './CronogramaProposta';
 import { embutirFontes, svgParaPngBlob, copiarPng, baixarBlob } from './exportarSvg';
 
@@ -38,7 +39,7 @@ export default function GeradorCronogramaProposta({ projetoNome, etapas, toast, 
   const exportar = async () => {
     if (!svgRef.current) return null;
     return svgParaPngBlob(svgRef.current, {
-      largura: GEO.largura, altura: GEO.altura, escala: 2, fontsQuery: FONTS_QUERY,
+      largura: GEO.largura, altura: GEO.altura, escala: 2, fontsQuery: FONTS_QUERY, logoUrl: LOGO_URL,
     });
   };
 
@@ -100,18 +101,18 @@ export default function GeradorCronogramaProposta({ projetoNome, etapas, toast, 
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--sp-24)', background: 'var(--color-bg)' }}>
-          {plano.aviso && (
-            <div style={{
+          {[plano.avisoOrdem, plano.aviso].filter(Boolean).map((msg, i) => (
+            <div key={i} style={{
               marginBottom: 'var(--sp-16)', padding: 'var(--sp-12) var(--sp-16)',
               borderRadius: 8, background: 'rgba(255,189,89,0.12)',
               border: '1px solid var(--color-warning, #FFBD59)', fontSize: 'var(--text-caption)',
               lineHeight: 1.5, color: 'var(--color-text)',
             }}>
-              {plano.aviso}
+              {msg}
             </div>
-          )}
+          ))}
           <div style={{ borderRadius: 8, overflow: 'hidden', boxShadow: 'var(--shadow-2)' }}>
-            <CronogramaProposta ref={svgRef} plano={plano} nomeProjeto={projetoNome} />
+            <CronogramaProposta ref={svgRef} plano={plano} />
           </div>
         </div>
       </div>
