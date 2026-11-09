@@ -64,6 +64,7 @@ Regras, todas derivadas da spec:
 |**Fase vazia** (3 de 8 serviços)|é a **Q1**; bloqueia a 32, não a 31|
 |**Escopo longo** (Plano de Marketing = 13 linhas)|política A da Fase 30: dois presets + aviso visível ao gerente|
 |**Port para o Hub** (Fase 33)|mesmas armadilhas do `plano-fases-25-27.md`: Tailwind lá × custom properties aqui, enum divergente, gate `podeEditar`. O tema em arquivo único é o que torna o port viável.|
+|**Confundir a marca com a do calendário de kick-off** (hotfix de 09/11/2026, revisão 5')|`marca-apoio-texto.svg` (só texto, branco nativo) é **exclusivo** do Cronograma de Execução — o calendário de kick-off (Fase 28/29) usa `marca-apoio.svg` (símbolo + texto, cor original via `LOGO_URL`/`LOGO_RATIO` do `calendarioKickoffTema.js`), propositalmente diferente. Ao portar a Fase 33, levar `marca-apoio-texto.svg` junto como arquivo próprio do componente — **não** reaproveitar/trocar pelo arquivo do calendário, nem o contrário.|
 
 ---
 
