@@ -48,8 +48,11 @@ export const GEO = {
     prazo: 1096.6,
   },
   cabecalhoBase: 108.1,
-  // Caixa da marca "APOIO CONSULTORIA" no canto superior direito (H4).
-  marca: { x: 1302.6, y: 3.8, largura: 113.2, altura: 38.2 },
+  // Caixa da marca "APOIO CONSULTORIA" no canto superior direito (H4, revisão
+  // 5' de 09/11/2026) — a tinta do texto medida no PDF (não a caixa de
+  // recorte original 1302,6/3,8/113,2/38,2, mais folgada), para casar com o
+  // enquadramento justo de `marca-apoio-texto.svg`.
+  marca: { x: 1304.8, y: 6.4, largura: 109.9, altura: 32.8 },
   titulo: { x: 127.6, corpo: 44.2 },
   cabecalho: { corpo: 25.0 },
   rotuloFase: { corpo: 20.2 },
@@ -93,13 +96,13 @@ export const CORES = {
   textoPrazo: '#94A3B8',   // valores de prazo ("5 dias"…)
 };
 
-// Marca "APOIO CONSULTORIA": branca sobre este fundo escuro — o arquivo
-// original (`marca-apoio.svg`) é azul-marinho (#03345F), que sumiria aqui.
-// Sem gerar um arquivo novo (H4): `brightness(0)` achata qualquer cor de
-// entrada (inclusive os trechos já brancos do próprio SVG) em preto sólido,
-// `invert(1)` vira branco — robusto à cor original, ao contrário de um
-// replace de hex que erraria os trechos que já eram brancos.
-export const FILTRO_MARCA_BRANCA = 'brightness(0) invert(1)';
+// Marca "APOIO CONSULTORIA" (H4, revisão 5' de 09/11/2026): `marca-apoio.svg`
+// (o arquivo da plataforma) traz o símbolo junto do texto e é traçado em
+// camadas de cinza com furos brancos — um filtro de inversão de cor pinta os
+// furos também, colando o "I" de APOIO no "O". `marca-apoio-texto.svg` é um
+// arquivo NOVO: vetorização da própria imagem `/X5` do PDF modelo (só a área
+// do texto, sem o símbolo), um único path branco nativo — sem filtro.
+export const MARCA_TEXTO_URL = '/marca-apoio-texto.svg';
 
 // ── Tipografia ──────────────────────────────────────────────────────────────
 // DM Serif Display e Poppins: as duas Google Fonts sob licença OFL, portanto
