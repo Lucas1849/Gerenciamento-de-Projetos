@@ -91,11 +91,15 @@ export const CORES = {
   textoClaro: '#FFFFFF',   // título, nomes das etapas, rótulo do rodapé, marca
   destaque: '#8FC6FF',     // cabeçalho da tabela, rótulos de fase, total
   textoPrazo: '#94A3B8',   // valores de prazo ("5 dias"…)
-  // Marca "APOIO CONSULTORIA": branca sobre este fundo escuro — o arquivo
-  // original (`marca-apoio.svg`) é azul-marinho (#03345F), que sumiria aqui;
-  // aplicada via filtro CSS na montagem, sem gerar um arquivo novo (H4).
-  marca: '#FFFFFF',
 };
+
+// Marca "APOIO CONSULTORIA": branca sobre este fundo escuro — o arquivo
+// original (`marca-apoio.svg`) é azul-marinho (#03345F), que sumiria aqui.
+// Sem gerar um arquivo novo (H4): `brightness(0)` achata qualquer cor de
+// entrada (inclusive os trechos já brancos do próprio SVG) em preto sólido,
+// `invert(1)` vira branco — robusto à cor original, ao contrário de um
+// replace de hex que erraria os trechos que já eram brancos.
+export const FILTRO_MARCA_BRANCA = 'brightness(0) invert(1)';
 
 // ── Tipografia ──────────────────────────────────────────────────────────────
 // DM Serif Display e Poppins: as duas Google Fonts sob licença OFL, portanto

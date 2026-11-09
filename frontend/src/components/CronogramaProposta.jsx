@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { GEO, CORES, FONTES } from './cronogramaPropostaTema';
+import { GEO, CORES, FONTES, FILTRO_MARCA_BRANCA } from './cronogramaPropostaTema';
 import { LOGO_URL, LOGO_RATIO } from './calendarioKickoffTema';
 
 // Componente SVG do slide "Cronograma de Execução" da proposta comercial
@@ -71,7 +71,7 @@ const CronogramaProposta = forwardRef(function CronogramaProposta(
       <image
         href={LOGO_URL} xlinkHref={LOGO_URL}
         x={logoX} y={marca.y} width={logoLargura} height={marca.altura}
-        style={{ filter: 'brightness(0) invert(1)' }}
+        style={{ filter: FILTRO_MARCA_BRANCA }}
       />
 
       {/* Painel da tabela: card opaco com borda e cantos arredondados (H6) —

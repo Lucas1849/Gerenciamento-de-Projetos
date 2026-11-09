@@ -142,6 +142,12 @@ export function planejarCronograma(etapas) {
   // etapas soltas, sem blocos), comprime pela mesma razão em vez de deixar
   // as linhas vazarem por cima do rodapé: o aviso acima já avisa que ficou
   // apertado, mas o slide nunca pode sair com texto sobreposto.
+  // Limite conhecido: o fator comprime a altura da LINHA, não o texto dentro
+  // dela (yBaseLinhaNome centraliza pelo tamanho natural do texto) — uma
+  // compressão muito forte (fator abaixo de ~0,75) com linhas de bloco de
+  // várias sub-linhas poderia, em tese, vazar texto sobre o separador
+  // seguinte. Não observado com o catálogo atual (nomes curtos, até ~13
+  // etapas por serviço); revisitar se um serviço bem maior aparecer.
   const fator = natural > 0 ? disponivel / natural : 1;
 
   const quebras = calcularQuebras(linhasNumeradas, preset);
